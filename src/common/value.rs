@@ -12,7 +12,7 @@ pub struct Value<T: Clone> {
 }
 
 impl<T: 'static + Clone> Value<T> {
-    fn new(value: T) -> Self {
+    pub fn new(value: T) -> Self {
         Value { value }
     }
 }
@@ -28,6 +28,12 @@ impl<T: 'static + Clone> AbstractValue for Value<T> {
 
     fn clone_box(&self) -> Box<dyn AbstractValue> {
         Box::new(self.clone())
+    }
+}
+
+impl Clone for Box<dyn AbstractValue> {
+    fn clone(&self) -> Self {
+        self.clone_box()
     }
 }
 
