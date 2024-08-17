@@ -7,6 +7,7 @@ use num_traits::identities::Zero;
 
 use crate::systems::framework::vector_base::VectorBase;
 
+// TODO: implement immutable Subvector
 pub struct Subvector<'a, T: Add + PartialEq + Clone + Debug + Zero> {
     vector: na::DVectorViewMut<'a, T>,
 }
@@ -42,6 +43,10 @@ impl<'a, T: Add + PartialEq + Clone + Debug + Zero> VectorBase<T> for Subvector<
 
     fn get_mut_at_index(&mut self, index: usize) -> &mut T {
         &mut self.vector[index]
+    }
+
+    fn get_mutable_subvector<'b>(&'b mut self, start: usize, shape: usize) -> Subvector<'b, T> {
+        Subvector::<'b, T>::new(self.vector.rows_mut(start, shape))
     }
 
     fn set_at_index(&mut self, index: usize, value: T) {

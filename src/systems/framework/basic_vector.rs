@@ -9,6 +9,7 @@ extern crate nalgebra as na;
 use crate::systems::framework::subvector::Subvector;
 use crate::systems::framework::vector_base::VectorBase;
 
+#[derive(Clone)]
 pub struct BasicVector<T: Add + PartialEq + Clone + Debug + Zero> {
     values: na::DVector<T>,
 }
@@ -28,10 +29,6 @@ impl<T: Add + PartialEq + Clone + Debug + Zero> BasicVector<T> {
 
     pub fn set_value(&mut self, value: &na::DVector<T>) {
         self.values = (*value).clone();
-    }
-
-    pub fn get_subvector<'a>(&'a mut self, start: usize, shape: usize) -> Subvector<'a, T> {
-        Subvector::<'a, T>::new(self.get_mutable_value().rows_mut(start, shape))
     }
 }
 
@@ -60,6 +57,10 @@ impl<T: Add + PartialEq + Clone + Debug + Zero> VectorBase<T> for BasicVector<T>
 
     fn get_mut_at_index(&mut self, index: usize) -> &mut T {
         &mut self.values[index]
+    }
+
+    fn get_mutable_subvector<'a>(&'a mut self, start: usize, shape: usize) -> Subvector<'a, T> {
+        Subvector::<'a, T>::new(self.get_mutable_value().rows_mut(start, shape))
     }
 
     fn set_at_index(&mut self, index: usize, value: T) {

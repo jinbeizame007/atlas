@@ -7,6 +7,12 @@ pub struct Identifier<Tag> {
 }
 
 impl<Tag> Identifier<Tag> {
+    pub fn new(value: usize) -> Self {
+        Identifier::<Tag> {
+            value,
+            _marker: PhantomData::<Tag>,
+        }
+    }
     pub fn get_value(&self) -> &usize {
         &self.value
     }
