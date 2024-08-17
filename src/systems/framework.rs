@@ -1,5 +1,8 @@
+pub mod basic_vector;
 pub mod cache;
 pub mod context;
 pub mod context_base;
+pub mod continuous_state;
 pub mod fixed_input_port_value;
 pub mod framework_common;
+pub mod vector_base;
