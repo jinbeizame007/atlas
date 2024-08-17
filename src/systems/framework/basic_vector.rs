@@ -6,6 +6,7 @@ use std::ops::{Add, Index, IndexMut};
 use num_traits::identities::Zero;
 extern crate nalgebra as na;
 
+use crate::systems::framework::subvector::Subvector;
 use crate::systems::framework::vector_base::VectorBase;
 
 pub struct BasicVector<T: Add + PartialEq + Clone + Debug + Zero> {
@@ -28,6 +29,10 @@ impl<T: Add + PartialEq + Clone + Debug + Zero> BasicVector<T> {
     pub fn set_value(&mut self, value: &na::DVector<T>) {
         self.values = (*value).clone();
     }
+
+    pub fn get_subvector<'a>(&'a mut self, start: usize, shape: usize) -> Subvector<'a, T> {
+        Subvector::<'a, T>::new(self.get_mutable_value().rows_mut(start, shape))
+    }
 }
 
 impl<T: Add + PartialEq + Clone + Debug + Zero> Index<usize> for BasicVector<T> {
@@ -47,10 +52,6 @@ impl<T: Add + PartialEq + Clone + Debug + Zero> IndexMut<usize> for BasicVector<
 impl<T: Add + PartialEq + Clone + Debug + Zero> VectorBase<T> for BasicVector<T> {
     fn size(&self) -> usize {
         self.values.len()
-    }
-
-    fn copy_to_vector(&self) -> nalgebra::DVector<T> {
-        self.values.clone()
     }
 
     fn get_at_index(&self, index: usize) -> &T {

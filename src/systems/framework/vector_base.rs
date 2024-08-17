@@ -8,7 +8,6 @@ pub trait VectorBase<T: Add + PartialEq + Clone + Debug, Output = T>:
     Index<usize> + IndexMut<usize>
 {
     fn size(&self) -> usize;
-    fn copy_to_vector(&self) -> na::DVector<T>;
     fn get_at_index(&self, index: usize) -> &T;
     fn get_mut_at_index(&mut self, index: usize) -> &mut T;
     fn set_at_index(&mut self, index: usize, value: T);
