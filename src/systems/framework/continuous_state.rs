@@ -32,6 +32,10 @@ impl<T: Add + PartialEq + Clone + Debug + Zero> ContinuousState<T> {
         }
     }
 
+    pub fn size(&self) -> usize {
+        self.state.size()
+    }
+
     pub fn get_system_id(&self) -> &SystemId {
         &self.system_id
     }

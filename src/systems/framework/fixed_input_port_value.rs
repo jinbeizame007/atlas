@@ -5,6 +5,10 @@ pub struct FixedInputPortValue {
 }
 
 impl FixedInputPortValue {
+    pub fn new(value: Box<dyn AbstractValue>) -> Self {
+        FixedInputPortValue { value }
+    }
+
     pub fn get_value(&mut self) -> &mut dyn AbstractValue {
         self.value.as_mut()
     }

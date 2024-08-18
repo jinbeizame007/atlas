@@ -46,12 +46,11 @@ impl Default for CacheEntryValue {
     }
 }
 
-pub struct Cache<'a> {
+pub struct Cache {
     store: Vec<CacheEntryValue>,
-    _marker: std::marker::PhantomData<&'a CacheEntryValue>,
 }
 
-impl<'a> Cache<'a> {
+impl Cache {
     pub fn cache_size(&self) -> usize {
         self.store.len()
     }
@@ -69,7 +68,7 @@ impl<'a> Cache<'a> {
         self.store[cache_index] = cache_entry_value;
     }
 
-    pub fn get_cache_entry_value(&'a self, cache_index: CacheIndex) -> Option<&'a CacheEntryValue> {
+    pub fn get_cache_entry_value(&self, cache_index: CacheIndex) -> Option<&CacheEntryValue> {
         self.store.get(cache_index.value())
     }
 

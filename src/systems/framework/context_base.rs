@@ -8,6 +8,9 @@ pub trait ContextBase {
     fn get_cache(&self) -> &Cache;
     fn get_mutable_cache(&mut self) -> &mut Cache;
     fn num_input_ports(&self) -> usize;
-    fn num_output_ports(&self) -> usize;
-    fn fix_input_port(index: usize, value: &dyn AbstractValue) -> &FixedInputPortValue;
+    // TODO: implement num_output_ports()
+    // fn num_output_ports(&self) -> usize;
+    fn fix_input_port(&mut self, index: usize, value: &dyn AbstractValue) -> &FixedInputPortValue;
+    fn get_fixed_input_port_value(&self, index: usize) -> &FixedInputPortValue;
+    fn get_mutable_fixed_input_port_value(&mut self, index: usize) -> &mut FixedInputPortValue;
 }
