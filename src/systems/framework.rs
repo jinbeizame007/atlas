@@ -5,5 +5,6 @@ pub mod context_base;
 pub mod continuous_state;
 pub mod fixed_input_port_value;
 pub mod framework_common;
+pub mod state;
 pub mod subvector;
 pub mod vector_base;
