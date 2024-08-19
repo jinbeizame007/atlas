@@ -9,6 +9,18 @@ pub type CacheIndex = TypeSafeIndex<CacheTag>;
 
 #[allow(dead_code)]
 #[derive(Clone)]
+pub struct InputPortTag;
+
+pub type InputPortIndex = TypeSafeIndex<InputPortTag>;
+
+#[allow(dead_code)]
+#[derive(Clone)]
+pub struct OutputPortTag;
+
+pub type OutputPortIndex = TypeSafeIndex<OutputPortTag>;
+
+#[allow(dead_code)]
+#[derive(Clone)]
 pub struct SystemIdTag;
 
 pub type SystemId = Identifier<SystemIdTag>;
