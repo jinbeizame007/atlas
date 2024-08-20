@@ -15,4 +15,5 @@ pub trait Context<T: Add + PartialEq + Clone + Debug + Zero>: ContextBase {
     fn num_continuous_states(&self) -> usize;
     fn get_continuous_state(&self) -> &ContinuousState<T>;
     fn get_continuous_state_vector(&self) -> &dyn VectorBase<T, Output = T>;
+    fn as_base(&self) -> &dyn ContextBase;
 }

@@ -73,4 +73,8 @@ impl<T: Add + PartialEq + Clone + Debug + Zero> Context<T> for LeafContext<T> {
     fn get_continuous_state_vector(&self) -> &dyn VectorBase<T, Output = T> {
         self.state.get_continuous_state().get_vector()
     }
+
+    fn as_base(&self) -> &dyn ContextBase {
+        self
+    }
 }

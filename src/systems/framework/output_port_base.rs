@@ -1,5 +1,4 @@
-use crate::systems::framework::framework_common::OutputPortIndex;
-use crate::systems::framework::input_port_base::PortDataType;
+use crate::systems::framework::framework_common::{OutputPortIndex, PortDataType};
 
 pub trait OutputPortBase {
     fn get_index(&self) -> &OutputPortIndex;

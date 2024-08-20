@@ -19,6 +19,11 @@ pub struct OutputPortTag;
 
 pub type OutputPortIndex = TypeSafeIndex<OutputPortTag>;
 
+pub enum PortDataType {
+    VectorValued,
+    AbstractValued,
+}
+
 #[allow(dead_code)]
 #[derive(Clone)]
 pub struct SystemIdTag;
