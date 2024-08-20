@@ -1,5 +1,6 @@
 pub mod basic_vector;
 pub mod cache;
+pub mod cache_entry;
 pub mod context;
 pub mod context_base;
 pub mod continuous_state;
