@@ -9,6 +9,7 @@ pub mod framework_common;
 pub mod input_port;
 pub mod input_port_base;
 pub mod leaf_context;
+pub mod output_port;
 pub mod output_port_base;
 pub mod port_base;
 pub mod state;
