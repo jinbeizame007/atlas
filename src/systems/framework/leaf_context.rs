@@ -77,4 +77,8 @@ impl<T: Add + PartialEq + Clone + Debug + Zero> Context<T> for LeafContext<T> {
     fn as_base(&self) -> &dyn ContextBase {
         self
     }
+
+    fn as_mutable_base(&mut self) -> &mut dyn ContextBase {
+        self
+    }
 }

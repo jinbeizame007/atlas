@@ -14,7 +14,7 @@ use crate::systems::framework::system::System;
 use crate::systems::framework::value_producer::AllocateCallback;
 
 pub struct InputPort<'a, T: Add + PartialEq + Clone + Debug + Zero> {
-    system: &'a dyn System<T>,
+    system: &'a dyn System<'a, T>,
     _system_id: SystemId,
     index: InputPortIndex,
     data_type: PortDataType,
@@ -45,7 +45,7 @@ impl<'a, T: Add + PartialEq + Clone + Debug + Zero> InputPortBase for InputPort<
 
 impl<'a, T: Add + PartialEq + Clone + Debug + Zero> InputPort<'a, T> {
     pub fn new(
-        system: &'a dyn System<T>,
+        system: &'a dyn System<'a, T>,
         _system_id: SystemId,
         index: InputPortIndex,
         data_type: PortDataType,

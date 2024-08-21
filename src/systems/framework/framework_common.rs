@@ -19,6 +19,12 @@ pub struct OutputPortTag;
 
 pub type OutputPortIndex = TypeSafeIndex<OutputPortTag>;
 
+#[allow(dead_code)]
+#[derive(Clone)]
+pub struct ContinuousStateTag;
+
+pub type ContinuousStateIndex = TypeSafeIndex<ContinuousStateTag>;
+
 pub enum PortDataType {
     VectorValued,
     AbstractValued,

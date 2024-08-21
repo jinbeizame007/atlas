@@ -23,7 +23,7 @@ impl CacheEntry {
         abstract_value.as_any().downcast_ref::<ValueType>().unwrap()
     }
 
-    fn eval_abstract<'a>(&self, context: &'a mut dyn ContextBase) -> &'a dyn AbstractValue {
+    pub fn eval_abstract<'a>(&self, context: &'a mut dyn ContextBase) -> &'a dyn AbstractValue {
         if self.get_cache_entry_value(context).needs_recomputation() {
             self.update_value(context)
         }

@@ -14,7 +14,7 @@ use crate::systems::framework::port_base::PortBase;
 use crate::systems::framework::system::System;
 
 pub struct LeafOutputPort<'a, T: Add + PartialEq + Clone + Debug + Zero> {
-    system: &'a dyn System<T>,
+    system: &'a dyn System<'a, T>,
     _system_id: SystemId,
     index: OutputPortIndex,
     data_type: PortDataType,
@@ -43,10 +43,10 @@ impl<'a, T: Add + PartialEq + Clone + Debug + Zero> OutputPort<'a, T> for LeafOu
         self.cache_entry.allocate()
     }
 
-    fn eval<ValueType: Clone + 'static>(&self, context: &mut dyn Context<T>) -> ValueType {
+    fn eval_abstract(&self, context: &mut dyn Context<T>) -> Box<dyn AbstractValue> {
         self.cache_entry
-            .eval::<ValueType>(context.as_mutable_base())
-            .clone()
+            .eval_abstract(context.as_mutable_base())
+            .clone_box()
     }
 
     fn calc(&self, context: &dyn Context<T>, value: &mut dyn AbstractValue) {
@@ -60,7 +60,7 @@ impl<'a, T: Add + PartialEq + Clone + Debug + Zero> OutputPort<'a, T> for LeafOu
 
 impl<'a, T: Add + PartialEq + Clone + Debug + Zero> LeafOutputPort<'a, T> {
     pub fn new(
-        system: &'a dyn System<T>,
+        system: &'a dyn System<'a, T>,
         _system_id: SystemId,
         index: OutputPortIndex,
         data_type: PortDataType,
@@ -75,6 +75,15 @@ impl<'a, T: Add + PartialEq + Clone + Debug + Zero> LeafOutputPort<'a, T> {
             size,
             cache_entry,
         }
+    }
+
+    pub fn eval<ValueType: Clone + 'static>(&self, context: &mut dyn Context<T>) -> ValueType {
+        self.eval_abstract(context)
+            .as_any()
+            .downcast_ref::<ValueType>()
+            .clone()
+            .unwrap()
+            .clone()
     }
 
     pub fn cache_entry(&self) -> &'a CacheEntry {

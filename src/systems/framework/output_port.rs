@@ -10,7 +10,8 @@ use crate::systems::framework::output_port_base::OutputPortBase;
 use crate::systems::framework::system::System;
 
 pub trait OutputPort<'a, T: Add + PartialEq + Clone + Debug + Zero>: OutputPortBase {
-    fn eval<ValueType: Clone + 'static>(&self, context: &dyn Context<T>) -> ValueType;
+    // fn eval<ValueType: Clone + 'static>(&self, context: &mut dyn Context<T>) -> ValueType;
+    fn eval_abstract(&self, context: &mut dyn Context<T>) -> Box<dyn AbstractValue>;
     fn allocate(&mut self) -> Box<dyn AbstractValue>;
     fn calc(&self, context: &dyn Context<T>, value: &mut dyn AbstractValue);
     fn get_system(&self) -> &'a dyn System<T>;
