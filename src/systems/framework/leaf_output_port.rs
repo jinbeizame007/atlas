@@ -81,7 +81,6 @@ impl<'a, T: Add + PartialEq + Clone + Debug + Zero> LeafOutputPort<'a, T> {
         self.eval_abstract(context)
             .as_any()
             .downcast_ref::<ValueType>()
-            .clone()
             .unwrap()
             .clone()
     }

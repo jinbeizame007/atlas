@@ -1,8 +1,8 @@
 use crate::common::value::AbstractValue;
 use crate::systems::framework::context_base::ContextBase;
 
-pub type AllocateCallback = dyn Fn() -> Box<dyn AbstractValue>;
-pub type CalcCallback = dyn Fn(&dyn ContextBase, &mut dyn AbstractValue);
+pub type AllocateCallback = Box<dyn Fn() -> Box<dyn AbstractValue>>;
+pub type CalcCallback = Box<dyn Fn(&dyn ContextBase, &mut dyn AbstractValue)>;
 
 pub struct ValueProducer {
     allocate_: Box<AllocateCallback>,

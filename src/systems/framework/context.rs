@@ -12,6 +12,7 @@ use crate::systems::framework::vector_base::VectorBase;
 pub trait Context<T: Add + PartialEq + Clone + Debug + Zero>: ContextBase {
     fn get_time(&self) -> &T;
     fn get_state(&self) -> &State<T>;
+    fn get_mutable_state(&mut self) -> &mut State<T>;
     fn num_continuous_states(&self) -> usize;
     fn get_continuous_state(&self) -> &ContinuousState<T>;
     fn get_continuous_state_vector(&self) -> &dyn VectorBase<T, Output = T>;

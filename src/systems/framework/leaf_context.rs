@@ -14,7 +14,7 @@ use crate::systems::framework::framework_common::SystemId;
 use crate::systems::framework::state::State;
 use crate::systems::framework::vector_base::VectorBase;
 
-pub struct LeafContext<T: Add + PartialEq + Clone + Debug + Zero> {
+pub struct LeafContext<T: Add + PartialEq + Clone + Debug + Zero + 'static> {
     system_id: SystemId,
     cache: Cache,
     time: T,
@@ -53,13 +53,17 @@ impl<T: Add + PartialEq + Clone + Debug + Zero> ContextBase for LeafContext<T> {
     }
 }
 
-impl<T: Add + PartialEq + Clone + Debug + Zero> Context<T> for LeafContext<T> {
+impl<T: Add + PartialEq + Clone + Debug + Zero + 'static> Context<T> for LeafContext<T> {
     fn get_time(&self) -> &T {
         &self.time
     }
 
     fn get_state(&self) -> &State<T> {
         &self.state
+    }
+
+    fn get_mutable_state(&mut self) -> &mut State<T> {
+        &mut self.state
     }
 
     fn num_continuous_states(&self) -> usize {

@@ -25,6 +25,7 @@ pub struct ContinuousStateTag;
 
 pub type ContinuousStateIndex = TypeSafeIndex<ContinuousStateTag>;
 
+#[derive(PartialEq)]
 pub enum PortDataType {
     VectorValued,
     AbstractValued,

@@ -12,7 +12,9 @@ use crate::systems::framework::input_port::InputPort;
 use crate::systems::framework::leaf_context::LeafContext;
 use crate::systems::framework::system::System;
 
-pub trait LeafSystem<'a, T: Add + PartialEq + Clone + Debug + Zero>: System<'a, T> {
+pub trait LeafSystem<'a, T: Add + PartialEq + Clone + Debug + Zero + 'static>:
+    System<'a, T>
+{
     fn allocate_context(&mut self) -> LeafContext<T>;
     fn declate_continuous_state(
         &mut self,

@@ -6,7 +6,7 @@ use num_traits::identities::Zero;
 
 use crate::systems::framework::continuous_state::ContinuousState;
 
-pub struct State<T: Add + PartialEq + Clone + Debug + Zero> {
+pub struct State<T: Add + PartialEq + Clone + Debug + Zero + 'static> {
     continuous_state: ContinuousState<T>,
 }
 

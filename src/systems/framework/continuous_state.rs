@@ -8,7 +8,7 @@ use crate::systems::framework::framework_common::SystemId;
 use crate::systems::framework::subvector::Subvector;
 use crate::systems::framework::vector_base::VectorBase;
 
-pub struct ContinuousState<T: Add + PartialEq + Clone + Debug + Zero> {
+pub struct ContinuousState<T: Add + PartialEq + Clone + Debug + Zero + 'static> {
     state: Box<dyn VectorBase<T, Output = T>>,
     num_q: usize,
     num_v: usize,

@@ -10,6 +10,13 @@ pub struct CacheEntry {
 }
 
 impl CacheEntry {
+    pub fn new(cache_index: CacheIndex, value_producer: ValueProducer) -> Self {
+        CacheEntry {
+            cache_index,
+            value_producer,
+        }
+    }
+
     pub fn allocate(&self) -> Box<dyn AbstractValue> {
         self.value_producer.allocate()
     }
