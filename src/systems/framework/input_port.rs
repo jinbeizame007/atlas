@@ -10,11 +10,11 @@ use crate::systems::framework::fixed_input_port_value::FixedInputPortValue;
 use crate::systems::framework::framework_common::{InputPortIndex, PortDataType, SystemId};
 use crate::systems::framework::input_port_base::{EvalAbstractCallback, InputPortBase};
 use crate::systems::framework::port_base::PortBase;
-use crate::systems::framework::system::System;
 use crate::systems::framework::value_producer::AllocateCallback;
 
-pub struct InputPort<'a, T: Add + PartialEq + Clone + Debug + Zero> {
-    system: &'a dyn System<'a, T>,
+pub struct InputPort<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> {
+    // TODO: Consider add a reference to the system
+    // system: &'a dyn System<'a, T>,
     _system_id: SystemId,
     index: InputPortIndex,
     data_type: PortDataType,
@@ -23,7 +23,7 @@ pub struct InputPort<'a, T: Add + PartialEq + Clone + Debug + Zero> {
     alloc: Box<AllocateCallback>,
 }
 
-impl<'a, T: Add + PartialEq + Clone + Debug + Zero> PortBase for InputPort<'a, T> {
+impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> PortBase for InputPort<T> {
     fn get_data_type(&self) -> &PortDataType {
         &self.data_type
     }
@@ -33,7 +33,7 @@ impl<'a, T: Add + PartialEq + Clone + Debug + Zero> PortBase for InputPort<'a, T
     }
 }
 
-impl<'a, T: Add + PartialEq + Clone + Debug + Zero> InputPortBase for InputPort<'a, T> {
+impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> InputPortBase for InputPort<T> {
     fn get_index(&self) -> &InputPortIndex {
         &self.index
     }
@@ -43,9 +43,8 @@ impl<'a, T: Add + PartialEq + Clone + Debug + Zero> InputPortBase for InputPort<
     }
 }
 
-impl<'a, T: Add + PartialEq + Clone + Debug + Zero> InputPort<'a, T> {
+impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> InputPort<T> {
     pub fn new(
-        system: &'a dyn System<'a, T>,
         _system_id: SystemId,
         index: InputPortIndex,
         data_type: PortDataType,
@@ -53,8 +52,8 @@ impl<'a, T: Add + PartialEq + Clone + Debug + Zero> InputPort<'a, T> {
         eval: Box<EvalAbstractCallback>,
         alloc: Box<AllocateCallback>,
     ) -> Self {
-        InputPort::<'a, T> {
-            system,
+        InputPort::<T> {
+            // system,
             _system_id,
             index,
             data_type,
@@ -64,8 +63,8 @@ impl<'a, T: Add + PartialEq + Clone + Debug + Zero> InputPort<'a, T> {
         }
     }
 
-    pub fn eval<ValueType: Clone + 'static>(&self, context: &dyn Context<T>) -> ValueType {
-        let context_base = context.as_base();
+    pub fn eval<ValueType: Clone + 'static>(&mut self, context: &dyn Context<T>) -> ValueType {
+        let context_base = context.as_mutable_base();
         let abstract_value = (self.eval)(context_base);
         self.port_eval_cast::<ValueType>(abstract_value.as_ref())
     }
@@ -83,14 +82,10 @@ impl<'a, T: Add + PartialEq + Clone + Debug + Zero> InputPort<'a, T> {
 
     pub fn fix_value<ValueType: Clone + 'static>(
         &self,
-        context: &'a mut dyn Context<T>,
+        context: &mut dyn Context<T>,
         value: ValueType,
-    ) -> &'a FixedInputPortValue {
+    ) -> &FixedInputPortValue {
         let abstract_value = Box::new(Value::<ValueType>::new(value)) as Box<dyn AbstractValue>;
         context.fix_input_port(self.get_index().value(), abstract_value.as_ref())
-    }
-
-    pub fn get_system(&self) -> &'a dyn System<T> {
-        self.system
     }
 }
