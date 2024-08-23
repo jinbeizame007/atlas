@@ -7,6 +7,12 @@ pub trait AbstractValue {
     fn clone_box(&self) -> Box<dyn AbstractValue>;
 }
 
+impl Default for Box<dyn AbstractValue> {
+    fn default() -> Self {
+        Box::new(Value::<i64>::new(0))
+    }
+}
+
 #[derive(Clone)]
 pub struct Value<T: Clone> {
     value: T,
