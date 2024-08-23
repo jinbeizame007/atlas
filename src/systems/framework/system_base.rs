@@ -8,7 +8,7 @@ use crate::systems::framework::output_port_base::OutputPortBase;
 use crate::systems::framework::value_producer::ValueProducer;
 
 #[derive(Default)]
-struct ContextSizes {
+pub struct ContextSizes {
     pub num_generalized_positions: usize,
     pub num_generalized_velocities: usize,
     pub num_misc_continuous_states: usize,
@@ -16,10 +16,21 @@ struct ContextSizes {
 
 pub trait SystemBase {
     // Context
-    fn allocate_context(&self) -> Box<dyn ContextBase> {
-        self.do_allocate_context()
+    // fn allocate_context(&self) -> Box<dyn ContextBase>;
+    // fn do_allocate_context(&self) -> Box<dyn ContextBase>;
+    fn initialize_context_base(&self, context: &mut dyn ContextBase) {
+        context.set_system_id(self.get_system_id().clone());
+
+        let cache = context.get_mutable_cache();
+        for index in 0..self.num_cache_entries() {
+            let cache_index = CacheIndex::new(index);
+            let cache_entry = self.get_cache_entry(&cache_index);
+            let cache_value = cache.create_new_cache_entry_value(cache_index);
+            cache_value.set_initial_value(cache_entry.allocate());
+        }
+
+        // TODO: Add an output port ticket to the context
     }
-    fn do_allocate_context(&self) -> Box<dyn ContextBase>;
 
     // Input port
     fn get_input_ports(&self) -> &Vec<Box<dyn InputPortBase>>;
@@ -76,7 +87,7 @@ pub trait SystemBase {
             + context_sizes.num_misc_continuous_states
     }
 
-    #[allow(private_interfaces)]
     fn get_context_sizes(&self) -> &ContextSizes;
-    fn get_system_id(&self) -> SystemId;
+    fn get_mutable_context_sizes(&mut self) -> &mut ContextSizes;
+    fn get_system_id(&self) -> &SystemId;
 }
