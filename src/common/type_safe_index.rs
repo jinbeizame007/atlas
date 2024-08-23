@@ -1,13 +1,13 @@
 use std::marker::PhantomData;
 use std::ops::{Add, Index, IndexMut};
 
-#[derive(Debug, Clone, Copy)]
-pub struct TypeSafeIndex<Tag> {
+#[derive(Debug, Default, Clone, Copy)]
+pub struct TypeSafeIndex<Tag: Default> {
     index: usize,
     _marker: PhantomData<Tag>,
 }
 
-impl<Tag> TypeSafeIndex<Tag> {
+impl<Tag: Default> TypeSafeIndex<Tag> {
     pub fn new(index: usize) -> Self {
         TypeSafeIndex {
             index,
@@ -20,7 +20,7 @@ impl<Tag> TypeSafeIndex<Tag> {
     }
 }
 
-impl<Tag, T> Index<TypeSafeIndex<Tag>> for Vec<T> {
+impl<Tag: Default, T> Index<TypeSafeIndex<Tag>> for Vec<T> {
     type Output = T;
 
     fn index(&self, index: TypeSafeIndex<Tag>) -> &Self::Output {
@@ -28,7 +28,7 @@ impl<Tag, T> Index<TypeSafeIndex<Tag>> for Vec<T> {
     }
 }
 
-impl<Tag, T> Index<&TypeSafeIndex<Tag>> for Vec<T> {
+impl<Tag: Default, T> Index<&TypeSafeIndex<Tag>> for Vec<T> {
     type Output = T;
 
     fn index(&self, index: &TypeSafeIndex<Tag>) -> &Self::Output {
@@ -36,49 +36,49 @@ impl<Tag, T> Index<&TypeSafeIndex<Tag>> for Vec<T> {
     }
 }
 
-impl<Tag, T> IndexMut<TypeSafeIndex<Tag>> for Vec<T> {
+impl<Tag: Default, T> IndexMut<TypeSafeIndex<Tag>> for Vec<T> {
     fn index_mut(&mut self, index: TypeSafeIndex<Tag>) -> &mut Self::Output {
         &mut self[index.value()]
     }
 }
 
-impl<Tag, T> IndexMut<&TypeSafeIndex<Tag>> for Vec<T> {
+impl<Tag: Default, T> IndexMut<&TypeSafeIndex<Tag>> for Vec<T> {
     fn index_mut(&mut self, index: &TypeSafeIndex<Tag>) -> &mut Self::Output {
         &mut self[index.value()]
     }
 }
 
-impl<Tag> From<usize> for TypeSafeIndex<Tag> {
+impl<Tag: Default> From<usize> for TypeSafeIndex<Tag> {
     fn from(value: usize) -> Self {
         TypeSafeIndex::<Tag>::new(value)
     }
 }
 
-impl<Tag> From<TypeSafeIndex<Tag>> for usize {
+impl<Tag: Default> From<TypeSafeIndex<Tag>> for usize {
     fn from(value: TypeSafeIndex<Tag>) -> Self {
         value.value()
     }
 }
 
-impl<Tag> PartialEq for TypeSafeIndex<Tag> {
+impl<Tag: Default> PartialEq for TypeSafeIndex<Tag> {
     fn eq(&self, other: &Self) -> bool {
         self.index == other.index
     }
 }
 
-impl<Tag> PartialEq<usize> for TypeSafeIndex<Tag> {
+impl<Tag: Default> PartialEq<usize> for TypeSafeIndex<Tag> {
     fn eq(&self, other: &usize) -> bool {
         self.index == *other
     }
 }
 
-impl<Tag> PartialOrd<usize> for TypeSafeIndex<Tag> {
+impl<Tag: Default> PartialOrd<usize> for TypeSafeIndex<Tag> {
     fn partial_cmp(&self, other: &usize) -> Option<std::cmp::Ordering> {
         self.index.partial_cmp(other)
     }
 }
 
-impl<Tag> Add<usize> for TypeSafeIndex<Tag> {
+impl<Tag: Default> Add<usize> for TypeSafeIndex<Tag> {
     type Output = TypeSafeIndex<Tag>;
 
     fn add(self, other: usize) -> TypeSafeIndex<Tag> {
