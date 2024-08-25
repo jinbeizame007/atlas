@@ -5,7 +5,7 @@ use std::ops::Add;
 use num_traits::identities::Zero;
 extern crate nalgebra as na;
 
-use crate::common::value::AbstractValue;
+use crate::common::value::{AbstractValue, Value};
 use crate::systems::framework::basic_vector::BasicVector;
 use crate::systems::framework::cache_entry::CacheEntry;
 use crate::systems::framework::context::Context;
@@ -15,10 +15,11 @@ use crate::systems::framework::framework_common::{
     ContinuousStateIndex, OutputPortIndex, PortDataType,
 };
 use crate::systems::framework::input_port::InputPort;
+use crate::systems::framework::input_port_base::InputPortBase;
 use crate::systems::framework::leaf_context::LeafContext;
 use crate::systems::framework::leaf_output_port::LeafOutputPort;
 use crate::systems::framework::model_values::ModelValues;
-use crate::systems::framework::state::State;
+use crate::systems::framework::port_base::PortBase;
 use crate::systems::framework::system::System;
 use crate::systems::framework::value_producer::{AllocateCallback, ValueProducer};
 
@@ -34,6 +35,21 @@ pub trait LeafSystem<T: Add + PartialEq + Clone + Debug + Default + Zero + 'stat
         self.initialize_context_base(context.as_mutable_base());
 
         Box::new(context)
+    }
+
+    fn do_allocate_input(&self, input_port: &InputPort<T>) -> Box<dyn AbstractValue> {
+        if let Some(model_result) = self
+            .get_model_input_values()
+            .clone_model(input_port.get_index().value())
+        {
+            model_result
+        } else if *input_port.get_data_type() == PortDataType::VectorValued {
+            Box::new(Value::<BasicVector<T>>::new(BasicVector::<T>::zeros(
+                input_port.size(),
+            )))
+        } else {
+            panic!("a System with abstract input ports must pass a model_value to declare_abstract_input_port()");
+        }
     }
 
     fn do_make_leaf_context(&self) -> LeafContext<T> {
