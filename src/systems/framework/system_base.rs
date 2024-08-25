@@ -16,6 +16,18 @@ pub struct ContextSizes {
 }
 
 pub trait SystemBase {
+    // Getters and setters without default implementations
+    fn get_input_ports(&self) -> &Vec<Box<dyn InputPortBase>>;
+    fn get_mutable_input_ports(&mut self) -> &mut Vec<Box<dyn InputPortBase>>;
+    fn get_output_ports(&self) -> &Vec<Box<dyn OutputPortBase>>;
+    fn get_mutable_output_ports(&mut self) -> &mut Vec<Box<dyn OutputPortBase>>;
+    fn get_cache_entries(&self) -> &Vec<Box<CacheEntry>>;
+    fn get_mutable_cache_entries(&mut self) -> &mut Vec<Box<CacheEntry>>;
+    fn get_context_sizes(&self) -> &ContextSizes;
+    fn get_mutable_context_sizes(&mut self) -> &mut ContextSizes;
+    fn get_system_id(&self) -> &SystemId;
+    fn get_parent_service(&self) -> &dyn SystemParentServiceInterface;
+
     // Context
     // fn allocate_context(&self) -> Box<dyn ContextBase>;
     // fn do_allocate_context(&self) -> Box<dyn ContextBase>;
@@ -34,8 +46,6 @@ pub trait SystemBase {
     }
 
     // Input port
-    fn get_input_ports(&self) -> &Vec<Box<dyn InputPortBase>>;
-    fn get_mutable_input_ports(&mut self) -> &mut Vec<Box<dyn InputPortBase>>;
     fn num_input_ports(&self) -> usize {
         self.get_input_ports().len()
     }
@@ -65,8 +75,6 @@ pub trait SystemBase {
     }
 
     // Output port
-    fn get_output_ports(&self) -> &Vec<Box<dyn OutputPortBase>>;
-    fn get_mutable_output_ports(&mut self) -> &mut Vec<Box<dyn OutputPortBase>>;
     fn num_output_ports(&self) -> usize {
         self.get_output_ports().len()
     }
@@ -78,8 +86,6 @@ pub trait SystemBase {
     }
 
     // Cache entry
-    fn get_cache_entries(&self) -> &Vec<Box<CacheEntry>>;
-    fn get_mutable_cache_entries(&mut self) -> &mut Vec<Box<CacheEntry>>;
     fn num_cache_entries(&self) -> usize {
         self.get_cache_entries().len()
     }
@@ -109,8 +115,4 @@ pub trait SystemBase {
     fn validate_context(&self, context: &dyn ContextBase) {
         assert!(*context.get_system_id() == *self.get_system_id())
     }
-    fn get_context_sizes(&self) -> &ContextSizes;
-    fn get_mutable_context_sizes(&mut self) -> &mut ContextSizes;
-    fn get_system_id(&self) -> &SystemId;
-    fn get_parent_service(&self) -> &dyn SystemParentServiceInterface;
 }

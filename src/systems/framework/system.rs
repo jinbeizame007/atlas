@@ -25,6 +25,16 @@ pub trait System<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static>:
 where
     Self: 'static,
 {
+    // Getters and setters without default implementations
+    fn get_input_ports(&self) -> &Vec<InputPort<T>>;
+    fn get_mutable_input_ports(&mut self) -> &mut Vec<InputPort<T>>;
+    fn get_input_port(&self, index: &InputPortIndex) -> &InputPort<T>;
+    fn get_mutable_input_port(&mut self, index: &InputPortIndex) -> &mut InputPort<T>;
+    fn get_output_ports(&self) -> &Vec<Box<dyn OutputPort<T>>>;
+    fn get_mutable_output_ports(&mut self) -> &mut Vec<Box<dyn OutputPort<T>>>;
+    fn get_output_port(&self, index: &OutputPortIndex) -> &dyn OutputPort<T>;
+    fn get_mutable_output_port(&mut self, index: &OutputPortIndex) -> &mut dyn OutputPort<T>;
+
     // Resource allocation and initializaion
     fn allocate_context(&mut self) -> Box<dyn Context<T>>;
     // fn allocate_context(&mut self) -> Box<dyn Context<T>> {
@@ -112,14 +122,4 @@ where
         context: &mut dyn Context<T>,
         derivatives: &mut ContinuousState<T>,
     );
-
-    // Utility methods
-    fn get_input_ports(&self) -> &Vec<InputPort<T>>;
-    fn get_mutable_input_ports(&mut self) -> &mut Vec<InputPort<T>>;
-    fn get_input_port(&self, index: &InputPortIndex) -> &InputPort<T>;
-    fn get_mutable_input_port(&mut self, index: &InputPortIndex) -> &mut InputPort<T>;
-    fn get_output_ports(&self) -> &Vec<Box<dyn OutputPort<T>>>;
-    fn get_mutable_output_ports(&mut self) -> &mut Vec<Box<dyn OutputPort<T>>>;
-    fn get_output_port(&self, index: &OutputPortIndex) -> &dyn OutputPort<T>;
-    fn get_mutable_output_port(&mut self, index: &OutputPortIndex) -> &mut dyn OutputPort<T>;
 }

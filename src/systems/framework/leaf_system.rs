@@ -26,6 +26,13 @@ use crate::systems::framework::value_producer::{AllocateCallback, ValueProducer}
 pub trait LeafSystem<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static>:
     System<T>
 {
+    // Getters and setters without default implementations
+    fn get_model_input_values(&self) -> &ModelValues;
+    fn get_mutable_model_input_values(&mut self) -> &mut ModelValues;
+    fn get_model_continuous_state_vector(&self) -> &BasicVector<T>;
+    fn get_mutable_model_continuous_state_vector(&mut self) -> &mut BasicVector<T>;
+    fn get_leaf_output_port(&self, output_port_index: &OutputPortIndex) -> &LeafOutputPort<T>;
+
     fn allocate_context(&self) -> Box<LeafContext<T>> {
         self.do_allocate_context()
     }
@@ -75,8 +82,6 @@ pub trait LeafSystem<T: Add + PartialEq + Clone + Debug + Default + Zero + 'stat
     fn set_model_continuous_state_vector(&mut self, model_continuous_state_vector: BasicVector<T>) {
         *self.get_mutable_model_continuous_state_vector() = model_continuous_state_vector;
     }
-    fn get_model_continuous_state_vector(&self) -> &BasicVector<T>;
-    fn get_mutable_model_continuous_state_vector(&mut self) -> &mut BasicVector<T>;
 
     fn set_default_state(&self, context: &mut dyn Context<T>) {
         self.validate_context(context.as_base());
@@ -120,8 +125,6 @@ pub trait LeafSystem<T: Add + PartialEq + Clone + Debug + Default + Zero + 'stat
 
         self.declare_input_port(PortDataType::AbstractValued, 0)
     }
-    fn get_model_input_values(&self) -> &ModelValues;
-    fn get_mutable_model_input_values(&mut self) -> &mut ModelValues;
 
     // Declare output port
     #[allow(clippy::type_complexity)]
@@ -219,5 +222,4 @@ pub trait LeafSystem<T: Add + PartialEq + Clone + Debug + Default + Zero + 'stat
 
         self.get_leaf_output_port(&output_port_index)
     }
-    fn get_leaf_output_port(&self, output_port_index: &OutputPortIndex) -> &LeafOutputPort<T>;
 }
