@@ -1,5 +1,10 @@
 use crate::common::identifier::Identifier;
 use crate::common::type_safe_index::TypeSafeIndex;
+use crate::common::value::AbstractValue;
+use crate::systems::framework::context_base::ContextBase;
+use crate::systems::framework::input_port_base::InputPortBase;
+
+use super::system_base::SystemBase;
 
 #[allow(dead_code)]
 #[derive(Clone, Default)]
@@ -25,7 +30,7 @@ pub struct ContinuousStateTag;
 
 pub type ContinuousStateIndex = TypeSafeIndex<ContinuousStateTag>;
 
-#[derive(PartialEq)]
+#[derive(Clone, PartialEq)]
 pub enum PortDataType {
     VectorValued,
     AbstractValued,
@@ -36,3 +41,12 @@ pub enum PortDataType {
 pub struct SystemIdTag;
 
 pub type SystemId = Identifier<SystemIdTag>;
+
+pub trait SystemParentServiceInterface {
+    fn get_root_system_base(&self) -> &dyn SystemBase;
+    fn eval_connected_subsystem_input_port(
+        &self,
+        context: &mut dyn ContextBase,
+        input_port: &dyn InputPortBase,
+    ) -> Box<dyn AbstractValue>;
+}
