@@ -9,7 +9,7 @@ use crate::systems::framework::basic_vector::BasicVector;
 
 // https://en.wikipedia.org/wiki/Prototype_pattern
 pub struct ModelValues {
-    values: Vec<Box<dyn AbstractValue>>,
+    values: Vec<Option<Box<dyn AbstractValue>>>,
 }
 
 impl ModelValues {
@@ -21,7 +21,7 @@ impl ModelValues {
         if index >= self.size() {
             self.values.resize_with(index, Default::default)
         }
-        self.values[index] = model_value;
+        self.values[index] = Some(model_value);
     }
 
     pub fn add_vector_model<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static>(
@@ -32,26 +32,29 @@ impl ModelValues {
         self.add_model(index, Box::new(Value::<BasicVector<T>>::new(model_vector)));
     }
 
-    pub fn clone_model(&self, index: usize) -> Box<dyn AbstractValue> {
+    pub fn clone_model(&self, index: usize) -> Option<Box<dyn AbstractValue>> {
         self.values[index].clone()
     }
 
-    pub fn clone_all_models(&self) -> Vec<Box<dyn AbstractValue>> {
-        self.values.iter().map(|x| x.clone_box()).collect()
+    pub fn clone_all_models(&self) -> Vec<Option<Box<dyn AbstractValue>>> {
+        self.values.to_vec()
     }
 
     pub fn clone_vector_model<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static>(
         &self,
         index: usize,
-    ) -> BasicVector<T> {
-        let abstract_value = self.clone_model(index);
-        let basic_vector = abstract_value
-            .as_ref()
-            .as_any()
-            .downcast_ref::<BasicVector<T>>()
-            .unwrap()
-            .clone();
-
-        basic_vector
+    ) -> Option<BasicVector<T>> {
+        if self.clone_model(index).is_some() {
+            self.clone_model(index).map(|abstract_value| {
+                abstract_value
+                    .as_ref()
+                    .as_any()
+                    .downcast_ref::<BasicVector<T>>()
+                    .unwrap()
+                    .clone()
+            })
+        } else {
+            None
+        }
     }
 }
