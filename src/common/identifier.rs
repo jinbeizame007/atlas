@@ -1,6 +1,7 @@
+use std::cmp::PartialEq;
 use std::marker::PhantomData;
 
-#[derive(Clone, Default)]
+#[derive(Clone, Default, PartialEq)]
 pub struct Identifier<Tag: Default> {
     value: usize,
     _marker: PhantomData<Tag>,

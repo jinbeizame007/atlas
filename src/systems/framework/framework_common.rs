@@ -1,10 +1,11 @@
+use std::cmp::PartialEq;
+
 use crate::common::identifier::Identifier;
 use crate::common::type_safe_index::TypeSafeIndex;
 use crate::common::value::AbstractValue;
 use crate::systems::framework::context_base::ContextBase;
 use crate::systems::framework::input_port_base::InputPortBase;
-
-use super::system_base::SystemBase;
+use crate::systems::framework::system_base::SystemBase;
 
 #[allow(dead_code)]
 #[derive(Clone, Default)]
@@ -37,7 +38,7 @@ pub enum PortDataType {
 }
 
 #[allow(dead_code)]
-#[derive(Clone, Default)]
+#[derive(Clone, Default, PartialEq)]
 pub struct SystemIdTag;
 
 pub type SystemId = Identifier<SystemIdTag>;
