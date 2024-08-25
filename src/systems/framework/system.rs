@@ -1,12 +1,10 @@
-use std::cell::RefCell;
 use std::cmp::PartialEq;
 use std::fmt::Debug;
 use std::ops::Add;
-use std::rc::{Rc, Weak};
 
 use num_traits::identities::Zero;
 
-use crate::common::value::{AbstractValue, Value};
+use crate::common::value::AbstractValue;
 use crate::systems::framework::basic_vector::BasicVector;
 use crate::systems::framework::cache_entry::CacheEntry;
 use crate::systems::framework::context::Context;
@@ -82,7 +80,7 @@ where
     fn allocate_input_abstract(&self, input_port: &InputPort<T>) -> Box<dyn AbstractValue> {
         self.do_allocate_input(input_port)
     }
-    fn allocate_time_derivatives(&mut self) -> &ContinuousState<T>;
+    fn allocate_time_derivatives(&mut self) -> ContinuousState<T>;
     fn create_default_context(&mut self) -> Box<dyn Context<T>> {
         let mut context = self.allocate_context();
         self.set_default_context(context.as_mut());

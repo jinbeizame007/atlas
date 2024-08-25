@@ -1,4 +1,3 @@
-use std::any::Any;
 use std::cmp::PartialEq;
 use std::fmt::Debug;
 use std::ops::Add;
@@ -40,6 +39,9 @@ pub trait LeafSystem<T: Add + PartialEq + Clone + Debug + Default + Zero + 'stat
         LeafContext::<T>::default()
     }
 
+    fn allocate_time_derivatives(&mut self) -> ContinuousState<T> {
+        self.allocate_continuous_state()
+    }
     fn allocate_continuous_state(&self) -> ContinuousState<T> {
         let context_sizes = self.get_context_sizes();
         let mut continuous_state = ContinuousState::<T>::new(
