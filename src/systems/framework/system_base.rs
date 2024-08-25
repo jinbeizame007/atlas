@@ -106,6 +106,9 @@ pub trait SystemBase {
             + context_sizes.num_misc_continuous_states
     }
 
+    fn validate_context(&self, context: &dyn ContextBase) {
+        assert!(*context.get_system_id() == *self.get_system_id())
+    }
     fn get_context_sizes(&self) -> &ContextSizes;
     fn get_mutable_context_sizes(&mut self) -> &mut ContextSizes;
     fn get_system_id(&self) -> &SystemId;

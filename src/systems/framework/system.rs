@@ -16,7 +16,6 @@ use crate::systems::framework::input_port::InputPort;
 use crate::systems::framework::input_port_base::InputPortBase;
 use crate::systems::framework::output_port::OutputPort;
 use crate::systems::framework::port_base::PortBase;
-use crate::systems::framework::state::State;
 use crate::systems::framework::system_base::SystemBase;
 
 use super::context_base::ContextBase;
@@ -86,9 +85,11 @@ where
         self.set_default_context(context.as_mut());
         context
     }
-    fn set_default_state(&self, state: &State<T>);
+
+    // TODO: Consider inputting &dyn Context<T> and &mut State<T>
+    fn set_default_state(&self, context: &mut dyn Context<T>);
     fn set_default_context(&mut self, context: &mut dyn Context<T>) {
-        self.set_default_state(context.get_mutable_state());
+        self.set_default_state(context);
     }
 
     // Cached evaluations

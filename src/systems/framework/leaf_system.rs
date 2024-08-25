@@ -18,6 +18,7 @@ use crate::systems::framework::input_port::InputPort;
 use crate::systems::framework::leaf_context::LeafContext;
 use crate::systems::framework::leaf_output_port::LeafOutputPort;
 use crate::systems::framework::model_values::ModelValues;
+use crate::systems::framework::state::State;
 use crate::systems::framework::system::System;
 use crate::systems::framework::value_producer::{AllocateCallback, ValueProducer};
 
@@ -60,6 +61,13 @@ pub trait LeafSystem<T: Add + PartialEq + Clone + Debug + Default + Zero + 'stat
     }
     fn get_model_continuous_state_vector(&self) -> &BasicVector<T>;
     fn get_mutable_model_continuous_state_vector(&mut self) -> &mut BasicVector<T>;
+
+    fn set_default_state(&self, context: &mut dyn Context<T>) {
+        self.validate_context(context.as_base());
+
+        let continuous_state = context.get_mutable_continuous_state();
+        continuous_state.set_from_vector(self.get_model_continuous_state_vector().get_value());
+    }
 
     fn declare_continuous_state(
         &mut self,

@@ -3,6 +3,7 @@ use std::fmt::Debug;
 use std::ops::Add;
 
 use num_traits::identities::Zero;
+extern crate nalgebra as na;
 
 use crate::systems::framework::framework_common::SystemId;
 use crate::systems::framework::subvector::Subvector;
