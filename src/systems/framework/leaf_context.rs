@@ -15,10 +15,10 @@ use crate::systems::framework::framework_common::SystemId;
 use crate::systems::framework::state::State;
 use crate::systems::framework::vector_base::VectorBase;
 
-// #[derive(Default)]
+#[derive(Default)]
 pub struct LeafContext<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> {
     system_id: SystemId,
-    parent: Arc<Mutex<dyn ContextBase>>,
+    parent: Option<Arc<Mutex<dyn ContextBase>>>,
     cache: Cache,
     time: T,
     state: State<T>,
@@ -27,6 +27,13 @@ pub struct LeafContext<T: Add + PartialEq + Clone + Debug + Default + Zero + 'st
 }
 
 impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> ContextBase for LeafContext<T> {
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
     fn set_system_id(&mut self, system_id: SystemId) {
         self.system_id = system_id;
     }
@@ -35,7 +42,7 @@ impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> ContextBase 
         &self.system_id
     }
 
-    fn get_parent_base(&self) -> Arc<Mutex<dyn ContextBase>> {
+    fn get_parent_base(&self) -> Option<Arc<Mutex<dyn ContextBase>>> {
         self.parent.clone()
     }
 
@@ -51,21 +58,25 @@ impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> ContextBase 
         self.input_port_values.len()
     }
 
-    fn fix_input_port(&mut self, index: usize, value: &dyn AbstractValue) -> &FixedInputPortValue {
+    fn fix_input_port(
+        &mut self,
+        index: usize,
+        value: &dyn AbstractValue,
+    ) -> Option<&FixedInputPortValue> {
         self.input_port_values[index] = Some(FixedInputPortValue::new(value.clone_box()));
 
-        &self.input_port_values[index].unwrap()
+        self.get_fixed_input_port_value(index)
     }
 
-    fn get_fixed_input_port_value(&self, index: usize) -> &Option<FixedInputPortValue> {
-        &self.input_port_values[index]
+    fn get_fixed_input_port_value(&self, index: usize) -> Option<&FixedInputPortValue> {
+        self.input_port_values[index].as_ref()
     }
 
     fn get_mutable_fixed_input_port_value(
         &mut self,
         index: usize,
-    ) -> &mut Option<FixedInputPortValue> {
-        &mut self.input_port_values[index]
+    ) -> Option<&mut FixedInputPortValue> {
+        self.input_port_values[index].as_mut()
     }
 
     fn get_mutable_is_context_base_initialized(&mut self) -> &mut bool {
