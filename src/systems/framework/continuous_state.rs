@@ -45,6 +45,10 @@ impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> ContinuousSt
         self.system_id = system_id;
     }
 
+    pub fn set_from_vector(&mut self, value: &na::DVector<T>) {
+        self.state.set_from_vector(value);
+    }
+
     pub fn get_vector(&self) -> &dyn VectorBase<T, Output = T> {
         self.state.as_ref()
     }
