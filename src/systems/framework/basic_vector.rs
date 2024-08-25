@@ -10,13 +10,17 @@ use crate::systems::framework::subvector::Subvector;
 use crate::systems::framework::vector_base::VectorBase;
 
 #[derive(Clone)]
-pub struct BasicVector<T: Add + PartialEq + Clone + Debug + Zero> {
+pub struct BasicVector<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> {
     values: na::DVector<T>,
 }
 
-impl<T: Add + PartialEq + Clone + Debug + Zero> BasicVector<T> {
+impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> BasicVector<T> {
     pub fn new(values: na::DVector<T>) -> Self {
         BasicVector::<T> { values }
+    }
+
+    pub fn zeros(size: usize) -> BasicVector<T> {
+        BasicVector::<T>::new(na::DVector::<T>::zeros(size))
     }
 
     pub fn get_value(&self) -> &na::DVector<T> {
@@ -32,7 +36,9 @@ impl<T: Add + PartialEq + Clone + Debug + Zero> BasicVector<T> {
     }
 }
 
-impl<T: Add + PartialEq + Clone + Debug + Zero> Index<usize> for BasicVector<T> {
+impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> Index<usize>
+    for BasicVector<T>
+{
     type Output = T;
 
     fn index(&self, index: usize) -> &Self::Output {
@@ -40,13 +46,17 @@ impl<T: Add + PartialEq + Clone + Debug + Zero> Index<usize> for BasicVector<T> 
     }
 }
 
-impl<T: Add + PartialEq + Clone + Debug + Zero> IndexMut<usize> for BasicVector<T> {
+impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> IndexMut<usize>
+    for BasicVector<T>
+{
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         &mut self.values[index]
     }
 }
 
-impl<T: Add + PartialEq + Clone + Debug + Zero> VectorBase<T> for BasicVector<T> {
+impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> VectorBase<T>
+    for BasicVector<T>
+{
     fn size(&self) -> usize {
         self.values.len()
     }
