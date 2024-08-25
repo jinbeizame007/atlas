@@ -1,10 +1,12 @@
+use std::cell::RefCell;
 use std::cmp::PartialEq;
 use std::fmt::Debug;
 use std::ops::Add;
+use std::rc::{Rc, Weak};
 
 use num_traits::identities::Zero;
 
-use crate::common::value::AbstractValue;
+use crate::common::value::{AbstractValue, Value};
 use crate::systems::framework::basic_vector::BasicVector;
 use crate::systems::framework::cache_entry::CacheEntry;
 use crate::systems::framework::context::Context;
@@ -21,8 +23,10 @@ use crate::systems::framework::system_base::SystemBase;
 
 use super::context_base::ContextBase;
 
-pub trait System<'a, T: Add + PartialEq + Clone + Debug + Default + Zero + 'static>:
+pub trait System<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static>:
     SystemBase
+where
+    Self: 'static,
 {
     // Resource allocation and initializaion
     fn allocate_context(&mut self) -> Box<dyn Context<T>>;
@@ -31,13 +35,22 @@ pub trait System<'a, T: Add + PartialEq + Clone + Debug + Default + Zero + 'stat
     // }
     fn declare_input_port(&mut self, data_type: PortDataType, size: usize) -> &InputPort<T> {
         let input_port_index = InputPortIndex::new(self.num_input_ports());
-
-        let eval = Box::new(|context_base: &mut dyn ContextBase| {
-            self.eval_abstract_input(context_base, &input_port_index)
-        });
-        let alloc =
-            Box::new(|| self.allocate_input_abstract(self.get_input_port(&input_port_index)));
-        let input_port = Box::new(InputPort::<'a, T>::new(
+        let eval = {
+            let cloned_input_port_index = input_port_index.clone();
+            let self_ptr: *mut Self = self;
+            Box::new(move |context_base: &mut dyn ContextBase| unsafe {
+                (*self_ptr).eval_abstract_input(context_base, &cloned_input_port_index)
+            })
+        };
+        let alloc = {
+            let cloned_input_port_index = input_port_index.clone();
+            let self_ptr: *mut Self = self;
+            Box::new(move || unsafe {
+                (*self_ptr)
+                    .allocate_input_abstract((*self_ptr).get_input_port(&cloned_input_port_index))
+            })
+        };
+        let input_port = Box::new(InputPort::<T>::new(
             self.get_system_id().clone(),
             input_port_index.clone(),
             data_type,
@@ -49,6 +62,7 @@ pub trait System<'a, T: Add + PartialEq + Clone + Debug + Default + Zero + 'stat
 
         self.get_input_port(&input_port_index)
     }
+
     fn do_allocate_input(&self, input_port: &InputPort<T>) -> Box<dyn AbstractValue>;
     fn allocate_input_vector(&mut self, input_port: &InputPort<T>) -> BasicVector<T> {
         assert!(*input_port.get_data_type() == PortDataType::VectorValued);
@@ -80,7 +94,10 @@ pub trait System<'a, T: Add + PartialEq + Clone + Debug + Default + Zero + 'stat
     }
 
     // Cached evaluations
-    fn eval_time_derivatives(&mut self, context: &'a mut dyn Context<T>) -> &'a ContinuousState<T> {
+    fn eval_time_derivatives<'a>(
+        &mut self,
+        context: &'a mut dyn Context<T>,
+    ) -> &'a ContinuousState<T> {
         let cache_entry = self.get_time_derivatives_cache_entry();
 
         cache_entry.eval(context.as_mutable_base())
@@ -101,7 +118,9 @@ pub trait System<'a, T: Add + PartialEq + Clone + Debug + Default + Zero + 'stat
     fn get_input_ports(&self) -> &Vec<InputPort<T>>;
     fn get_mutable_input_ports(&mut self) -> &mut Vec<InputPort<T>>;
     fn get_input_port(&self, index: &InputPortIndex) -> &InputPort<T>;
+    fn get_mutable_input_port(&mut self, index: &InputPortIndex) -> &mut InputPort<T>;
     fn get_output_ports(&self) -> &Vec<Box<dyn OutputPort<T>>>;
     fn get_mutable_output_ports(&mut self) -> &mut Vec<Box<dyn OutputPort<T>>>;
     fn get_output_port(&self, index: &OutputPortIndex) -> &dyn OutputPort<T>;
+    fn get_mutable_output_port(&mut self, index: &OutputPortIndex) -> &mut dyn OutputPort<T>;
 }

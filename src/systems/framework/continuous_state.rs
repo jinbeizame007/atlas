@@ -8,7 +8,8 @@ use crate::systems::framework::framework_common::SystemId;
 use crate::systems::framework::subvector::Subvector;
 use crate::systems::framework::vector_base::VectorBase;
 
-pub struct ContinuousState<T: Add + PartialEq + Clone + Debug + Zero + 'static> {
+#[derive(Default)]
+pub struct ContinuousState<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> {
     state: Box<dyn VectorBase<T, Output = T>>,
     num_q: usize,
     num_v: usize,
@@ -16,7 +17,7 @@ pub struct ContinuousState<T: Add + PartialEq + Clone + Debug + Zero + 'static> 
     system_id: SystemId,
 }
 
-impl<T: Add + PartialEq + Clone + Debug + Zero> ContinuousState<T> {
+impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> ContinuousState<T> {
     pub fn new(
         state: Box<dyn VectorBase<T, Output = T>>,
         num_q: usize,

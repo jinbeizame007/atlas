@@ -1,5 +1,6 @@
 use std::cmp::PartialEq;
 use std::fmt::Debug;
+use std::marker::PhantomData;
 use std::ops::Add;
 
 use num_traits::identities::Zero;
@@ -13,14 +14,13 @@ use crate::systems::framework::port_base::PortBase;
 use crate::systems::framework::value_producer::AllocateCallback;
 
 pub struct InputPort<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> {
-    // TODO: Consider add a reference to the system
-    // system: &'a dyn System<'a, T>,
     _system_id: SystemId,
     index: InputPortIndex,
     data_type: PortDataType,
     size: usize,
     eval: Box<EvalAbstractCallback>,
     alloc: Box<AllocateCallback>,
+    _phantom: PhantomData<T>,
 }
 
 impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> PortBase for InputPort<T> {
@@ -53,17 +53,21 @@ impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> InputPort<T>
         alloc: Box<AllocateCallback>,
     ) -> Self {
         InputPort::<T> {
-            // system,
             _system_id,
             index,
             data_type,
             size,
             eval,
             alloc,
+            _phantom: PhantomData::<T>,
         }
     }
 
-    pub fn eval<ValueType: Clone + 'static>(&mut self, context: &dyn Context<T>) -> ValueType {
+    pub fn set_eval(&mut self, eval: Box<EvalAbstractCallback>) {
+        self.eval = eval;
+    }
+
+    pub fn eval<ValueType: Clone + 'static>(&mut self, context: &mut dyn Context<T>) -> ValueType {
         let context_base = context.as_mutable_base();
         let abstract_value = (self.eval)(context_base);
         self.port_eval_cast::<ValueType>(abstract_value.as_ref())
@@ -80,12 +84,17 @@ impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> InputPort<T>
             .clone()
     }
 
-    pub fn fix_value<ValueType: Clone + 'static>(
+    pub fn set_alloc(&mut self, alloc: Box<AllocateCallback>) {
+        self.alloc = alloc;
+    }
+
+    pub fn fix_value<'a, ValueType: Clone + 'static>(
         &self,
-        context: &mut dyn Context<T>,
+        context: &'a mut dyn Context<T>,
         value: ValueType,
-    ) -> &FixedInputPortValue {
-        let abstract_value = Box::new(Value::<ValueType>::new(value)) as Box<dyn AbstractValue>;
-        context.fix_input_port(self.get_index().value(), abstract_value.as_ref())
+    ) -> Option<&'a FixedInputPortValue> {
+        let abstract_value = Value::<ValueType>::new(value);
+
+        context.fix_input_port(self.get_index().value(), &abstract_value)
     }
 }

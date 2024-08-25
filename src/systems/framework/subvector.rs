@@ -8,17 +8,19 @@ use num_traits::identities::Zero;
 use crate::systems::framework::vector_base::VectorBase;
 
 // TODO: implement immutable Subvector
-pub struct Subvector<'a, T: Add + PartialEq + Clone + Debug + Zero> {
+pub struct Subvector<'a, T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> {
     vector: na::DVectorViewMut<'a, T>,
 }
 
-impl<'a, T: Add + PartialEq + Clone + Debug + Zero> Subvector<'a, T> {
+impl<'a, T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> Subvector<'a, T> {
     pub fn new(vector: na::DVectorViewMut<'a, T>) -> Self {
         Subvector { vector }
     }
 }
 
-impl<'a, T: Add + PartialEq + Clone + Debug + Zero> Index<usize> for Subvector<'a, T> {
+impl<'a, T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> Index<usize>
+    for Subvector<'a, T>
+{
     type Output = T;
 
     fn index(&self, index: usize) -> &Self::Output {
@@ -26,13 +28,17 @@ impl<'a, T: Add + PartialEq + Clone + Debug + Zero> Index<usize> for Subvector<'
     }
 }
 
-impl<'a, T: Add + PartialEq + Clone + Debug + Zero> IndexMut<usize> for Subvector<'a, T> {
+impl<'a, T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> IndexMut<usize>
+    for Subvector<'a, T>
+{
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         &mut self.vector[index]
     }
 }
 
-impl<'a, T: Add + PartialEq + Clone + Debug + Zero> VectorBase<T> for Subvector<'a, T> {
+impl<'a, T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> VectorBase<T>
+    for Subvector<'a, T>
+{
     fn size(&self) -> usize {
         self.vector.len()
     }

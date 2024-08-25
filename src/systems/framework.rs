@@ -11,6 +11,7 @@ pub mod input_port_base;
 pub mod leaf_context;
 pub mod leaf_output_port;
 pub mod leaf_system;
+pub mod model_values;
 pub mod output_port;
 pub mod output_port_base;
 pub mod port_base;

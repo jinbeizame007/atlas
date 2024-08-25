@@ -1,7 +1,8 @@
+use crate::common::value::AbstractValue;
 use crate::systems::framework::cache_entry::CacheEntry;
 use crate::systems::framework::context_base::ContextBase;
 use crate::systems::framework::framework_common::{
-    CacheIndex, InputPortIndex, OutputPortIndex, SystemId,
+    CacheIndex, InputPortIndex, OutputPortIndex, SystemId, SystemParentServiceInterface,
 };
 use crate::systems::framework::input_port_base::InputPortBase;
 use crate::systems::framework::output_port_base::OutputPortBase;
@@ -43,6 +44,24 @@ pub trait SystemBase {
     }
     fn add_input_port(&mut self, input_port: Box<dyn InputPortBase>) {
         self.get_mutable_input_ports().push(input_port);
+    }
+    fn eval_abstract_input(
+        &self,
+        context: &dyn ContextBase,
+        input_port_index: &InputPortIndex,
+    ) -> Box<dyn AbstractValue> {
+        if let Some(fixed_input_port_value) =
+            context.get_fixed_input_port_value(input_port_index.value())
+        {
+            fixed_input_port_value.get_value().clone_box()
+        } else {
+            let parent_context_base = context.get_parent_base().unwrap();
+            let mut guard = parent_context_base.lock().unwrap();
+            let input_port = self.get_input_port_base(input_port_index);
+
+            self.get_parent_service()
+                .eval_connected_subsystem_input_port(&mut *guard, input_port)
+        }
     }
 
     // Output port
@@ -90,4 +109,5 @@ pub trait SystemBase {
     fn get_context_sizes(&self) -> &ContextSizes;
     fn get_mutable_context_sizes(&mut self) -> &mut ContextSizes;
     fn get_system_id(&self) -> &SystemId;
+    fn get_parent_service(&self) -> &dyn SystemParentServiceInterface;
 }

@@ -21,7 +21,7 @@ impl CacheEntry {
         self.value_producer.allocate()
     }
 
-    pub fn calc(&self, context: &dyn ContextBase, value: &mut dyn AbstractValue) {
+    pub fn calc(&self, context: &mut dyn ContextBase, value: &mut dyn AbstractValue) {
         self.value_producer.calc(context, value)
     }
 
@@ -51,10 +51,7 @@ impl CacheEntry {
     }
 
     pub fn get_cache_entry_value<'a>(&self, context: &'a dyn ContextBase) -> &'a CacheEntryValue {
-        context
-            .get_cache()
-            .get_cache_entry_value(&self.cache_index)
-            .unwrap()
+        context.get_cache().get_cache_entry_value(&self.cache_index)
     }
 
     pub fn get_mutable_cache_entry_value<'a>(
@@ -64,7 +61,6 @@ impl CacheEntry {
         context
             .get_mutable_cache()
             .get_mutable_cache_entry_value(&self.cache_index)
-            .unwrap()
     }
 
     pub fn cache_index(&self) -> &CacheIndex {

@@ -1,13 +1,14 @@
 use crate::common::value::{AbstractValue, Value};
 use crate::systems::framework::framework_common::CacheIndex;
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, Default, PartialEq)]
 enum Flag {
-    ReadyToUse,
+    #[default]
     ValueIsOutOfDate,
+    ReadyToUse,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct CacheEntryValue {
     cache_index: CacheIndex,
     value: Box<dyn AbstractValue>,
@@ -17,6 +18,10 @@ pub struct CacheEntryValue {
 impl CacheEntryValue {
     pub fn cache_index(&self) -> &CacheIndex {
         &self.cache_index
+    }
+
+    pub fn set_initial_value(&mut self, initial_value: Box<dyn AbstractValue>) {
+        self.value = initial_value;
     }
 
     pub fn get_abstract_value(&self) -> &dyn AbstractValue {
@@ -40,16 +45,7 @@ impl CacheEntryValue {
     }
 }
 
-impl Default for CacheEntryValue {
-    fn default() -> Self {
-        CacheEntryValue {
-            cache_index: CacheIndex::new(0),
-            value: Box::new(Value::<usize>::new(0)),
-            flag: Flag::ValueIsOutOfDate,
-        }
-    }
-}
-
+#[derive(Default)]
 pub struct Cache {
     store: Vec<CacheEntryValue>,
 }
@@ -59,7 +55,10 @@ impl Cache {
         self.store.len()
     }
 
-    pub fn create_new_cache_entry_value(&mut self, cache_index: CacheIndex) {
+    pub fn create_new_cache_entry_value(
+        &mut self,
+        cache_index: CacheIndex,
+    ) -> &mut CacheEntryValue {
         if cache_index >= self.cache_size() {
             self.store
                 .resize_with(cache_index.value() + 1, Default::default)
@@ -69,17 +68,19 @@ impl Cache {
             cache_index: cache_index.clone(),
             ..Default::default()
         };
-        self.store[cache_index] = cache_entry_value;
+        self.store[cache_index.value()] = cache_entry_value;
+
+        self.get_mutable_cache_entry_value(&cache_index)
     }
 
-    pub fn get_cache_entry_value(&self, cache_index: &CacheIndex) -> Option<&CacheEntryValue> {
-        self.store.get(cache_index.value())
+    pub fn get_cache_entry_value(&self, cache_index: &CacheIndex) -> &CacheEntryValue {
+        &self.store[cache_index]
     }
 
     pub fn get_mutable_cache_entry_value(
         &mut self,
         cache_index: &CacheIndex,
-    ) -> Option<&mut CacheEntryValue> {
-        self.store.get_mut(cache_index.value())
+    ) -> &mut CacheEntryValue {
+        &mut self.store[cache_index.value()]
     }
 }
