@@ -1,7 +1,7 @@
-use std::cmp::PartialEq;
 use std::fmt::Debug;
-use std::ops::Add;
 
-use num_traits::identities::Zero;
+use num_traits::NumAssign;
 
-pub trait AtlasScalar: Add + PartialEq + Clone + Debug + Default + Zero + 'static {}
+pub trait AtlasScalar: NumAssign + Clone + Debug + Default + 'static {}
+
+impl AtlasScalar for f64 {}
