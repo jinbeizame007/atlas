@@ -226,3 +226,31 @@ impl<T: AtlasScalar> VectorBase<T> for BasicVector<T> {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_num_ops() {
+        let a = BasicVector::<f64>::new(na::DVector::<f64>::from_vec(vec![1.0, 2.0]));
+        let b = BasicVector::<f64>::new(na::DVector::<f64>::from_vec(vec![3.0, 4.0]));
+
+        assert_eq!(
+            &a + &b,
+            BasicVector::<f64>::new(na::DVector::<f64>::from_vec(vec![4.0, 6.0]))
+        );
+        assert_eq!(
+            &a - &b,
+            BasicVector::<f64>::new(na::DVector::<f64>::from_vec(vec![-2.0, -2.0]))
+        );
+        // assert_eq!(
+        //     &a * &b,
+        //     BasicVector::<f64>::new(na::DVector::<f64>::from_vec(vec![3.0, 8.0]))
+        // );
+        // assert_eq!(
+        //     &a / &b,
+        //     BasicVector::<f64>::new(na::DVector::<f64>::from_vec(vec![1.0 / 3.0, 0.5]))
+        // );
+    }
+}
