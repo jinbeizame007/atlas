@@ -24,6 +24,64 @@ pub struct Adder<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> 
     parent_service: Option<Box<dyn SystemParentServiceInterface>>,
 }
 
+impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> SystemBase for Adder<T> {
+    fn get_input_ports(&self) -> Vec<&dyn InputPortBase> {
+        self.input_ports
+            .iter()
+            .map(|p| p.as_ref() as &dyn InputPortBase)
+            .collect()
+    }
+
+    fn get_mutable_input_ports(&mut self) -> Vec<&mut dyn InputPortBase> {
+        self.input_ports
+            .iter_mut()
+            .map(|p| p.as_mut() as &mut dyn InputPortBase)
+            .collect()
+    }
+
+    fn get_output_ports(&self) -> Vec<&dyn OutputPortBase> {
+        self.output_ports
+            .iter()
+            .map(|p| p.as_ref() as &dyn OutputPortBase)
+            .collect()
+    }
+
+    fn get_mutable_output_ports(&mut self) -> Vec<&mut dyn OutputPortBase> {
+        self.output_ports
+            .iter_mut()
+            .map(|p| p.as_mut() as &mut dyn OutputPortBase)
+            .collect()
+    }
+
+    // fn add_input_port(&mut self, input_port: Box<InputPort<T>>) {
+    //     self.input_ports.push(input_port);
+    // }
+
+    fn get_cache_entries(&self) -> &Vec<CacheEntry> {
+        &self.cache_entries
+    }
+
+    fn get_mutable_cache_entries(&mut self) -> &mut Vec<CacheEntry> {
+        &mut self.cache_entries
+    }
+
+    fn get_context_sizes(&self) -> &ContextSizes {
+        &self.context_sizes
+    }
+
+    fn get_mutable_context_sizes(&mut self) -> &mut ContextSizes {
+        &mut self.context_sizes
+    }
+
+    fn get_system_id(&self) -> &SystemId {
+        &self.system_id
+    }
+
+    fn get_parent_service(&self) -> Option<&dyn SystemParentServiceInterface> {
+        self.parent_service.as_ref().map(|p| p.as_ref())
+    }
+}
+
 impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> Adder<T> {
     pub fn new(num_inputs: usize, size: usize) -> Self {
         Self {
