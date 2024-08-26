@@ -5,12 +5,16 @@ use std::ops::Add;
 use crate::systems::framework::basic_vector::BasicVector;
 use crate::systems::framework::cache_entry::CacheEntry;
 use crate::systems::framework::context::Context;
+use crate::systems::framework::framework_common::InputPortIndex;
+use crate::systems::framework::framework_common::OutputPortIndex;
 use crate::systems::framework::framework_common::{SystemId, SystemParentServiceInterface};
 use crate::systems::framework::input_port::InputPort;
 use crate::systems::framework::input_port_base::InputPortBase;
 use crate::systems::framework::leaf_output_port::LeafOutputPort;
 use crate::systems::framework::leaf_system::LeafSystem;
+use crate::systems::framework::output_port::OutputPort;
 use crate::systems::framework::output_port_base::OutputPortBase;
+use crate::systems::framework::system::System;
 use crate::systems::framework::system_base::{ContextSizes, SystemBase};
 
 pub struct Adder<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> {
@@ -79,6 +83,50 @@ impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> SystemBase f
 
     fn get_parent_service(&self) -> Option<&dyn SystemParentServiceInterface> {
         self.parent_service.as_ref().map(|p| p.as_ref())
+    }
+}
+
+impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> System<T> for Adder<T> {
+    fn get_input_ports(&self) -> Vec<&InputPort<T>> {
+        self.input_ports.iter().map(|p| p.as_ref()).collect()
+    }
+
+    fn get_mutable_input_ports(&mut self) -> Vec<&mut InputPort<T>> {
+        self.input_ports.iter_mut().map(|p| p.as_mut()).collect()
+    }
+
+    fn get_input_port(&self, index: &InputPortIndex) -> &InputPort<T> {
+        self.input_ports[index].as_ref()
+    }
+
+    fn get_mutable_input_port(&mut self, index: &InputPortIndex) -> &mut InputPort<T> {
+        self.input_ports[index].as_mut()
+    }
+
+    fn add_input_port(&mut self, input_port: Box<InputPort<T>>) {
+        self.input_ports.push(input_port);
+    }
+
+    fn get_output_ports(&self) -> Vec<&dyn OutputPort<T>> {
+        self.output_ports
+            .iter()
+            .map(|p| p.as_ref() as &dyn OutputPort<T>)
+            .collect()
+    }
+
+    fn get_mutable_output_ports(&mut self) -> Vec<&mut dyn OutputPort<T>> {
+        self.output_ports
+            .iter_mut()
+            .map(|p| p.as_mut() as &mut dyn OutputPort<T>)
+            .collect()
+    }
+
+    fn get_output_port(&self, index: &OutputPortIndex) -> &dyn OutputPort<T> {
+        self.output_ports[index].as_ref()
+    }
+
+    fn get_mutable_output_port(&mut self, index: &OutputPortIndex) -> &mut dyn OutputPort<T> {
+        self.output_ports[index].as_mut()
     }
 }
 

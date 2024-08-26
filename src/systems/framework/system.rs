@@ -27,13 +27,13 @@ where
     Self: 'static,
 {
     // Getters and setters without default implementations
-    fn get_input_ports(&self) -> &Vec<InputPort<T>>;
-    fn get_mutable_input_ports(&mut self) -> &mut Vec<InputPort<T>>;
+    fn get_input_ports(&self) -> Vec<&InputPort<T>>;
+    fn get_mutable_input_ports(&mut self) -> Vec<&mut InputPort<T>>;
     fn get_input_port(&self, index: &InputPortIndex) -> &InputPort<T>;
     fn get_mutable_input_port(&mut self, index: &InputPortIndex) -> &mut InputPort<T>;
     fn add_input_port(&mut self, input_port: Box<InputPort<T>>);
-    fn get_output_ports(&self) -> &Vec<Box<dyn OutputPort<T>>>;
-    fn get_mutable_output_ports(&mut self) -> &mut Vec<Box<dyn OutputPort<T>>>;
+    fn get_output_ports(&self) -> Vec<&dyn OutputPort<T>>;
+    fn get_mutable_output_ports(&mut self) -> Vec<&mut dyn OutputPort<T>>;
     fn get_output_port(&self, index: &OutputPortIndex) -> &dyn OutputPort<T>;
     fn get_mutable_output_port(&mut self, index: &OutputPortIndex) -> &mut dyn OutputPort<T>;
 
