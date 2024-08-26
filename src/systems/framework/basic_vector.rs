@@ -1,4 +1,6 @@
-use std::ops::{Index, IndexMut};
+use std::cmp::PartialEq;
+use std::fmt::Debug;
+use std::ops::{Add, Div, Index, IndexMut, Mul, Rem, Sub};
 
 extern crate nalgebra as na;
 
@@ -33,6 +35,12 @@ impl<T: AtlasScalar> BasicVector<T> {
     }
 }
 
+impl<T: AtlasScalar> Debug for BasicVector<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self.values)
+    }
+}
+
 impl<T: AtlasScalar> Index<usize> for BasicVector<T> {
     type Output = T;
 
@@ -47,15 +55,139 @@ impl<T: AtlasScalar> IndexMut<usize> for BasicVector<T> {
     }
 }
 
-// impl<T: AtlasScalar> Add<BasicVector<T>>
-//     for BasicVector<T>
-// {
-//     type Output = BasicVector<T>;
+impl<T: AtlasScalar> PartialEq for BasicVector<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.values == other.values
+    }
+}
 
-//     fn add(self, rhs: BasicVector<T>) -> Self::Output {
-//         BasicVector::<T>::new(self.values.clone() + rhs.values.clone())
-//     }
-// }
+impl<T: AtlasScalar> Add<&BasicVector<T>> for &BasicVector<T> {
+    type Output = BasicVector<T>;
+
+    fn add(self, rhs: &BasicVector<T>) -> Self::Output {
+        BasicVector::<T>::new(self.values.clone() + rhs.values.clone())
+    }
+}
+
+impl<T: AtlasScalar> Add<BasicVector<T>> for &BasicVector<T> {
+    type Output = BasicVector<T>;
+
+    fn add(self, rhs: BasicVector<T>) -> Self::Output {
+        BasicVector::<T>::new(self.values.clone() + rhs.values.clone())
+    }
+}
+
+impl<T: AtlasScalar> Add<&BasicVector<T>> for BasicVector<T> {
+    type Output = BasicVector<T>;
+
+    fn add(self, rhs: &BasicVector<T>) -> Self::Output {
+        BasicVector::<T>::new(self.values + rhs.values.clone())
+    }
+}
+
+impl<T: AtlasScalar> Add<BasicVector<T>> for BasicVector<T> {
+    type Output = BasicVector<T>;
+
+    fn add(self, rhs: BasicVector<T>) -> Self::Output {
+        BasicVector::<T>::new(self.values + rhs.values)
+    }
+}
+
+impl<T: AtlasScalar> Sub<&BasicVector<T>> for &BasicVector<T> {
+    type Output = BasicVector<T>;
+
+    fn sub(self, rhs: &BasicVector<T>) -> Self::Output {
+        BasicVector::<T>::new(self.values.clone() - rhs.values.clone())
+    }
+}
+
+impl<T: AtlasScalar> Sub<BasicVector<T>> for BasicVector<T> {
+    type Output = BasicVector<T>;
+
+    fn sub(self, rhs: BasicVector<T>) -> Self::Output {
+        BasicVector::<T>::new(self.values - rhs.values)
+    }
+}
+
+impl<T: AtlasScalar> Sub<BasicVector<T>> for &BasicVector<T> {
+    type Output = BasicVector<T>;
+
+    fn sub(self, rhs: BasicVector<T>) -> Self::Output {
+        BasicVector::<T>::new(self.values.clone() - rhs.values)
+    }
+}
+
+impl<T: AtlasScalar> Mul<&BasicVector<T>> for &BasicVector<T> {
+    type Output = BasicVector<T>;
+
+    fn mul(self, rhs: &BasicVector<T>) -> Self::Output {
+        BasicVector::<T>::new(self.values.clone() * rhs.values.clone())
+    }
+}
+
+impl<T: AtlasScalar> Mul<BasicVector<T>> for &BasicVector<T> {
+    type Output = BasicVector<T>;
+
+    fn mul(self, rhs: BasicVector<T>) -> Self::Output {
+        BasicVector::<T>::new(self.values.clone() * rhs.values)
+    }
+}
+
+impl<T: AtlasScalar> Mul<&BasicVector<T>> for BasicVector<T> {
+    type Output = BasicVector<T>;
+
+    fn mul(self, rhs: &BasicVector<T>) -> Self::Output {
+        BasicVector::<T>::new(self.values * rhs.values.clone())
+    }
+}
+
+impl<T: AtlasScalar> Mul<BasicVector<T>> for BasicVector<T> {
+    type Output = BasicVector<T>;
+
+    fn mul(self, rhs: BasicVector<T>) -> Self::Output {
+        BasicVector::<T>::new(self.values * rhs.values)
+    }
+}
+
+impl<T: AtlasScalar> Div<&BasicVector<T>> for &BasicVector<T> {
+    type Output = BasicVector<T>;
+
+    fn div(self, rhs: &BasicVector<T>) -> Self::Output {
+        assert_eq!(self.size(), rhs.size());
+        let result = self.clone().values.zip_map(&rhs.values, |a, b| a / b);
+        BasicVector::<T>::new(result)
+    }
+}
+
+impl<T: AtlasScalar> Div<BasicVector<T>> for &BasicVector<T> {
+    type Output = BasicVector<T>;
+
+    fn div(self, rhs: BasicVector<T>) -> Self::Output {
+        assert_eq!(self.size(), rhs.size());
+        let result = self.clone().values.zip_map(&rhs.values, |a, b| a / b);
+        BasicVector::<T>::new(result)
+    }
+}
+
+impl<T: AtlasScalar> Div<&BasicVector<T>> for BasicVector<T> {
+    type Output = BasicVector<T>;
+
+    fn div(self, rhs: &BasicVector<T>) -> Self::Output {
+        assert_eq!(self.size(), rhs.size());
+        let result = self.values.zip_map(&rhs.values, |a, b| a / b);
+        BasicVector::<T>::new(result)
+    }
+}
+
+impl<T: AtlasScalar> Div<BasicVector<T>> for BasicVector<T> {
+    type Output = BasicVector<T>;
+
+    fn div(self, rhs: BasicVector<T>) -> Self::Output {
+        assert_eq!(self.size(), rhs.size());
+        let result = self.values.zip_map(&rhs.values, |a, b| a / b);
+        BasicVector::<T>::new(result)
+    }
+}
 
 impl<T: AtlasScalar> VectorBase<T> for BasicVector<T> {
     fn size(&self) -> usize {
