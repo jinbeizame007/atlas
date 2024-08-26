@@ -132,8 +132,19 @@ pub trait LeafSystem<T: Add + PartialEq + Clone + Debug + Default + Zero + 'stat
     fn declare_vector_output_port(
         &mut self,
         size: usize,
-        calc: Box<dyn Fn(&dyn System<T>, &mut dyn Context<T>, &mut BasicVector<T>)>,
-    );
+        calc: Box<dyn Fn(&mut dyn Context<T>, &mut BasicVector<T>)>,
+    ) -> &LeafOutputPort<T> {
+        let model_vector = BasicVector::<T>::zeros(size);
+        self.create_vector_leaf_output_port(size, Self::make_allocate_callback(model_vector), calc)
+    }
+
+    fn make_allocate_callback<OutputType: Clone + 'static>(
+        model_value: OutputType,
+    ) -> Box<AllocateCallback> {
+        Box::new(move || {
+            Box::new(Value::<OutputType>::new(model_value.clone())) as Box<dyn AbstractValue>
+        })
+    }
 
     #[allow(clippy::type_complexity)]
     fn declare_abstract_output_port<OutputType>(
