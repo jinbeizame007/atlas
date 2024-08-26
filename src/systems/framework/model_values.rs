@@ -8,11 +8,16 @@ use crate::common::value::{AbstractValue, Value};
 use crate::systems::framework::basic_vector::BasicVector;
 
 // https://en.wikipedia.org/wiki/Prototype_pattern
+#[derive(Default)]
 pub struct ModelValues {
     values: Vec<Option<Box<dyn AbstractValue>>>,
 }
 
 impl ModelValues {
+    pub fn new(values: Vec<Option<Box<dyn AbstractValue>>>) -> Self {
+        Self { values }
+    }
+
     pub fn size(&self) -> usize {
         self.values.len()
     }

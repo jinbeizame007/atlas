@@ -2,16 +2,21 @@ use num_traits::identities::Zero;
 use std::fmt::Debug;
 use std::ops::Add;
 
+use crate::common::value::AbstractValue;
 use crate::systems::framework::basic_vector::BasicVector;
 use crate::systems::framework::cache_entry::CacheEntry;
 use crate::systems::framework::context::Context;
+use crate::systems::framework::continuous_state::ContinuousState;
 use crate::systems::framework::framework_common::InputPortIndex;
 use crate::systems::framework::framework_common::OutputPortIndex;
-use crate::systems::framework::framework_common::{SystemId, SystemParentServiceInterface};
+use crate::systems::framework::framework_common::{
+    CacheIndex, SystemId, SystemParentServiceInterface,
+};
 use crate::systems::framework::input_port::InputPort;
 use crate::systems::framework::input_port_base::InputPortBase;
 use crate::systems::framework::leaf_output_port::LeafOutputPort;
 use crate::systems::framework::leaf_system::LeafSystem;
+use crate::systems::framework::model_values::ModelValues;
 use crate::systems::framework::output_port::OutputPort;
 use crate::systems::framework::output_port_base::OutputPortBase;
 use crate::systems::framework::system::System;
@@ -26,6 +31,9 @@ pub struct Adder<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> 
     context_sizes: ContextSizes,
     system_id: SystemId,
     parent_service: Option<Box<dyn SystemParentServiceInterface>>,
+    time_derivatives_cache_index: CacheIndex,
+    model_input_values: ModelValues,
+    model_continuous_state_vector: BasicVector<T>,
 }
 
 impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> SystemBase for Adder<T> {
@@ -128,6 +136,52 @@ impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> System<T> fo
     fn get_mutable_output_port(&mut self, index: &OutputPortIndex) -> &mut dyn OutputPort<T> {
         self.output_ports[index].as_mut()
     }
+
+    fn get_time_derivatives_cache_index(&self) -> &CacheIndex {
+        &self.time_derivatives_cache_index
+    }
+
+    fn allocate_context(&self) -> Box<dyn Context<T>> {
+        LeafSystem::<T>::allocate_context(self)
+    }
+
+    fn do_allocate_input(&self, input_port: &InputPort<T>) -> Box<dyn AbstractValue> {
+        LeafSystem::<T>::do_allocate_input(self, input_port)
+    }
+
+    fn allocate_time_derivatives(&mut self) -> ContinuousState<T> {
+        LeafSystem::<T>::allocate_time_derivatives(self)
+    }
+
+    fn set_default_state(&self, context: &mut dyn Context<T>) {
+        LeafSystem::<T>::set_default_state(self, context)
+    }
+}
+
+impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> LeafSystem<T> for Adder<T> {
+    fn get_model_input_values(&self) -> &ModelValues {
+        &self.model_input_values
+    }
+
+    fn get_mutable_model_input_values(&mut self) -> &mut ModelValues {
+        &mut self.model_input_values
+    }
+
+    fn get_model_continuous_state_vector(&self) -> &BasicVector<T> {
+        &self.model_continuous_state_vector
+    }
+
+    fn get_mutable_model_continuous_state_vector(&mut self) -> &mut BasicVector<T> {
+        &mut self.model_continuous_state_vector
+    }
+
+    fn get_leaf_output_port(&self, output_port_index: &OutputPortIndex) -> &LeafOutputPort<T> {
+        &self.output_ports[output_port_index]
+    }
+
+    fn add_output_port(&mut self, output_port: Box<LeafOutputPort<T>>) {
+        self.output_ports.push(output_port);
+    }
 }
 
 impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> Adder<T> {
@@ -141,6 +195,9 @@ impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> Adder<T> {
             context_sizes: ContextSizes::default(),
             system_id: SystemId::new(0),
             parent_service: None,
+            time_derivatives_cache_index: CacheIndex::new(0),
+            model_input_values: ModelValues::default(),
+            model_continuous_state_vector: BasicVector::<T>::zeros(0),
         }
     }
 

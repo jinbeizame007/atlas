@@ -15,7 +15,6 @@ use crate::systems::framework::framework_common::{
 use crate::systems::framework::input_port::InputPort;
 use crate::systems::framework::input_port_base::InputPortBase;
 use crate::systems::framework::output_port::OutputPort;
-use crate::systems::framework::output_port_base::OutputPortBase;
 use crate::systems::framework::port_base::PortBase;
 use crate::systems::framework::system_base::SystemBase;
 
