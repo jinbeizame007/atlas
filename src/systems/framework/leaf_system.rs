@@ -32,6 +32,7 @@ pub trait LeafSystem<T: Add + PartialEq + Clone + Debug + Default + Zero + 'stat
     fn get_model_continuous_state_vector(&self) -> &BasicVector<T>;
     fn get_mutable_model_continuous_state_vector(&mut self) -> &mut BasicVector<T>;
     fn get_leaf_output_port(&self, output_port_index: &OutputPortIndex) -> &LeafOutputPort<T>;
+    fn add_output_port(&mut self, output_port: Box<LeafOutputPort<T>>);
 
     fn allocate_context(&self) -> Box<LeafContext<T>> {
         self.do_allocate_context()

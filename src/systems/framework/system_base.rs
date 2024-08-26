@@ -17,16 +17,16 @@ pub struct ContextSizes {
 
 pub trait SystemBase {
     // Getters and setters without default implementations
-    fn get_input_ports(&self) -> &Vec<Box<dyn InputPortBase>>;
-    fn get_mutable_input_ports(&mut self) -> &mut Vec<Box<dyn InputPortBase>>;
-    fn get_output_ports(&self) -> &Vec<Box<dyn OutputPortBase>>;
-    fn get_mutable_output_ports(&mut self) -> &mut Vec<Box<dyn OutputPortBase>>;
-    fn get_cache_entries(&self) -> &Vec<Box<CacheEntry>>;
-    fn get_mutable_cache_entries(&mut self) -> &mut Vec<Box<CacheEntry>>;
+    fn get_input_ports(&self) -> Vec<&dyn InputPortBase>;
+    fn get_mutable_input_ports(&mut self) -> Vec<&mut dyn InputPortBase>;
+    fn get_output_ports(&self) -> Vec<&dyn OutputPortBase>;
+    fn get_mutable_output_ports(&mut self) -> Vec<&mut dyn OutputPortBase>;
+    fn get_cache_entries(&self) -> &Vec<CacheEntry>;
+    fn get_mutable_cache_entries(&mut self) -> &mut Vec<CacheEntry>;
     fn get_context_sizes(&self) -> &ContextSizes;
     fn get_mutable_context_sizes(&mut self) -> &mut ContextSizes;
     fn get_system_id(&self) -> &SystemId;
-    fn get_parent_service(&self) -> &dyn SystemParentServiceInterface;
+    fn get_parent_service(&self) -> Option<&dyn SystemParentServiceInterface>;
 
     // Context
     // fn allocate_context(&self) -> Box<dyn ContextBase>;
@@ -50,11 +50,12 @@ pub trait SystemBase {
         self.get_input_ports().len()
     }
     fn get_input_port_base(&self, index: &InputPortIndex) -> &dyn InputPortBase {
-        self.get_input_ports()[index].as_ref()
+        self.get_input_ports()[index]
     }
-    fn add_input_port(&mut self, input_port: Box<dyn InputPortBase>) {
-        self.get_mutable_input_ports().push(input_port);
-    }
+    // fn add_input_port(&mut self, input_port: Box<dyn InputPortBase>);
+    // fn add_input_port(&mut self, input_port: Box<dyn InputPortBase>) {
+    //     self.get_mutable_input_ports().push(input_port);
+    // }
     fn eval_abstract_input(
         &self,
         context: &dyn ContextBase,
@@ -70,6 +71,7 @@ pub trait SystemBase {
             let input_port = self.get_input_port_base(input_port_index);
 
             self.get_parent_service()
+                .unwrap()
                 .eval_connected_subsystem_input_port(&mut *guard, input_port)
         }
     }
@@ -79,25 +81,25 @@ pub trait SystemBase {
         self.get_output_ports().len()
     }
     fn get_output_port_base(&self, index: &OutputPortIndex) -> &dyn OutputPortBase {
-        self.get_output_ports()[index].as_ref()
+        self.get_output_ports()[index]
     }
-    fn add_output_port(&mut self, output_port: Box<dyn OutputPortBase>) {
-        self.get_mutable_output_ports().push(output_port);
-    }
+    // fn add_output_port(&mut self, output_port: Box<dyn OutputPortBase>) {
+    //     self.get_mutable_output_ports().push(output_port);
+    // }
 
     // Cache entry
     fn num_cache_entries(&self) -> usize {
         self.get_cache_entries().len()
     }
     fn get_cache_entry(&self, index: &CacheIndex) -> &CacheEntry {
-        self.get_cache_entries()[index].as_ref()
+        &self.get_cache_entries()[index]
     }
     fn get_mutable_cache_entry(&mut self, index: &CacheIndex) -> &mut CacheEntry {
-        self.get_mutable_cache_entries()[index].as_mut()
+        &mut self.get_mutable_cache_entries()[index]
     }
     fn declare_cache_entry(&mut self, value_producer: ValueProducer) -> &CacheEntry {
         let cache_index = CacheIndex::new(self.num_cache_entries());
-        let cache_entry = Box::new(CacheEntry::new(cache_index.clone(), value_producer));
+        let cache_entry = CacheEntry::new(cache_index.clone(), value_producer);
         self.get_mutable_cache_entries().push(cache_entry);
 
         self.get_cache_entry(&cache_index)

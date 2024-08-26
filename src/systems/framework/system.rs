@@ -15,6 +15,7 @@ use crate::systems::framework::framework_common::{
 use crate::systems::framework::input_port::InputPort;
 use crate::systems::framework::input_port_base::InputPortBase;
 use crate::systems::framework::output_port::OutputPort;
+use crate::systems::framework::output_port_base::OutputPortBase;
 use crate::systems::framework::port_base::PortBase;
 use crate::systems::framework::system_base::SystemBase;
 
@@ -30,6 +31,7 @@ where
     fn get_mutable_input_ports(&mut self) -> &mut Vec<InputPort<T>>;
     fn get_input_port(&self, index: &InputPortIndex) -> &InputPort<T>;
     fn get_mutable_input_port(&mut self, index: &InputPortIndex) -> &mut InputPort<T>;
+    fn add_input_port(&mut self, input_port: Box<InputPort<T>>);
     fn get_output_ports(&self) -> &Vec<Box<dyn OutputPort<T>>>;
     fn get_mutable_output_ports(&mut self) -> &mut Vec<Box<dyn OutputPort<T>>>;
     fn get_output_port(&self, index: &OutputPortIndex) -> &dyn OutputPort<T>;
