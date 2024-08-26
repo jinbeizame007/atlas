@@ -1,9 +1,4 @@
-use std::cmp::PartialEq;
-use std::fmt::Debug;
-use std::ops::Add;
-
-use num_traits::identities::Zero;
-
+use crate::common::atlas_scalar::AtlasScalar;
 use crate::common::value::{AbstractValue, Value};
 use crate::systems::framework::basic_vector::BasicVector;
 
@@ -29,11 +24,7 @@ impl ModelValues {
         self.values[index] = Some(model_value);
     }
 
-    pub fn add_vector_model<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static>(
-        &mut self,
-        index: usize,
-        model_vector: BasicVector<T>,
-    ) {
+    pub fn add_vector_model<T: AtlasScalar>(&mut self, index: usize, model_vector: BasicVector<T>) {
         self.add_model(index, Box::new(Value::<BasicVector<T>>::new(model_vector)));
     }
 
@@ -45,10 +36,7 @@ impl ModelValues {
         self.values.to_vec()
     }
 
-    pub fn clone_vector_model<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static>(
-        &self,
-        index: usize,
-    ) -> Option<BasicVector<T>> {
+    pub fn clone_vector_model<T: AtlasScalar>(&self, index: usize) -> Option<BasicVector<T>> {
         if self.clone_model(index).is_some() {
             self.clone_model(index).map(|abstract_value| {
                 abstract_value

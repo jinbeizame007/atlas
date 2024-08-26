@@ -1,17 +1,12 @@
-use std::cmp::PartialEq;
-use std::fmt::Debug;
-use std::ops::Add;
-
-use num_traits::identities::Zero;
-
+use crate::common::atlas_scalar::AtlasScalar;
 use crate::systems::framework::continuous_state::ContinuousState;
 
 #[derive(Default)]
-pub struct State<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> {
+pub struct State<T: AtlasScalar> {
     continuous_state: ContinuousState<T>,
 }
 
-impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> State<T> {
+impl<T: AtlasScalar> State<T> {
     pub fn new(continuous_state: ContinuousState<T>) -> Self {
         State::<T> { continuous_state }
     }

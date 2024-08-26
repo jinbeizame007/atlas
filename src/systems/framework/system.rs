@@ -1,9 +1,4 @@
-use std::cmp::PartialEq;
-use std::fmt::Debug;
-use std::ops::Add;
-
-use num_traits::identities::Zero;
-
+use crate::common::atlas_scalar::AtlasScalar;
 use crate::common::value::AbstractValue;
 use crate::systems::framework::basic_vector::BasicVector;
 use crate::systems::framework::cache_entry::CacheEntry;
@@ -20,8 +15,7 @@ use crate::systems::framework::system_base::SystemBase;
 
 use super::context_base::ContextBase;
 
-pub trait System<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static>:
-    SystemBase
+pub trait System<T: AtlasScalar>: SystemBase
 where
     Self: 'static,
 {

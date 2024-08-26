@@ -1,26 +1,22 @@
-use std::cmp::PartialEq;
-use std::fmt::Debug;
-use std::ops::{Add, Index, IndexMut};
+use std::ops::{Index, IndexMut};
 
 extern crate nalgebra as na;
-use num_traits::identities::Zero;
 
+use crate::common::atlas_scalar::AtlasScalar;
 use crate::systems::framework::vector_base::VectorBase;
 
 // TODO: implement immutable Subvector
-pub struct Subvector<'a, T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> {
+pub struct Subvector<'a, T: AtlasScalar> {
     vector: na::DVectorViewMut<'a, T>,
 }
 
-impl<'a, T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> Subvector<'a, T> {
+impl<'a, T: AtlasScalar> Subvector<'a, T> {
     pub fn new(vector: na::DVectorViewMut<'a, T>) -> Self {
         Subvector { vector }
     }
 }
 
-impl<'a, T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> Index<usize>
-    for Subvector<'a, T>
-{
+impl<'a, T: AtlasScalar> Index<usize> for Subvector<'a, T> {
     type Output = T;
 
     fn index(&self, index: usize) -> &Self::Output {
@@ -28,17 +24,13 @@ impl<'a, T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> Index<us
     }
 }
 
-impl<'a, T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> IndexMut<usize>
-    for Subvector<'a, T>
-{
+impl<'a, T: AtlasScalar> IndexMut<usize> for Subvector<'a, T> {
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         &mut self.vector[index]
     }
 }
 
-impl<'a, T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> VectorBase<T>
-    for Subvector<'a, T>
-{
+impl<'a, T: AtlasScalar> VectorBase<T> for Subvector<'a, T> {
     fn size(&self) -> usize {
         self.vector.len()
     }

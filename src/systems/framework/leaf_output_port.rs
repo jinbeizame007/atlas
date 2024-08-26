@@ -1,11 +1,7 @@
 use std::any::Any;
-use std::cmp::PartialEq;
-use std::fmt::Debug;
 use std::marker::PhantomData;
-use std::ops::Add;
 
-use num_traits::identities::Zero;
-
+use crate::common::atlas_scalar::AtlasScalar;
 use crate::common::value::AbstractValue;
 use crate::systems::framework::cache_entry::CacheEntry;
 use crate::systems::framework::context::Context;
@@ -14,7 +10,7 @@ use crate::systems::framework::output_port::OutputPort;
 use crate::systems::framework::output_port_base::OutputPortBase;
 use crate::systems::framework::port_base::PortBase;
 
-pub struct LeafOutputPort<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> {
+pub struct LeafOutputPort<T: AtlasScalar> {
     _system_id: SystemId,
     index: OutputPortIndex,
     data_type: PortDataType,
@@ -23,7 +19,7 @@ pub struct LeafOutputPort<T: Add + PartialEq + Clone + Debug + Default + Zero + 
     _phantom: PhantomData<T>,
 }
 
-impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> PortBase for LeafOutputPort<T> {
+impl<T: AtlasScalar> PortBase for LeafOutputPort<T> {
     fn as_any(&self) -> &dyn Any {
         self
     }
@@ -37,17 +33,13 @@ impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> PortBase for
     }
 }
 
-impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> OutputPortBase
-    for LeafOutputPort<T>
-{
+impl<T: AtlasScalar> OutputPortBase for LeafOutputPort<T> {
     fn get_index(&self) -> &OutputPortIndex {
         &self.index
     }
 }
 
-impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> OutputPort<T>
-    for LeafOutputPort<T>
-{
+impl<T: AtlasScalar> OutputPort<T> for LeafOutputPort<T> {
     fn allocate(&mut self) -> Box<dyn AbstractValue> {
         self.cache_entry().allocate()
     }
@@ -63,7 +55,7 @@ impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> OutputPort<T
     }
 }
 
-impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> LeafOutputPort<T> {
+impl<T: AtlasScalar> LeafOutputPort<T> {
     pub fn new(
         _system_id: SystemId,
         index: OutputPortIndex,

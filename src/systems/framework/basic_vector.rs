@@ -1,20 +1,17 @@
-use std::cmp::PartialEq;
-use std::fmt::Debug;
-use std::ops::{Add, Index, IndexMut};
+use std::ops::{Index, IndexMut};
 
-// use nalgebra::zero;
-use num_traits::identities::Zero;
 extern crate nalgebra as na;
 
+use crate::common::atlas_scalar::AtlasScalar;
 use crate::systems::framework::subvector::Subvector;
 use crate::systems::framework::vector_base::VectorBase;
 
 #[derive(Clone)]
-pub struct BasicVector<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> {
+pub struct BasicVector<T: AtlasScalar> {
     values: na::DVector<T>,
 }
 
-impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> BasicVector<T> {
+impl<T: AtlasScalar> BasicVector<T> {
     pub fn new(values: na::DVector<T>) -> Self {
         BasicVector::<T> { values }
     }
@@ -36,9 +33,7 @@ impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> BasicVector<
     }
 }
 
-impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> Index<usize>
-    for BasicVector<T>
-{
+impl<T: AtlasScalar> Index<usize> for BasicVector<T> {
     type Output = T;
 
     fn index(&self, index: usize) -> &Self::Output {
@@ -46,17 +41,23 @@ impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> Index<usize>
     }
 }
 
-impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> IndexMut<usize>
-    for BasicVector<T>
-{
+impl<T: AtlasScalar> IndexMut<usize> for BasicVector<T> {
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         &mut self.values[index]
     }
 }
 
-impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> VectorBase<T>
-    for BasicVector<T>
-{
+// impl<T: AtlasScalar> Add<BasicVector<T>>
+//     for BasicVector<T>
+// {
+//     type Output = BasicVector<T>;
+
+//     fn add(self, rhs: BasicVector<T>) -> Self::Output {
+//         BasicVector::<T>::new(self.values.clone() + rhs.values.clone())
+//     }
+// }
+
+impl<T: AtlasScalar> VectorBase<T> for BasicVector<T> {
     fn size(&self) -> usize {
         self.values.len()
     }

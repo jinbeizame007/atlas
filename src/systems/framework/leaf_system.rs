@@ -1,10 +1,6 @@
-use std::cmp::PartialEq;
-use std::fmt::Debug;
-use std::ops::Add;
-
-use num_traits::identities::Zero;
 extern crate nalgebra as na;
 
+use crate::common::atlas_scalar::AtlasScalar;
 use crate::common::value::{AbstractValue, Value};
 use crate::systems::framework::basic_vector::BasicVector;
 use crate::systems::framework::cache_entry::CacheEntry;
@@ -23,9 +19,7 @@ use crate::systems::framework::port_base::PortBase;
 use crate::systems::framework::system::System;
 use crate::systems::framework::value_producer::{AllocateCallback, ValueProducer};
 
-pub trait LeafSystem<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static>:
-    System<T>
-{
+pub trait LeafSystem<T: AtlasScalar>: System<T> {
     // Getters and setters without default implementations
     fn get_model_input_values(&self) -> &ModelValues;
     fn get_mutable_model_input_values(&mut self) -> &mut ModelValues;

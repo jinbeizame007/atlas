@@ -1,16 +1,12 @@
-use std::cmp::PartialEq;
-use std::fmt::Debug;
-use std::ops::Add;
-
-use num_traits::identities::Zero;
 extern crate nalgebra as na;
 
+use crate::common::atlas_scalar::AtlasScalar;
 use crate::systems::framework::framework_common::SystemId;
 use crate::systems::framework::subvector::Subvector;
 use crate::systems::framework::vector_base::VectorBase;
 
 #[derive(Default)]
-pub struct ContinuousState<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> {
+pub struct ContinuousState<T: AtlasScalar> {
     state: Box<dyn VectorBase<T, Output = T>>,
     num_q: usize,
     num_v: usize,
@@ -18,7 +14,7 @@ pub struct ContinuousState<T: Add + PartialEq + Clone + Debug + Default + Zero +
     system_id: SystemId,
 }
 
-impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> ContinuousState<T> {
+impl<T: AtlasScalar> ContinuousState<T> {
     pub fn new(
         state: Box<dyn VectorBase<T, Output = T>>,
         num_q: usize,

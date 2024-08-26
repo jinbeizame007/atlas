@@ -1,7 +1,4 @@
-use num_traits::identities::Zero;
-use std::fmt::Debug;
-use std::ops::Add;
-
+use crate::common::atlas_scalar::AtlasScalar;
 use crate::common::value::AbstractValue;
 use crate::systems::framework::basic_vector::BasicVector;
 use crate::systems::framework::cache_entry::CacheEntry;
@@ -22,7 +19,7 @@ use crate::systems::framework::output_port_base::OutputPortBase;
 use crate::systems::framework::system::System;
 use crate::systems::framework::system_base::{ContextSizes, SystemBase};
 
-pub struct Adder<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> {
+pub struct Adder<T: AtlasScalar> {
     num_inputs: usize,
     size: usize,
     input_ports: Vec<Box<InputPort<T>>>,
@@ -36,7 +33,7 @@ pub struct Adder<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> 
     model_continuous_state_vector: BasicVector<T>,
 }
 
-impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> SystemBase for Adder<T> {
+impl<T: AtlasScalar> SystemBase for Adder<T> {
     fn get_input_ports(&self) -> Vec<&dyn InputPortBase> {
         self.input_ports
             .iter()
@@ -94,7 +91,7 @@ impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> SystemBase f
     }
 }
 
-impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> System<T> for Adder<T> {
+impl<T: AtlasScalar> System<T> for Adder<T> {
     fn get_input_ports(&self) -> Vec<&InputPort<T>> {
         self.input_ports.iter().map(|p| p.as_ref()).collect()
     }
@@ -158,7 +155,7 @@ impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> System<T> fo
     }
 }
 
-impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> LeafSystem<T> for Adder<T> {
+impl<T: AtlasScalar> LeafSystem<T> for Adder<T> {
     fn get_model_input_values(&self) -> &ModelValues {
         &self.model_input_values
     }
@@ -184,7 +181,7 @@ impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> LeafSystem<T
     }
 }
 
-impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> Adder<T> {
+impl<T: AtlasScalar> Adder<T> {
     pub fn new(num_inputs: usize, size: usize) -> Self {
         Self {
             num_inputs,
@@ -201,10 +198,14 @@ impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> Adder<T> {
         }
     }
 
-    // fn calc_sum(&self, context: &dyn Context<T>, output: &mut BasicVector<T>) {
-    //     for input_port_index in 0..self.num_{
-    //         let input = context.get_input_port_value(i);
-    //         output.add_inplace(input);
+    // fn calc_sum(&self, context: &mut dyn Context<T>, sum: &mut BasicVector<T>) {
+    //     let mut sum_vector = sum.get_mutable_value();
+    //     for input_port in self.input_ports.iter() {
+    //         sum_vector = sum_vector
+    //             + input_port
+    //                 .eval::<BasicVector<T>>(context)
+    //                 .get_value()
+    //                 .clone();
     //     }
     // }
 }

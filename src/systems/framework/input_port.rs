@@ -1,11 +1,7 @@
 use std::any::Any;
-use std::cmp::PartialEq;
-use std::fmt::Debug;
 use std::marker::PhantomData;
-use std::ops::Add;
 
-use num_traits::identities::Zero;
-
+use crate::common::atlas_scalar::AtlasScalar;
 use crate::common::value::{AbstractValue, Value};
 use crate::systems::framework::context::Context;
 use crate::systems::framework::fixed_input_port_value::FixedInputPortValue;
@@ -14,7 +10,7 @@ use crate::systems::framework::input_port_base::{EvalAbstractCallback, InputPort
 use crate::systems::framework::port_base::PortBase;
 use crate::systems::framework::value_producer::AllocateCallback;
 
-pub struct InputPort<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> {
+pub struct InputPort<T: AtlasScalar> {
     _system_id: SystemId,
     index: InputPortIndex,
     data_type: PortDataType,
@@ -24,7 +20,7 @@ pub struct InputPort<T: Add + PartialEq + Clone + Debug + Default + Zero + 'stat
     _phantom: PhantomData<T>,
 }
 
-impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> PortBase for InputPort<T> {
+impl<T: AtlasScalar> PortBase for InputPort<T> {
     fn as_any(&self) -> &dyn Any {
         self
     }
@@ -38,7 +34,7 @@ impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> PortBase for
     }
 }
 
-impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> InputPortBase for InputPort<T> {
+impl<T: AtlasScalar> InputPortBase for InputPort<T> {
     fn get_index(&self) -> &InputPortIndex {
         &self.index
     }
@@ -48,7 +44,7 @@ impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> InputPortBas
     }
 }
 
-impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> InputPort<T> {
+impl<T: AtlasScalar> InputPort<T> {
     pub fn new(
         _system_id: SystemId,
         index: InputPortIndex,

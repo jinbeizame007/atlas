@@ -1,10 +1,6 @@
-use std::cmp::PartialEq;
-use std::fmt::Debug;
-use std::ops::Add;
 use std::sync::{Arc, Mutex};
 
-use num_traits::identities::Zero;
-
+use crate::common::atlas_scalar::AtlasScalar;
 use crate::common::value::AbstractValue;
 use crate::systems::framework::cache::Cache;
 use crate::systems::framework::context::Context;
@@ -16,7 +12,7 @@ use crate::systems::framework::state::State;
 use crate::systems::framework::vector_base::VectorBase;
 
 #[derive(Default)]
-pub struct LeafContext<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> {
+pub struct LeafContext<T: AtlasScalar> {
     system_id: SystemId,
     parent: Option<Arc<Mutex<dyn ContextBase>>>,
     cache: Cache,
@@ -26,7 +22,7 @@ pub struct LeafContext<T: Add + PartialEq + Clone + Debug + Default + Zero + 'st
     is_context_base_initialized: bool,
 }
 
-impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> ContextBase for LeafContext<T> {
+impl<T: AtlasScalar> ContextBase for LeafContext<T> {
     fn as_any(&self) -> &dyn std::any::Any {
         self
     }
@@ -84,7 +80,7 @@ impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> ContextBase 
     }
 }
 
-impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> Context<T> for LeafContext<T> {
+impl<T: AtlasScalar> Context<T> for LeafContext<T> {
     fn get_time(&self) -> &T {
         &self.time
     }
