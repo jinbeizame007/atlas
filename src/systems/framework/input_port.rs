@@ -1,3 +1,4 @@
+use std::any::Any;
 use std::cmp::PartialEq;
 use std::fmt::Debug;
 use std::marker::PhantomData;
@@ -24,6 +25,10 @@ pub struct InputPort<T: Add + PartialEq + Clone + Debug + Default + Zero + 'stat
 }
 
 impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> PortBase for InputPort<T> {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
     fn get_data_type(&self) -> &PortDataType {
         &self.data_type
     }

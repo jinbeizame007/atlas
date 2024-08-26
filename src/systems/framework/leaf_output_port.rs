@@ -1,3 +1,4 @@
+use std::any::Any;
 use std::cmp::PartialEq;
 use std::fmt::Debug;
 use std::marker::PhantomData;
@@ -23,6 +24,10 @@ pub struct LeafOutputPort<T: Add + PartialEq + Clone + Debug + Default + Zero + 
 }
 
 impl<T: Add + PartialEq + Clone + Debug + Default + Zero + 'static> PortBase for LeafOutputPort<T> {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
     fn get_data_type(&self) -> &PortDataType {
         &self.data_type
     }
