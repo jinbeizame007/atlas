@@ -38,7 +38,7 @@ where
     fn get_mutable_output_port(&mut self, index: &OutputPortIndex) -> &mut dyn OutputPort<T>;
 
     // Resource allocation and initializaion
-    fn allocate_context(&mut self) -> Box<dyn Context<T>>;
+    fn allocate_context(&self) -> Box<dyn Context<T>>;
     // fn allocate_context(&mut self) -> Box<dyn Context<T>> {
     //     self.do_allocate_context().as_ref().
     // }
@@ -122,6 +122,19 @@ where
     fn calc_time_derivatives(
         &mut self,
         context: &mut dyn Context<T>,
+        derivatives: Option<&mut ContinuousState<T>>,
+    ) {
+        self.validate_context(context.as_base());
+        self.do_calc_time_derivatives(context, derivatives.unwrap());
+    }
+
+    fn do_calc_time_derivatives(
+        &mut self,
+        _context: &mut dyn Context<T>,
         derivatives: &mut ContinuousState<T>,
-    );
+    ) {
+        // This default implementation is only valid for Systems with no continuous
+        // state. Other Systems must override this method!
+        assert!(derivatives.size() == 0);
+    }
 }
