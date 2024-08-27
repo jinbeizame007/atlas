@@ -1,6 +1,6 @@
 use std::cmp::PartialEq;
 use std::fmt::Debug;
-use std::ops::{Add, Div, Index, IndexMut, Mul, Rem, Sub};
+use std::ops::{Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Sub, SubAssign};
 
 extern crate nalgebra as na;
 
@@ -60,6 +60,8 @@ impl<T: AtlasScalar> PartialEq for BasicVector<T> {
         self.values == other.values
     }
 }
+
+// NumOps
 
 impl<T: AtlasScalar> Add<&BasicVector<T>> for &BasicVector<T> {
     type Output = BasicVector<T>;
@@ -189,6 +191,56 @@ impl<T: AtlasScalar> Div<BasicVector<T>> for BasicVector<T> {
     }
 }
 
+// NumAssignOps
+
+impl<T: AtlasScalar> AddAssign for BasicVector<T> {
+    fn add_assign(&mut self, rhs: BasicVector<T>) {
+        self.values += rhs.values;
+    }
+}
+
+impl<T: AtlasScalar> AddAssign<&BasicVector<T>> for BasicVector<T> {
+    fn add_assign(&mut self, rhs: &BasicVector<T>) {
+        self.values += &rhs.values;
+    }
+}
+
+impl<T: AtlasScalar> SubAssign for BasicVector<T> {
+    fn sub_assign(&mut self, rhs: BasicVector<T>) {
+        self.values -= rhs.values;
+    }
+}
+
+impl<T: AtlasScalar> SubAssign<&BasicVector<T>> for BasicVector<T> {
+    fn sub_assign(&mut self, rhs: &BasicVector<T>) {
+        self.values -= &rhs.values;
+    }
+}
+
+impl<T: AtlasScalar> MulAssign for BasicVector<T> {
+    fn mul_assign(&mut self, rhs: BasicVector<T>) {
+        self.values *= rhs.values;
+    }
+}
+
+impl<T: AtlasScalar> MulAssign<&BasicVector<T>> for BasicVector<T> {
+    fn mul_assign(&mut self, rhs: &BasicVector<T>) {
+        self.values *= &rhs.values;
+    }
+}
+
+// impl<T: AtlasScalar> DivAssign for BasicVector<T> {
+//     fn div_assign(&mut self, rhs: BasicVector<T>) {
+//         self.values /= rhs.values;
+//     }
+// }
+
+// impl<T: AtlasScalar> DivAssign<&BasicVector<T>> for BasicVector<T> {
+//     fn div_assign(&mut self, rhs: &BasicVector<T>) {
+//         self.values /= &rhs.values;
+//     }
+// }
+
 impl<T: AtlasScalar> VectorBase<T> for BasicVector<T> {
     fn size(&self) -> usize {
         self.values.len()
@@ -252,5 +304,24 @@ mod tests {
         //     &a / &b,
         //     BasicVector::<f64>::new(na::DVector::<f64>::from_vec(vec![1.0 / 3.0, 0.5]))
         // );
+    }
+
+    #[test]
+    fn test_num_assign_ops() {
+        let mut a = BasicVector::<f64>::new(na::DVector::<f64>::from_vec(vec![1.0, 2.0]));
+        let b = BasicVector::<f64>::new(na::DVector::<f64>::from_vec(vec![3.0, 4.0]));
+
+        a += &b;
+        assert_eq!(
+            a,
+            BasicVector::<f64>::new(na::DVector::<f64>::from_vec(vec![4.0, 6.0]))
+        );
+
+        a = BasicVector::<f64>::new(na::DVector::<f64>::from_vec(vec![1.0, 2.0]));
+        a -= &b;
+        assert_eq!(
+            a,
+            BasicVector::<f64>::new(na::DVector::<f64>::from_vec(vec![-2.0, -2.0]))
+        );
     }
 }
