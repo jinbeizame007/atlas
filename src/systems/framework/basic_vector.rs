@@ -18,6 +18,10 @@ impl<T: AtlasScalar> BasicVector<T> {
         BasicVector::<T> { values }
     }
 
+    pub fn from_vec(values: Vec<T>) -> Self {
+        BasicVector::<T>::new(na::DVector::<T>::from_vec(values))
+    }
+
     pub fn zeros(size: usize) -> BasicVector<T> {
         BasicVector::<T>::new(na::DVector::<T>::zeros(size))
     }
