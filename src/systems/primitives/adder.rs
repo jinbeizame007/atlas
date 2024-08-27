@@ -7,7 +7,7 @@ use crate::systems::framework::continuous_state::ContinuousState;
 use crate::systems::framework::framework_common::InputPortIndex;
 use crate::systems::framework::framework_common::OutputPortIndex;
 use crate::systems::framework::framework_common::{
-    CacheIndex, SystemId, SystemParentServiceInterface,
+    CacheIndex, PortDataType, SystemId, SystemParentServiceInterface,
 };
 use crate::systems::framework::input_port::InputPort;
 use crate::systems::framework::input_port_base::InputPortBase;
@@ -18,6 +18,7 @@ use crate::systems::framework::output_port::OutputPort;
 use crate::systems::framework::output_port_base::OutputPortBase;
 use crate::systems::framework::system::System;
 use crate::systems::framework::system_base::{ContextSizes, SystemBase};
+use crate::systems::framework::vector_base::VectorBase;
 
 pub struct Adder<T: AtlasScalar> {
     num_inputs: usize,
@@ -183,7 +184,7 @@ impl<T: AtlasScalar> LeafSystem<T> for Adder<T> {
 
 impl<T: AtlasScalar> Adder<T> {
     pub fn new(num_inputs: usize, size: usize) -> Self {
-        Self {
+        let mut adder = Self {
             num_inputs,
             size,
             input_ports: vec![],
@@ -195,17 +196,29 @@ impl<T: AtlasScalar> Adder<T> {
             time_derivatives_cache_index: CacheIndex::new(0),
             model_input_values: ModelValues::default(),
             model_continuous_state_vector: BasicVector::<T>::zeros(0),
+        };
+
+        let calc = {
+            let self_ptr: *mut Self = &mut adder;
+            Box::new(
+                move |context: &mut dyn Context<T>, sum: &mut BasicVector<T>| unsafe {
+                    Self::calc_sum(&mut (*self_ptr), context, sum)
+                },
+            )
+        };
+
+        for _ in 0..num_inputs {
+            adder.declare_input_port(PortDataType::VectorValued, size);
         }
+        adder.declare_vector_output_port(size, calc);
+
+        adder
     }
 
-    // fn calc_sum(&self, context: &mut dyn Context<T>, sum: &mut BasicVector<T>) {
-    //     let mut sum_vector = sum.get_mutable_value();
-    //     for input_port in self.input_ports.iter() {
-    //         sum_vector = sum_vector
-    //             + input_port
-    //                 .eval::<BasicVector<T>>(context)
-    //                 .get_value()
-    //                 .clone();
-    //     }
-    // }
+    fn calc_sum(&mut self, context: &mut dyn Context<T>, sum: &mut BasicVector<T>) {
+        VectorBase::fill(sum, &T::zero());
+        for input_port in self.input_ports.iter_mut() {
+            *sum += input_port.eval::<BasicVector<T>>(context);
+        }
+    }
 }
