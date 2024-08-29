@@ -34,6 +34,8 @@ pub trait SystemBase {
     fn initialize_context_base(&self, context: &mut dyn ContextBase) {
         context.set_system_id(self.get_system_id().clone());
 
+        self.create_source_trackers(context);
+
         let cache = context.get_mutable_cache();
         for index in 0..self.num_cache_entries() {
             let cache_index = CacheIndex::new(index);
@@ -43,6 +45,12 @@ pub trait SystemBase {
         }
 
         // TODO: Add an output port ticket to the context
+    }
+
+    fn create_source_trackers(&self, context: &mut dyn ContextBase) {
+        for input_port in self.get_input_ports() {
+            context.add_input_port(input_port.get_index());
+        }
     }
 
     // Input port
