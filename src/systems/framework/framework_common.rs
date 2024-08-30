@@ -8,37 +8,37 @@ use crate::systems::framework::input_port_base::InputPortBase;
 use crate::systems::framework::system_base::SystemBase;
 
 #[allow(dead_code)]
-#[derive(Clone, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct CacheTag;
 
 pub type CacheIndex = TypeSafeIndex<CacheTag>;
 
 #[allow(dead_code)]
-#[derive(Clone, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct InputPortTag;
 
 pub type InputPortIndex = TypeSafeIndex<InputPortTag>;
 
 #[allow(dead_code)]
-#[derive(Clone, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct OutputPortTag;
 
 pub type OutputPortIndex = TypeSafeIndex<OutputPortTag>;
 
 #[allow(dead_code)]
-#[derive(Clone, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct ContinuousStateTag;
 
 pub type ContinuousStateIndex = TypeSafeIndex<ContinuousStateTag>;
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum PortDataType {
     VectorValued,
     AbstractValued,
 }
 
 #[allow(dead_code)]
-#[derive(Clone, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct SystemIdTag;
 
 pub type SystemId = Identifier<SystemIdTag>;

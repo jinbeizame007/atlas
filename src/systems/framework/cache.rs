@@ -1,14 +1,14 @@
 use crate::common::value::AbstractValue;
 use crate::systems::framework::framework_common::CacheIndex;
 
-#[derive(Clone, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 enum Flag {
     #[default]
     ValueIsOutOfDate,
     ReadyToUse,
 }
 
-#[derive(Clone, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct CacheEntryValue {
     cache_index: CacheIndex,
     value: Box<dyn AbstractValue>,

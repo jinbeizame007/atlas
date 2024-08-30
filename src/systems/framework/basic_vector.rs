@@ -8,7 +8,7 @@ use crate::common::atlas_scalar::AtlasScalar;
 use crate::systems::framework::subvector::Subvector;
 use crate::systems::framework::vector_base::VectorBase;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct BasicVector<T: AtlasScalar> {
     values: na::DVector<T>,
 }
@@ -36,12 +36,6 @@ impl<T: AtlasScalar> BasicVector<T> {
 
     pub fn set_value(&mut self, value: &na::DVector<T>) {
         self.values = (*value).clone();
-    }
-}
-
-impl<T: AtlasScalar> Debug for BasicVector<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self.values)
     }
 }
 
