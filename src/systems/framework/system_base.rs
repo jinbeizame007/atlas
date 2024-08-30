@@ -17,55 +17,55 @@ pub struct ContextSizes {
 
 pub trait SystemBase {
     // Getters and setters without default implementations
-    fn get_input_ports(&self) -> Vec<&dyn InputPortBase>;
-    fn get_mutable_input_ports(&mut self) -> Vec<&mut dyn InputPortBase>;
-    fn get_output_ports(&self) -> Vec<&dyn OutputPortBase>;
-    fn get_mutable_output_ports(&mut self) -> Vec<&mut dyn OutputPortBase>;
-    fn get_cache_entries(&self) -> &Vec<CacheEntry>;
-    fn get_mutable_cache_entries(&mut self) -> &mut Vec<CacheEntry>;
-    fn get_context_sizes(&self) -> &ContextSizes;
-    fn get_mutable_context_sizes(&mut self) -> &mut ContextSizes;
-    fn get_system_id(&self) -> &SystemId;
-    fn get_parent_service(&self) -> Option<&dyn SystemParentServiceInterface>;
+    fn input_ports(&self) -> Vec<&dyn InputPortBase>;
+    fn input_ports_mut(&mut self) -> Vec<&mut dyn InputPortBase>;
+    fn output_ports(&self) -> Vec<&dyn OutputPortBase>;
+    fn output_ports_mut(&mut self) -> Vec<&mut dyn OutputPortBase>;
+    fn cache_entries(&self) -> &Vec<CacheEntry>;
+    fn cache_mut_entries(&mut self) -> &mut Vec<CacheEntry>;
+    fn context_sizes(&self) -> &ContextSizes;
+    fn context_sizes_mut(&mut self) -> &mut ContextSizes;
+    fn system_id(&self) -> &SystemId;
+    fn parent_service(&self) -> Option<&dyn SystemParentServiceInterface>;
 
     // Context
     // fn allocate_context(&self) -> Box<dyn ContextBase>;
     // fn do_allocate_context(&self) -> Box<dyn ContextBase>;
     fn initialize_context_base(&self, context: &mut dyn ContextBase) {
-        context.set_system_id(self.get_system_id().clone());
+        context.set_system_id(self.system_id().clone());
 
         self.create_source_trackers(context);
 
-        let cache = context.get_mutable_cache();
+        let cache = context.cache_mut();
         for index in 0..self.num_cache_entries() {
             let cache_index = CacheIndex::new(index);
-            let cache_entry = self.get_cache_entry(&cache_index);
+            let cache_entry = self.cache_entry(&cache_index);
             let cache_value = cache.create_new_cache_entry_value(cache_index);
             cache_value.set_initial_value(cache_entry.allocate());
         }
 
         // TODO: Add an output port ticket to the context
-        // for output_port in self.get_output_ports() {
-        //     context.add_output_port(output_port.get_index());
+        // for output_port in self.output_ports() {
+        //     context.add_output_port(output_port.index());
         // }
     }
 
     fn create_source_trackers(&self, context: &mut dyn ContextBase) {
-        for input_port in self.get_input_ports() {
-            context.add_input_port(input_port.get_index());
+        for input_port in self.input_ports() {
+            context.add_input_port(input_port.index());
         }
     }
 
     // Input port
     fn num_input_ports(&self) -> usize {
-        self.get_input_ports().len()
+        self.input_ports().len()
     }
-    fn get_input_port_base(&self, index: &InputPortIndex) -> &dyn InputPortBase {
-        self.get_input_ports()[index]
+    fn input_port_base(&self, index: &InputPortIndex) -> &dyn InputPortBase {
+        self.input_ports()[index]
     }
     // fn add_input_port(&mut self, input_port: Box<dyn InputPortBase>);
     // fn add_input_port(&mut self, input_port: Box<dyn InputPortBase>) {
-    //     self.get_mutable_input_ports().push(input_port);
+    //     self.input_ports_mut().push(input_port);
     // }
     fn eval_abstract_input(
         &self,
@@ -73,15 +73,15 @@ pub trait SystemBase {
         input_port_index: &InputPortIndex,
     ) -> Box<dyn AbstractValue> {
         if let Some(fixed_input_port_value) =
-            context.get_fixed_input_port_value(input_port_index.value())
+            context.fixed_input_port_value(input_port_index.value())
         {
-            fixed_input_port_value.get_value().clone_box()
+            fixed_input_port_value.value().clone_box()
         } else {
-            let parent_context_base = context.get_parent_base().unwrap();
+            let parent_context_base = context.parent_base().unwrap();
             let mut guard = parent_context_base.lock().unwrap();
-            let input_port = self.get_input_port_base(input_port_index);
+            let input_port = self.input_port_base(input_port_index);
 
-            self.get_parent_service()
+            self.parent_service()
                 .unwrap()
                 .eval_connected_subsystem_input_port(&mut *guard, input_port)
         }
@@ -89,36 +89,36 @@ pub trait SystemBase {
 
     // Output port
     fn num_output_ports(&self) -> usize {
-        self.get_output_ports().len()
+        self.output_ports().len()
     }
-    fn get_output_port_base(&self, index: &OutputPortIndex) -> &dyn OutputPortBase {
-        self.get_output_ports()[index]
+    fn output_port_base(&self, index: &OutputPortIndex) -> &dyn OutputPortBase {
+        self.output_ports()[index]
     }
     // fn add_output_port(&mut self, output_port: Box<dyn OutputPortBase>) {
-    //     self.get_mutable_output_ports().push(output_port);
+    //     self.output_ports_mut().push(output_port);
     // }
 
     // Cache entry
     fn num_cache_entries(&self) -> usize {
-        self.get_cache_entries().len()
+        self.cache_entries().len()
     }
-    fn get_cache_entry(&self, index: &CacheIndex) -> &CacheEntry {
-        &self.get_cache_entries()[index]
+    fn cache_entry(&self, index: &CacheIndex) -> &CacheEntry {
+        &self.cache_entries()[index]
     }
-    fn get_mutable_cache_entry(&mut self, index: &CacheIndex) -> &mut CacheEntry {
-        &mut self.get_mutable_cache_entries()[index]
+    fn cache_mut_entry(&mut self, index: &CacheIndex) -> &mut CacheEntry {
+        &mut self.cache_mut_entries()[index]
     }
     fn declare_cache_entry(&mut self, value_producer: ValueProducer) -> &CacheEntry {
         let cache_index = CacheIndex::new(self.num_cache_entries());
         let cache_entry = CacheEntry::new(cache_index.clone(), value_producer);
-        self.get_mutable_cache_entries().push(cache_entry);
+        self.cache_mut_entries().push(cache_entry);
 
-        self.get_cache_entry(&cache_index)
+        self.cache_entry(&cache_index)
     }
 
     // State
     fn num_continuous_states(&self) -> usize {
-        let context_sizes = self.get_context_sizes();
+        let context_sizes = self.context_sizes();
 
         context_sizes.num_generalized_positions
             + context_sizes.num_generalized_velocities
@@ -126,6 +126,6 @@ pub trait SystemBase {
     }
 
     fn validate_context(&self, context: &dyn ContextBase) {
-        assert!(*context.get_system_id() == *self.get_system_id())
+        assert!(*context.system_id() == *self.system_id())
     }
 }

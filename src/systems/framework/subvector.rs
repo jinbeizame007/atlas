@@ -35,15 +35,15 @@ impl<'a, T: AtlasScalar> VectorBase<T> for Subvector<'a, T> {
         self.vector.len()
     }
 
-    fn get_at_index(&self, index: usize) -> &T {
+    fn at_index(&self, index: usize) -> &T {
         &self.vector[index]
     }
 
-    fn get_mut_at_index(&mut self, index: usize) -> &mut T {
+    fn at_index_mut(&mut self, index: usize) -> &mut T {
         &mut self.vector[index]
     }
 
-    fn get_mutable_subvector<'b>(&'b mut self, start: usize, shape: usize) -> Subvector<'b, T> {
+    fn subvector_mut<'b>(&'b mut self, start: usize, shape: usize) -> Subvector<'b, T> {
         Subvector::<'b, T>::new(self.vector.rows_mut(start, shape))
     }
 

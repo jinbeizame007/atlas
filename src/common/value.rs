@@ -24,11 +24,11 @@ impl<T: 'static + Clone + Debug> Value<T> {
         Value { value }
     }
 
-    pub fn get_value(&self) -> &T {
+    pub fn value(&self) -> &T {
         &self.value
     }
 
-    pub fn get_mutable_value(&mut self) -> &mut T {
+    pub fn value_mut(&mut self) -> &mut T {
         &mut self.value
     }
 
@@ -51,7 +51,7 @@ impl<T: 'static + Clone + Debug> AbstractValue for Value<T> {
             .as_any()
             .downcast_ref::<Value<T>>()
             .unwrap()
-            .get_value();
+            .value();
         self.set_value(value);
     }
 
@@ -89,7 +89,7 @@ mod tests {
                 .as_any()
                 .downcast_ref::<Value<i64>>()
                 .unwrap()
-                .get_value()
+                .value()
         )
     }
 }

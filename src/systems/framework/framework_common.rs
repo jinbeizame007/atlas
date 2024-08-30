@@ -44,7 +44,7 @@ pub struct SystemIdTag;
 pub type SystemId = Identifier<SystemIdTag>;
 
 pub trait SystemParentServiceInterface {
-    fn get_root_system_base(&self) -> &dyn SystemBase;
+    fn root_system_base(&self) -> &dyn SystemBase;
     fn eval_connected_subsystem_input_port(
         &self,
         context: &mut dyn ContextBase,

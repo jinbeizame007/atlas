@@ -34,7 +34,7 @@ impl<T: AtlasScalar> ContinuousState<T> {
         self.state.size()
     }
 
-    pub fn get_system_id(&self) -> &SystemId {
+    pub fn system_id(&self) -> &SystemId {
         &self.system_id
     }
 
@@ -46,24 +46,24 @@ impl<T: AtlasScalar> ContinuousState<T> {
         self.state.set_from_vector(value);
     }
 
-    pub fn get_vector(&self) -> &dyn VectorBase<T, Output = T> {
+    pub fn vector(&self) -> &dyn VectorBase<T, Output = T> {
         self.state.as_ref()
     }
 
-    pub fn get_mutable_vector(&mut self) -> &mut dyn VectorBase<T, Output = T> {
+    pub fn vector_mut(&mut self) -> &mut dyn VectorBase<T, Output = T> {
         self.state.as_mut()
     }
 
-    pub fn get_mutable_generalized_position(&mut self) -> Subvector<T> {
-        self.state.get_mutable_subvector(0, self.num_q)
+    pub fn generalized_position_mut(&mut self) -> Subvector<T> {
+        self.state.subvector_mut(0, self.num_q)
     }
 
-    pub fn get_mutable_generalized_velocity(&mut self) -> Subvector<T> {
-        self.state.get_mutable_subvector(self.num_q, self.num_v)
+    pub fn generalized_velocity_mut(&mut self) -> Subvector<T> {
+        self.state.subvector_mut(self.num_q, self.num_v)
     }
 
-    pub fn get_mutable_misc_continuous_state(&mut self) -> Subvector<T> {
+    pub fn misc_continuous_state_mut(&mut self) -> Subvector<T> {
         self.state
-            .get_mutable_subvector(self.num_q + self.num_v, self.num_z)
+            .subvector_mut(self.num_q + self.num_v, self.num_z)
     }
 }

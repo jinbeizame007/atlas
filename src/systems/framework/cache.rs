@@ -24,11 +24,11 @@ impl CacheEntryValue {
         self.value = initial_value;
     }
 
-    pub fn get_abstract_value(&self) -> &dyn AbstractValue {
+    pub fn abstract_value(&self) -> &dyn AbstractValue {
         self.value.as_ref()
     }
 
-    pub fn get_mutable_abstract_value(&mut self) -> &mut dyn AbstractValue {
+    pub fn abstract_value_mut(&mut self) -> &mut dyn AbstractValue {
         self.value.as_mut()
     }
 
@@ -70,17 +70,14 @@ impl Cache {
         };
         self.store[cache_index.value()] = cache_entry_value;
 
-        self.get_mutable_cache_entry_value(&cache_index)
+        self.cache_mut_entry_value(&cache_index)
     }
 
-    pub fn get_cache_entry_value(&self, cache_index: &CacheIndex) -> &CacheEntryValue {
+    pub fn cache_entry_value(&self, cache_index: &CacheIndex) -> &CacheEntryValue {
         &self.store[cache_index]
     }
 
-    pub fn get_mutable_cache_entry_value(
-        &mut self,
-        cache_index: &CacheIndex,
-    ) -> &mut CacheEntryValue {
+    pub fn cache_mut_entry_value(&mut self, cache_index: &CacheIndex) -> &mut CacheEntryValue {
         &mut self.store[cache_index.value()]
     }
 }

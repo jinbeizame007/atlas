@@ -11,11 +11,11 @@ impl<T: AtlasScalar> State<T> {
         State::<T> { continuous_state }
     }
 
-    pub fn get_continuous_state(&self) -> &ContinuousState<T> {
+    pub fn continuous_state(&self) -> &ContinuousState<T> {
         &self.continuous_state
     }
 
-    pub fn get_mutable_continuous_state(&mut self) -> &mut ContinuousState<T> {
+    pub fn continuous_state_mut(&mut self) -> &mut ContinuousState<T> {
         &mut self.continuous_state
     }
 }

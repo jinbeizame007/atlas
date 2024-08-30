@@ -20,15 +20,15 @@ where
     Self: 'static,
 {
     // Getters and setters without default implementations
-    fn get_input_ports(&self) -> Vec<&InputPort<T>>;
-    fn get_mutable_input_ports(&mut self) -> Vec<&mut InputPort<T>>;
-    fn get_input_port(&self, index: &InputPortIndex) -> &InputPort<T>;
-    fn get_mutable_input_port(&mut self, index: &InputPortIndex) -> &mut InputPort<T>;
+    fn input_ports(&self) -> Vec<&InputPort<T>>;
+    fn input_ports_mut(&mut self) -> Vec<&mut InputPort<T>>;
+    fn input_port(&self, index: &InputPortIndex) -> &InputPort<T>;
+    fn input_port_mut(&mut self, index: &InputPortIndex) -> &mut InputPort<T>;
     fn add_input_port(&mut self, input_port: InputPort<T>);
-    fn get_output_ports(&self) -> Vec<&dyn OutputPort<T>>;
-    fn get_mutable_output_ports(&mut self) -> Vec<&mut dyn OutputPort<T>>;
-    fn get_output_port(&self, index: &OutputPortIndex) -> &dyn OutputPort<T>;
-    fn get_mutable_output_port(&mut self, index: &OutputPortIndex) -> &mut dyn OutputPort<T>;
+    fn output_ports(&self) -> Vec<&dyn OutputPort<T>>;
+    fn output_ports_mut(&mut self) -> Vec<&mut dyn OutputPort<T>>;
+    fn output_port(&self, index: &OutputPortIndex) -> &dyn OutputPort<T>;
+    fn output_port_mut(&mut self, index: &OutputPortIndex) -> &mut dyn OutputPort<T>;
 
     // Resource allocation and initializaion
     fn allocate_context(&self) -> Box<dyn Context<T>>;
@@ -49,11 +49,11 @@ where
             let self_ptr: *mut Self = self;
             Box::new(move || unsafe {
                 (*self_ptr)
-                    .allocate_input_abstract((*self_ptr).get_input_port(&cloned_input_port_index))
+                    .allocate_input_abstract((*self_ptr).input_port(&cloned_input_port_index))
             })
         };
         let input_port = InputPort::<T>::new(
-            self.get_system_id().clone(),
+            self.system_id().clone(),
             input_port_index.clone(),
             data_type,
             size,
@@ -62,13 +62,13 @@ where
         );
         self.add_input_port(input_port);
 
-        self.get_input_port(&input_port_index)
+        self.input_port(&input_port_index)
     }
 
     fn do_allocate_input(&self, input_port: &InputPort<T>) -> Box<dyn AbstractValue>;
     fn allocate_input_vector(&mut self, input_port: &InputPort<T>) -> BasicVector<T> {
-        assert!(*input_port.get_data_type() == PortDataType::VectorValued);
-        let self_input_port_base = self.get_input_port_base(input_port.get_index());
+        assert!(*input_port.data_type() == PortDataType::VectorValued);
+        let self_input_port_base = self.input_port_base(input_port.index());
         assert!(std::ptr::eq(
             self_input_port_base,
             input_port as &dyn InputPortBase
@@ -102,14 +102,14 @@ where
         &mut self,
         context: &'a mut dyn Context<T>,
     ) -> &'a ContinuousState<T> {
-        let cache_entry = self.get_time_derivatives_cache_entry();
+        let cache_entry = self.time_derivatives_cache_entry();
 
         cache_entry.eval(context.as_mutable_base())
     }
-    fn get_time_derivatives_cache_entry(&self) -> &CacheEntry {
-        self.get_cache_entry(self.get_time_derivatives_cache_index())
+    fn time_derivatives_cache_entry(&self) -> &CacheEntry {
+        self.cache_entry(self.time_derivatives_cache_index())
     }
-    fn get_time_derivatives_cache_index(&self) -> &CacheIndex;
+    fn time_derivatives_cache_index(&self) -> &CacheIndex;
 
     // Calculations
     fn calc_time_derivatives(

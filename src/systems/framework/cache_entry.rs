@@ -31,36 +31,32 @@ impl CacheEntry {
     }
 
     pub fn eval_abstract<'a>(&self, context: &'a mut dyn ContextBase) -> &'a dyn AbstractValue {
-        if self.get_cache_entry_value(context).needs_recomputation() {
+        if self.cache_entry_value(context).needs_recomputation() {
             self.update_value(context)
         }
-        self.get_cache_entry_value(context).get_abstract_value()
+        self.cache_entry_value(context).abstract_value()
     }
 
     fn update_value(&self, context: &mut dyn ContextBase) {
         let mut value = {
-            let mutable_cache_value = self.get_mutable_cache_entry_value(context);
-            mutable_cache_value.get_mutable_abstract_value().clone_box()
+            let mutable_cache_value = self.cache_mut_entry_value(context);
+            mutable_cache_value.abstract_value_mut().clone_box()
         };
         self.calc(context, value.as_mut());
 
-        let mutable_abstract_value = self
-            .get_mutable_cache_entry_value(context)
-            .get_mutable_abstract_value();
+        let mutable_abstract_value = self.cache_mut_entry_value(context).abstract_value_mut();
         mutable_abstract_value.set_from(value.as_ref());
     }
 
-    pub fn get_cache_entry_value<'a>(&self, context: &'a dyn ContextBase) -> &'a CacheEntryValue {
-        context.get_cache().get_cache_entry_value(&self.cache_index)
+    pub fn cache_entry_value<'a>(&self, context: &'a dyn ContextBase) -> &'a CacheEntryValue {
+        context.cache().cache_entry_value(&self.cache_index)
     }
 
-    pub fn get_mutable_cache_entry_value<'a>(
+    pub fn cache_mut_entry_value<'a>(
         &self,
         context: &'a mut dyn ContextBase,
     ) -> &'a mut CacheEntryValue {
-        context
-            .get_mutable_cache()
-            .get_mutable_cache_entry_value(&self.cache_index)
+        context.cache_mut().cache_mut_entry_value(&self.cache_index)
     }
 
     pub fn cache_index(&self) -> &CacheIndex {

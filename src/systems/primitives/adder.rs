@@ -36,28 +36,28 @@ pub struct Adder<T: AtlasScalar> {
 }
 
 impl<T: AtlasScalar> SystemBase for Adder<T> {
-    fn get_input_ports(&self) -> Vec<&dyn InputPortBase> {
+    fn input_ports(&self) -> Vec<&dyn InputPortBase> {
         self.input_ports
             .iter()
             .map(|p| p as &dyn InputPortBase)
             .collect()
     }
 
-    fn get_mutable_input_ports(&mut self) -> Vec<&mut dyn InputPortBase> {
+    fn input_ports_mut(&mut self) -> Vec<&mut dyn InputPortBase> {
         self.input_ports
             .iter_mut()
             .map(|p| p as &mut dyn InputPortBase)
             .collect()
     }
 
-    fn get_output_ports(&self) -> Vec<&dyn OutputPortBase> {
+    fn output_ports(&self) -> Vec<&dyn OutputPortBase> {
         self.output_ports
             .iter()
             .map(|p| p.as_ref() as &dyn OutputPortBase)
             .collect()
     }
 
-    fn get_mutable_output_ports(&mut self) -> Vec<&mut dyn OutputPortBase> {
+    fn output_ports_mut(&mut self) -> Vec<&mut dyn OutputPortBase> {
         self.output_ports
             .iter_mut()
             .map(|p| p.as_mut() as &mut dyn OutputPortBase)
@@ -68,45 +68,45 @@ impl<T: AtlasScalar> SystemBase for Adder<T> {
     //     self.input_ports.push(input_port);
     // }
 
-    fn get_cache_entries(&self) -> &Vec<CacheEntry> {
+    fn cache_entries(&self) -> &Vec<CacheEntry> {
         &self.cache_entries
     }
 
-    fn get_mutable_cache_entries(&mut self) -> &mut Vec<CacheEntry> {
+    fn cache_mut_entries(&mut self) -> &mut Vec<CacheEntry> {
         &mut self.cache_entries
     }
 
-    fn get_context_sizes(&self) -> &ContextSizes {
+    fn context_sizes(&self) -> &ContextSizes {
         &self.context_sizes
     }
 
-    fn get_mutable_context_sizes(&mut self) -> &mut ContextSizes {
+    fn context_sizes_mut(&mut self) -> &mut ContextSizes {
         &mut self.context_sizes
     }
 
-    fn get_system_id(&self) -> &SystemId {
+    fn system_id(&self) -> &SystemId {
         &self.system_id
     }
 
-    fn get_parent_service(&self) -> Option<&dyn SystemParentServiceInterface> {
+    fn parent_service(&self) -> Option<&dyn SystemParentServiceInterface> {
         self.parent_service.as_ref().map(|p| p.as_ref())
     }
 }
 
 impl<T: AtlasScalar> System<T> for Adder<T> {
-    fn get_input_ports(&self) -> Vec<&InputPort<T>> {
+    fn input_ports(&self) -> Vec<&InputPort<T>> {
         self.input_ports.iter().collect()
     }
 
-    fn get_mutable_input_ports(&mut self) -> Vec<&mut InputPort<T>> {
+    fn input_ports_mut(&mut self) -> Vec<&mut InputPort<T>> {
         self.input_ports.iter_mut().collect()
     }
 
-    fn get_input_port(&self, index: &InputPortIndex) -> &InputPort<T> {
+    fn input_port(&self, index: &InputPortIndex) -> &InputPort<T> {
         &self.input_ports[index]
     }
 
-    fn get_mutable_input_port(&mut self, index: &InputPortIndex) -> &mut InputPort<T> {
+    fn input_port_mut(&mut self, index: &InputPortIndex) -> &mut InputPort<T> {
         &mut self.input_ports[index]
     }
 
@@ -114,29 +114,29 @@ impl<T: AtlasScalar> System<T> for Adder<T> {
         self.input_ports.push(input_port);
     }
 
-    fn get_output_ports(&self) -> Vec<&dyn OutputPort<T>> {
+    fn output_ports(&self) -> Vec<&dyn OutputPort<T>> {
         self.output_ports
             .iter()
             .map(|p| p.as_ref() as &dyn OutputPort<T>)
             .collect()
     }
 
-    fn get_mutable_output_ports(&mut self) -> Vec<&mut dyn OutputPort<T>> {
+    fn output_ports_mut(&mut self) -> Vec<&mut dyn OutputPort<T>> {
         self.output_ports
             .iter_mut()
             .map(|p| p.as_mut() as &mut dyn OutputPort<T>)
             .collect()
     }
 
-    fn get_output_port(&self, index: &OutputPortIndex) -> &dyn OutputPort<T> {
+    fn output_port(&self, index: &OutputPortIndex) -> &dyn OutputPort<T> {
         self.output_ports[index].as_ref()
     }
 
-    fn get_mutable_output_port(&mut self, index: &OutputPortIndex) -> &mut dyn OutputPort<T> {
+    fn output_port_mut(&mut self, index: &OutputPortIndex) -> &mut dyn OutputPort<T> {
         self.output_ports[index].as_mut()
     }
 
-    fn get_time_derivatives_cache_index(&self) -> &CacheIndex {
+    fn time_derivatives_cache_index(&self) -> &CacheIndex {
         &self.time_derivatives_cache_index
     }
 
@@ -158,27 +158,27 @@ impl<T: AtlasScalar> System<T> for Adder<T> {
 }
 
 impl<T: AtlasScalar> LeafSystem<T> for Adder<T> {
-    fn get_model_input_values(&self) -> &ModelValues {
+    fn model_input_values(&self) -> &ModelValues {
         &self.model_input_values
     }
 
-    fn get_mutable_model_input_values(&mut self) -> &mut ModelValues {
+    fn model_input_values_mut(&mut self) -> &mut ModelValues {
         &mut self.model_input_values
     }
 
-    fn get_model_continuous_state_vector(&self) -> &BasicVector<T> {
+    fn model_continuous_state_vector(&self) -> &BasicVector<T> {
         &self.model_continuous_state_vector
     }
 
-    fn get_mutable_model_continuous_state_vector(&mut self) -> &mut BasicVector<T> {
+    fn model_continuous_state_vector_mut(&mut self) -> &mut BasicVector<T> {
         &mut self.model_continuous_state_vector
     }
 
-    fn get_leaf_output_port(&self, output_port_index: &OutputPortIndex) -> &LeafOutputPort<T> {
+    fn leaf_output_port(&self, output_port_index: &OutputPortIndex) -> &LeafOutputPort<T> {
         &self.output_ports[output_port_index]
     }
 
-    fn get_mutable_leaf_output_port(
+    fn leaf_output_port_mut(
         &mut self,
         output_port_index: &OutputPortIndex,
     ) -> &mut LeafOutputPort<T> {
@@ -240,8 +240,8 @@ mod tests {
     #[test]
     fn test_constructor() {
         let adder = Adder::<f64>::new(2, 3);
-        assert_eq!(System::<f64>::get_input_ports(&adder).len(), 2);
-        assert_eq!(System::<f64>::get_output_ports(&adder).len(), 1);
+        assert_eq!(System::<f64>::input_ports(&adder).len(), 2);
+        assert_eq!(System::<f64>::output_ports(&adder).len(), 1);
     }
 
     #[test]
@@ -255,24 +255,20 @@ mod tests {
         let mut adder = Adder::<f64>::new(2, 3);
         let mut context = adder.create_default_context();
 
-        adder
-            .get_mutable_input_port(&InputPortIndex::new(0))
-            .fix_value(
-                context.as_mut(),
-                BasicVector::<f64>::from_vec(vec![1.0, 2.0, 3.0]),
-            );
-        adder
-            .get_mutable_input_port(&InputPortIndex::new(1))
-            .fix_value(
-                context.as_mut(),
-                BasicVector::<f64>::from_vec(vec![0.5, 1.2, 0.3]),
-            );
+        adder.input_port_mut(&InputPortIndex::new(0)).fix_value(
+            context.as_mut(),
+            BasicVector::<f64>::from_vec(vec![1.0, 2.0, 3.0]),
+        );
+        adder.input_port_mut(&InputPortIndex::new(1)).fix_value(
+            context.as_mut(),
+            BasicVector::<f64>::from_vec(vec![0.5, 1.2, 0.3]),
+        );
 
         let sum = adder
-            .get_leaf_output_port(&OutputPortIndex::new(0))
+            .leaf_output_port(&OutputPortIndex::new(0))
             .eval::<BasicVector<f64>>(context.as_mut());
         assert_eq!(
-            *sum.get_value(),
+            *sum.value(),
             na::DVector::<f64>::from_vec(vec![1.5, 3.2, 3.3])
         );
     }

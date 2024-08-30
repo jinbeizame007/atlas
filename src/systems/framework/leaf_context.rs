@@ -34,23 +34,23 @@ impl<T: AtlasScalar> ContextBase for LeafContext<T> {
         self.system_id = system_id;
     }
 
-    fn get_system_id(&self) -> &SystemId {
+    fn system_id(&self) -> &SystemId {
         &self.system_id
     }
 
-    fn get_parent_base(&self) -> Option<Arc<Mutex<dyn ContextBase>>> {
+    fn parent_base(&self) -> Option<Arc<Mutex<dyn ContextBase>>> {
         self.parent.clone()
     }
 
-    fn get_cache(&self) -> &Cache {
+    fn cache(&self) -> &Cache {
         &self.cache
     }
 
-    fn get_mutable_cache(&mut self) -> &mut Cache {
+    fn cache_mut(&mut self) -> &mut Cache {
         &mut self.cache
     }
 
-    fn get_input_port_values(&mut self) -> &mut Vec<Option<FixedInputPortValue>> {
+    fn input_port_values(&mut self) -> &mut Vec<Option<FixedInputPortValue>> {
         &mut self.input_port_values
     }
 
@@ -65,35 +65,32 @@ impl<T: AtlasScalar> ContextBase for LeafContext<T> {
     ) -> Option<&FixedInputPortValue> {
         self.input_port_values[index] = Some(FixedInputPortValue::new(value.clone_box()));
 
-        self.get_fixed_input_port_value(index)
+        self.fixed_input_port_value(index)
     }
 
-    fn get_fixed_input_port_value(&self, index: usize) -> Option<&FixedInputPortValue> {
+    fn fixed_input_port_value(&self, index: usize) -> Option<&FixedInputPortValue> {
         self.input_port_values[index].as_ref()
     }
 
-    fn get_mutable_fixed_input_port_value(
-        &mut self,
-        index: usize,
-    ) -> Option<&mut FixedInputPortValue> {
+    fn fixed_input_port_value_mut(&mut self, index: usize) -> Option<&mut FixedInputPortValue> {
         self.input_port_values[index].as_mut()
     }
 
-    fn get_mutable_is_context_base_initialized(&mut self) -> &mut bool {
+    fn is_context_base_initialized_mut(&mut self) -> &mut bool {
         &mut self.is_context_base_initialized
     }
 }
 
 impl<T: AtlasScalar> Context<T> for LeafContext<T> {
-    fn get_time(&self) -> &T {
+    fn time(&self) -> &T {
         &self.time
     }
 
-    fn get_state(&self) -> &State<T> {
+    fn state(&self) -> &State<T> {
         &self.state
     }
 
-    fn get_mutable_state(&mut self) -> &mut State<T> {
+    fn state_mut(&mut self) -> &mut State<T> {
         &mut self.state
     }
 
@@ -102,19 +99,19 @@ impl<T: AtlasScalar> Context<T> for LeafContext<T> {
     }
 
     fn num_continuous_states(&self) -> usize {
-        self.state.get_continuous_state().size()
+        self.state.continuous_state().size()
     }
 
-    fn get_continuous_state(&self) -> &ContinuousState<T> {
-        self.state.get_continuous_state()
+    fn continuous_state(&self) -> &ContinuousState<T> {
+        self.state.continuous_state()
     }
 
-    fn get_mutable_continuous_state(&mut self) -> &mut ContinuousState<T> {
-        self.state.get_mutable_continuous_state()
+    fn continuous_state_mut(&mut self) -> &mut ContinuousState<T> {
+        self.state.continuous_state_mut()
     }
 
-    fn get_continuous_state_vector(&self) -> &dyn VectorBase<T, Output = T> {
-        self.state.get_continuous_state().get_vector()
+    fn continuous_state_vector(&self) -> &dyn VectorBase<T, Output = T> {
+        self.state.continuous_state().vector()
     }
 
     fn as_base(&self) -> &dyn ContextBase {

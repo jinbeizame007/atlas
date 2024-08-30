@@ -25,7 +25,7 @@ impl<T: AtlasScalar> PortBase for LeafOutputPort<T> {
         self
     }
 
-    fn get_data_type(&self) -> &PortDataType {
+    fn data_type(&self) -> &PortDataType {
         &self.data_type
     }
 
@@ -35,7 +35,7 @@ impl<T: AtlasScalar> PortBase for LeafOutputPort<T> {
 }
 
 impl<T: AtlasScalar> OutputPortBase for LeafOutputPort<T> {
-    fn get_index(&self) -> &OutputPortIndex {
+    fn index(&self) -> &OutputPortIndex {
         &self.index
     }
 }
@@ -82,7 +82,7 @@ impl<T: AtlasScalar> LeafOutputPort<T> {
             .as_any()
             .downcast_ref::<Value<ValueType>>()
             .unwrap()
-            .get_value()
+            .value()
             .clone()
     }
 

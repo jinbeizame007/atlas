@@ -23,12 +23,12 @@ use crate::systems::framework::value_producer::{AllocateCallback, ValueProducer}
 
 pub trait LeafSystem<T: AtlasScalar>: System<T> {
     // Getters and setters without default implementations
-    fn get_model_input_values(&self) -> &ModelValues;
-    fn get_mutable_model_input_values(&mut self) -> &mut ModelValues;
-    fn get_model_continuous_state_vector(&self) -> &BasicVector<T>;
-    fn get_mutable_model_continuous_state_vector(&mut self) -> &mut BasicVector<T>;
-    fn get_leaf_output_port(&self, output_port_index: &OutputPortIndex) -> &LeafOutputPort<T>;
-    fn get_mutable_leaf_output_port(
+    fn model_input_values(&self) -> &ModelValues;
+    fn model_input_values_mut(&mut self) -> &mut ModelValues;
+    fn model_continuous_state_vector(&self) -> &BasicVector<T>;
+    fn model_continuous_state_vector_mut(&mut self) -> &mut BasicVector<T>;
+    fn leaf_output_port(&self, output_port_index: &OutputPortIndex) -> &LeafOutputPort<T>;
+    fn leaf_output_port_mut(
         &mut self,
         output_port_index: &OutputPortIndex,
     ) -> &mut LeafOutputPort<T>;
@@ -47,11 +47,11 @@ pub trait LeafSystem<T: AtlasScalar>: System<T> {
 
     fn do_allocate_input(&self, input_port: &InputPort<T>) -> Box<dyn AbstractValue> {
         if let Some(model_result) = self
-            .get_model_input_values()
-            .clone_model(input_port.get_index().value())
+            .model_input_values()
+            .clone_model(input_port.index().value())
         {
             model_result
-        } else if *input_port.get_data_type() == PortDataType::VectorValued {
+        } else if *input_port.data_type() == PortDataType::VectorValued {
             Box::new(Value::<BasicVector<T>>::new(BasicVector::<T>::zeros(
                 input_port.size(),
             )))
@@ -68,27 +68,27 @@ pub trait LeafSystem<T: AtlasScalar>: System<T> {
         self.allocate_continuous_state()
     }
     fn allocate_continuous_state(&self) -> ContinuousState<T> {
-        let context_sizes = self.get_context_sizes();
+        let context_sizes = self.context_sizes();
         let mut continuous_state = ContinuousState::<T>::new(
-            Box::new(self.get_model_continuous_state_vector().clone()),
+            Box::new(self.model_continuous_state_vector().clone()),
             context_sizes.num_generalized_positions,
             context_sizes.num_generalized_velocities,
             context_sizes.num_misc_continuous_states,
         );
-        continuous_state.set_system_id(self.get_system_id().clone());
+        continuous_state.set_system_id(self.system_id().clone());
 
         continuous_state
     }
 
     fn set_model_continuous_state_vector(&mut self, model_continuous_state_vector: BasicVector<T>) {
-        *self.get_mutable_model_continuous_state_vector() = model_continuous_state_vector;
+        *self.model_continuous_state_vector_mut() = model_continuous_state_vector;
     }
 
     fn set_default_state(&self, context: &mut dyn Context<T>) {
         self.validate_context(context.as_base());
 
-        let continuous_state = context.get_mutable_continuous_state();
-        continuous_state.set_from_vector(self.get_model_continuous_state_vector().get_value());
+        let continuous_state = context.continuous_state_mut();
+        continuous_state.set_from_vector(self.model_continuous_state_vector().value());
     }
 
     fn declare_continuous_state(
@@ -102,7 +102,7 @@ pub trait LeafSystem<T: AtlasScalar>: System<T> {
             BasicVector::<T>::new(na::DVector::<T>::from_element(n, T::default()));
         self.set_model_continuous_state_vector(model_continuous_state_vector);
 
-        let context_sizes = self.get_mutable_context_sizes();
+        let context_sizes = self.context_sizes_mut();
         context_sizes.num_generalized_positions = num_q;
         context_sizes.num_generalized_velocities = num_v;
         context_sizes.num_misc_continuous_states = num_z;
@@ -114,14 +114,14 @@ pub trait LeafSystem<T: AtlasScalar>: System<T> {
     fn declare_vector_input_port(&mut self, size: usize) -> &InputPort<T> {
         let model_vector = BasicVector::<T>::zeros(size);
         let input_port_index = self.num_input_ports();
-        self.get_mutable_model_input_values()
+        self.model_input_values_mut()
             .add_vector_model(input_port_index, model_vector);
 
         self.declare_input_port(PortDataType::VectorValued, size)
     }
     fn declare_abstract_input_port(&mut self, model_value: &dyn AbstractValue) -> &InputPort<T> {
         let next_input_port_index = self.num_input_ports();
-        let model_input_values = self.get_mutable_model_input_values();
+        let model_input_values = self.model_input_values_mut();
         model_input_values.add_model(next_input_port_index, model_value.clone_box());
 
         self.declare_input_port(PortDataType::AbstractValued, 0)
@@ -185,7 +185,7 @@ pub trait LeafSystem<T: AtlasScalar>: System<T> {
                     .as_any_mut()
                     .downcast_mut::<Value<BasicVector<T>>>()
                     .unwrap()
-                    .get_mutable_value();
+                    .value_mut();
 
                 (calc)(context, basic_vector)
             },
@@ -208,7 +208,7 @@ pub trait LeafSystem<T: AtlasScalar>: System<T> {
         value_producer: ValueProducer,
     ) -> &LeafOutputPort<T> {
         let output_port_index = OutputPortIndex::new(self.num_output_ports());
-        let _system_id = self.get_system_id().clone();
+        let _system_id = self.system_id().clone();
         let cache_entry = self.declare_cache_entry(value_producer);
         let cache_entry_ptr: *const CacheEntry = cache_entry;
         let output_port = if let Some(size) = fixed_size {
@@ -233,6 +233,6 @@ pub trait LeafSystem<T: AtlasScalar>: System<T> {
         };
         self.add_output_port(output_port);
 
-        self.get_leaf_output_port(&output_port_index)
+        self.leaf_output_port(&output_port_index)
     }
 }

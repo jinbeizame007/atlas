@@ -9,11 +9,11 @@ impl FixedInputPortValue {
         FixedInputPortValue { value }
     }
 
-    pub fn get_value(&self) -> &dyn AbstractValue {
+    pub fn value(&self) -> &dyn AbstractValue {
         self.value.as_ref()
     }
 
-    pub fn get_mutable_value(&mut self) -> &mut dyn AbstractValue {
+    pub fn value_mut(&mut self) -> &mut dyn AbstractValue {
         self.value.as_mut()
     }
 }

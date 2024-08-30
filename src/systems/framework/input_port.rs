@@ -26,7 +26,7 @@ impl<T: AtlasScalar> PortBase for InputPort<T> {
         self
     }
 
-    fn get_data_type(&self) -> &PortDataType {
+    fn data_type(&self) -> &PortDataType {
         &self.data_type
     }
 
@@ -36,7 +36,7 @@ impl<T: AtlasScalar> PortBase for InputPort<T> {
 }
 
 impl<T: AtlasScalar> InputPortBase for InputPort<T> {
-    fn get_index(&self) -> &InputPortIndex {
+    fn index(&self) -> &InputPortIndex {
         &self.index
     }
 
@@ -86,7 +86,7 @@ impl<T: AtlasScalar> InputPort<T> {
             .as_any()
             .downcast_ref::<Value<ValueType>>()
             .unwrap()
-            .get_value()
+            .value()
             .clone()
     }
 
@@ -101,6 +101,6 @@ impl<T: AtlasScalar> InputPort<T> {
     ) -> Option<&'a FixedInputPortValue> {
         let abstract_value = Value::<ValueType>::new(value);
 
-        context.fix_input_port(self.get_index().value(), &abstract_value)
+        context.fix_input_port(self.index().value(), &abstract_value)
     }
 }

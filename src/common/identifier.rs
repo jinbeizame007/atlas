@@ -14,7 +14,7 @@ impl<Tag: Default> Identifier<Tag> {
             _marker: PhantomData::<Tag>,
         }
     }
-    pub fn get_value(&self) -> &usize {
+    pub fn value(&self) -> &usize {
         &self.value
     }
 }
