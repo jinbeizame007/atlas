@@ -1,13 +1,5 @@
-[package]
-name = "atlas"
-version = "0.1.0"
-edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
-nalgebra = "0.33.0"
-num-traits = "0.2.19"
-proc-macro2 = "1.0.86"
-quote = "1.0.37"
-syn = {version = "2.0.76", features = ["derive"]}
+[workspace]
+members = [
+    "atlas",
+    "atlas_derive"
+]
