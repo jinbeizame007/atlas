@@ -1,3 +1,5 @@
+// use atlas_derives::SystemBase;
+
 use crate::common::value::AbstractValue;
 use crate::systems::framework::cache_entry::CacheEntry;
 use crate::systems::framework::context_base::ContextBase;
@@ -22,7 +24,7 @@ pub trait SystemBase {
     fn output_ports(&self) -> Vec<&dyn OutputPortBase>;
     fn output_ports_mut(&mut self) -> Vec<&mut dyn OutputPortBase>;
     fn cache_entries(&self) -> &Vec<CacheEntry>;
-    fn cache_mut_entries(&mut self) -> &mut Vec<CacheEntry>;
+    fn cache_entries_mut(&mut self) -> &mut Vec<CacheEntry>;
     fn context_sizes(&self) -> &ContextSizes;
     fn context_sizes_mut(&mut self) -> &mut ContextSizes;
     fn system_id(&self) -> &SystemId;
@@ -106,12 +108,12 @@ pub trait SystemBase {
         &self.cache_entries()[index]
     }
     fn cache_mut_entry(&mut self, index: &CacheIndex) -> &mut CacheEntry {
-        &mut self.cache_mut_entries()[index]
+        &mut self.cache_entries_mut()[index]
     }
     fn declare_cache_entry(&mut self, value_producer: ValueProducer) -> &CacheEntry {
         let cache_index = CacheIndex::new(self.num_cache_entries());
         let cache_entry = CacheEntry::new(cache_index.clone(), value_producer);
-        self.cache_mut_entries().push(cache_entry);
+        self.cache_entries_mut().push(cache_entry);
 
         self.cache_entry(&cache_index)
     }

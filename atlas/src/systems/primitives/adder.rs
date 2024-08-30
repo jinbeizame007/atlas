@@ -1,3 +1,5 @@
+use atlas_derives::SystemBase;
+
 extern crate nalgebra as na;
 
 use crate::common::atlas_scalar::AtlasScalar;
@@ -19,9 +21,11 @@ use crate::systems::framework::model_values::ModelValues;
 use crate::systems::framework::output_port::OutputPort;
 use crate::systems::framework::output_port_base::OutputPortBase;
 use crate::systems::framework::system::System;
-use crate::systems::framework::system_base::{ContextSizes, SystemBase};
+use crate::systems::framework::system_base::ContextSizes;
+use crate::systems::framework::system_base::SystemBase;
 use crate::systems::framework::vector_base::VectorBase;
 
+#[derive(SystemBase)]
 pub struct Adder<T: AtlasScalar> {
     #[allow(clippy::box_collection)]
     input_ports: Box<Vec<InputPort<T>>>,
@@ -35,63 +39,63 @@ pub struct Adder<T: AtlasScalar> {
     model_continuous_state_vector: BasicVector<T>,
 }
 
-impl<T: AtlasScalar> SystemBase for Adder<T> {
-    fn input_ports(&self) -> Vec<&dyn InputPortBase> {
-        self.input_ports
-            .iter()
-            .map(|p| p as &dyn InputPortBase)
-            .collect()
-    }
+// impl<T: AtlasScalar> SystemBase for Adder<T> {
+//     fn input_ports(&self) -> Vec<&dyn InputPortBase> {
+//         self.input_ports
+//             .iter()
+//             .map(|p| p as &dyn InputPortBase)
+//             .collect()
+//     }
 
-    fn input_ports_mut(&mut self) -> Vec<&mut dyn InputPortBase> {
-        self.input_ports
-            .iter_mut()
-            .map(|p| p as &mut dyn InputPortBase)
-            .collect()
-    }
+//     fn input_ports_mut(&mut self) -> Vec<&mut dyn InputPortBase> {
+//         self.input_ports
+//             .iter_mut()
+//             .map(|p| p as &mut dyn InputPortBase)
+//             .collect()
+//     }
 
-    fn output_ports(&self) -> Vec<&dyn OutputPortBase> {
-        self.output_ports
-            .iter()
-            .map(|p| p.as_ref() as &dyn OutputPortBase)
-            .collect()
-    }
+//     fn output_ports(&self) -> Vec<&dyn OutputPortBase> {
+//         self.output_ports
+//             .iter()
+//             .map(|p| p.as_ref() as &dyn OutputPortBase)
+//             .collect()
+//     }
 
-    fn output_ports_mut(&mut self) -> Vec<&mut dyn OutputPortBase> {
-        self.output_ports
-            .iter_mut()
-            .map(|p| p.as_mut() as &mut dyn OutputPortBase)
-            .collect()
-    }
+//     fn output_ports_mut(&mut self) -> Vec<&mut dyn OutputPortBase> {
+//         self.output_ports
+//             .iter_mut()
+//             .map(|p| p.as_mut() as &mut dyn OutputPortBase)
+//             .collect()
+//     }
 
-    // fn add_input_port(&mut self, input_port: Box<InputPort<T>>) {
-    //     self.input_ports.push(input_port);
-    // }
+//     // fn add_input_port(&mut self, input_port: Box<InputPort<T>>) {
+//     //     self.input_ports.push(input_port);
+//     // }
 
-    fn cache_entries(&self) -> &Vec<CacheEntry> {
-        &self.cache_entries
-    }
+//     fn cache_entries(&self) -> &Vec<CacheEntry> {
+//         &self.cache_entries
+//     }
 
-    fn cache_mut_entries(&mut self) -> &mut Vec<CacheEntry> {
-        &mut self.cache_entries
-    }
+//     fn cache_entries_mut(&mut self) -> &mut Vec<CacheEntry> {
+//         &mut self.cache_entries
+//     }
 
-    fn context_sizes(&self) -> &ContextSizes {
-        &self.context_sizes
-    }
+//     fn context_sizes(&self) -> &ContextSizes {
+//         &self.context_sizes
+//     }
 
-    fn context_sizes_mut(&mut self) -> &mut ContextSizes {
-        &mut self.context_sizes
-    }
+//     fn context_sizes_mut(&mut self) -> &mut ContextSizes {
+//         &mut self.context_sizes
+//     }
 
-    fn system_id(&self) -> &SystemId {
-        &self.system_id
-    }
+//     fn system_id(&self) -> &SystemId {
+//         &self.system_id
+//     }
 
-    fn parent_service(&self) -> Option<&dyn SystemParentServiceInterface> {
-        self.parent_service.as_ref().map(|p| p.as_ref())
-    }
-}
+//     fn parent_service(&self) -> Option<&dyn SystemParentServiceInterface> {
+//         self.parent_service.as_ref().map(|p| p.as_ref())
+//     }
+// }
 
 impl<T: AtlasScalar> System<T> for Adder<T> {
     fn input_ports(&self) -> Vec<&InputPort<T>> {
