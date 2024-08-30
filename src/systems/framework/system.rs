@@ -24,7 +24,7 @@ where
     fn get_mutable_input_ports(&mut self) -> Vec<&mut InputPort<T>>;
     fn get_input_port(&self, index: &InputPortIndex) -> &InputPort<T>;
     fn get_mutable_input_port(&mut self, index: &InputPortIndex) -> &mut InputPort<T>;
-    fn add_input_port(&mut self, input_port: Box<InputPort<T>>);
+    fn add_input_port(&mut self, input_port: InputPort<T>);
     fn get_output_ports(&self) -> Vec<&dyn OutputPort<T>>;
     fn get_mutable_output_ports(&mut self) -> Vec<&mut dyn OutputPort<T>>;
     fn get_output_port(&self, index: &OutputPortIndex) -> &dyn OutputPort<T>;
@@ -52,14 +52,14 @@ where
                     .allocate_input_abstract((*self_ptr).get_input_port(&cloned_input_port_index))
             })
         };
-        let input_port = Box::new(InputPort::<T>::new(
+        let input_port = InputPort::<T>::new(
             self.get_system_id().clone(),
             input_port_index.clone(),
             data_type,
             size,
             eval,
             alloc,
-        ));
+        );
         self.add_input_port(input_port);
 
         self.get_input_port(&input_port_index)

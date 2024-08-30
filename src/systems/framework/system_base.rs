@@ -45,6 +45,9 @@ pub trait SystemBase {
         }
 
         // TODO: Add an output port ticket to the context
+        // for output_port in self.get_output_ports() {
+        //     context.add_output_port(output_port.get_index());
+        // }
     }
 
     fn create_source_trackers(&self, context: &mut dyn ContextBase) {

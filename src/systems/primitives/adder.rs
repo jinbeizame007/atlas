@@ -1,3 +1,5 @@
+extern crate nalgebra as na;
+
 use crate::common::atlas_scalar::AtlasScalar;
 use crate::common::value::AbstractValue;
 use crate::systems::framework::basic_vector::BasicVector;
@@ -21,9 +23,8 @@ use crate::systems::framework::system_base::{ContextSizes, SystemBase};
 use crate::systems::framework::vector_base::VectorBase;
 
 pub struct Adder<T: AtlasScalar> {
-    num_inputs: usize,
-    size: usize,
-    input_ports: Vec<Box<InputPort<T>>>,
+    #[allow(clippy::box_collection)]
+    input_ports: Box<Vec<InputPort<T>>>,
     output_ports: Vec<Box<LeafOutputPort<T>>>,
     cache_entries: Vec<CacheEntry>,
     context_sizes: ContextSizes,
@@ -38,14 +39,14 @@ impl<T: AtlasScalar> SystemBase for Adder<T> {
     fn get_input_ports(&self) -> Vec<&dyn InputPortBase> {
         self.input_ports
             .iter()
-            .map(|p| p.as_ref() as &dyn InputPortBase)
+            .map(|p| p as &dyn InputPortBase)
             .collect()
     }
 
     fn get_mutable_input_ports(&mut self) -> Vec<&mut dyn InputPortBase> {
         self.input_ports
             .iter_mut()
-            .map(|p| p.as_mut() as &mut dyn InputPortBase)
+            .map(|p| p as &mut dyn InputPortBase)
             .collect()
     }
 
@@ -94,22 +95,22 @@ impl<T: AtlasScalar> SystemBase for Adder<T> {
 
 impl<T: AtlasScalar> System<T> for Adder<T> {
     fn get_input_ports(&self) -> Vec<&InputPort<T>> {
-        self.input_ports.iter().map(|p| p.as_ref()).collect()
+        self.input_ports.iter().collect()
     }
 
     fn get_mutable_input_ports(&mut self) -> Vec<&mut InputPort<T>> {
-        self.input_ports.iter_mut().map(|p| p.as_mut()).collect()
+        self.input_ports.iter_mut().collect()
     }
 
     fn get_input_port(&self, index: &InputPortIndex) -> &InputPort<T> {
-        self.input_ports[index].as_ref()
+        &self.input_ports[index]
     }
 
     fn get_mutable_input_port(&mut self, index: &InputPortIndex) -> &mut InputPort<T> {
-        self.input_ports[index].as_mut()
+        &mut self.input_ports[index]
     }
 
-    fn add_input_port(&mut self, input_port: Box<InputPort<T>>) {
+    fn add_input_port(&mut self, input_port: InputPort<T>) {
         self.input_ports.push(input_port);
     }
 
@@ -177,6 +178,13 @@ impl<T: AtlasScalar> LeafSystem<T> for Adder<T> {
         &self.output_ports[output_port_index]
     }
 
+    fn get_mutable_leaf_output_port(
+        &mut self,
+        output_port_index: &OutputPortIndex,
+    ) -> &mut LeafOutputPort<T> {
+        &mut self.output_ports[output_port_index]
+    }
+
     fn add_output_port(&mut self, output_port: Box<LeafOutputPort<T>>) {
         self.output_ports.push(output_port);
     }
@@ -185,9 +193,7 @@ impl<T: AtlasScalar> LeafSystem<T> for Adder<T> {
 impl<T: AtlasScalar> Adder<T> {
     pub fn new(num_inputs: usize, size: usize) -> Self {
         let mut adder = Self {
-            num_inputs,
-            size,
-            input_ports: vec![],
+            input_ports: Box::<Vec<InputPort<T>>>::default(),
             output_ports: vec![],
             cache_entries: vec![],
             context_sizes: ContextSizes::default(),
@@ -199,10 +205,10 @@ impl<T: AtlasScalar> Adder<T> {
         };
 
         let calc = {
-            let self_ptr: *mut Self = &mut adder;
+            let input_ports_calc = adder.input_ports.as_ref() as *const Vec<InputPort<T>>;
             Box::new(
                 move |context: &mut dyn Context<T>, sum: &mut BasicVector<T>| unsafe {
-                    Self::calc_sum(&mut (*self_ptr), context, sum)
+                    Adder::<T>::calc_sum(&(*input_ports_calc), context, sum)
                 },
             )
         };
@@ -215,10 +221,59 @@ impl<T: AtlasScalar> Adder<T> {
         adder
     }
 
-    fn calc_sum(&mut self, context: &mut dyn Context<T>, sum: &mut BasicVector<T>) {
+    fn calc_sum(
+        input_ports: &[InputPort<T>],
+        context: &mut dyn Context<T>,
+        sum: &mut BasicVector<T>,
+    ) {
         VectorBase::fill(sum, &T::zero());
-        for input_port in self.input_ports.iter_mut() {
+        for input_port in input_ports.iter() {
             *sum += input_port.eval::<BasicVector<T>>(context);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_constructor() {
+        let adder = Adder::<f64>::new(2, 3);
+        assert_eq!(System::<f64>::get_input_ports(&adder).len(), 2);
+        assert_eq!(System::<f64>::get_output_ports(&adder).len(), 1);
+    }
+
+    #[test]
+    fn test_create_default_context() {
+        let mut adder = Adder::<f64>::new(2, 3);
+        let _context = adder.create_default_context();
+    }
+
+    #[test]
+    fn test_fix_input_port_values() {
+        let mut adder = Adder::<f64>::new(2, 3);
+        let mut context = adder.create_default_context();
+
+        adder
+            .get_mutable_input_port(&InputPortIndex::new(0))
+            .fix_value(
+                context.as_mut(),
+                BasicVector::<f64>::from_vec(vec![1.0, 2.0, 3.0]),
+            );
+        adder
+            .get_mutable_input_port(&InputPortIndex::new(1))
+            .fix_value(
+                context.as_mut(),
+                BasicVector::<f64>::from_vec(vec![0.5, 1.2, 0.3]),
+            );
+
+        let sum = adder
+            .get_leaf_output_port(&OutputPortIndex::new(0))
+            .eval::<BasicVector<f64>>(context.as_mut());
+        assert_eq!(
+            *sum.get_value(),
+            na::DVector::<f64>::from_vec(vec![1.5, 3.2, 3.3])
+        );
     }
 }

@@ -1,6 +1,7 @@
 use std::any::Any;
+use std::fmt::Debug;
 
-pub trait AbstractValue {
+pub trait AbstractValue: Debug {
     fn as_any(&self) -> &dyn Any;
     fn as_any_mut(&mut self) -> &mut dyn Any;
     fn set_from(&mut self, abstract_value: &dyn AbstractValue);
@@ -13,12 +14,12 @@ impl Default for Box<dyn AbstractValue> {
     }
 }
 
-#[derive(Clone)]
-pub struct Value<T: Clone> {
+#[derive(Clone, Debug)]
+pub struct Value<T: Clone + Debug> {
     value: T,
 }
 
-impl<T: 'static + Clone> Value<T> {
+impl<T: 'static + Clone + Debug> Value<T> {
     pub fn new(value: T) -> Self {
         Value { value }
     }
@@ -27,12 +28,16 @@ impl<T: 'static + Clone> Value<T> {
         &self.value
     }
 
+    pub fn get_mutable_value(&mut self) -> &mut T {
+        &mut self.value
+    }
+
     pub fn set_value(&mut self, value: &T) {
         self.value = value.clone();
     }
 }
 
-impl<T: 'static + Clone> AbstractValue for Value<T> {
+impl<T: 'static + Clone + Debug> AbstractValue for Value<T> {
     fn as_any(&self) -> &dyn Any {
         self
     }

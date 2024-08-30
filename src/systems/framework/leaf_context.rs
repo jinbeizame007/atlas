@@ -50,6 +50,10 @@ impl<T: AtlasScalar> ContextBase for LeafContext<T> {
         &mut self.cache
     }
 
+    fn get_input_port_values(&mut self) -> &mut Vec<Option<FixedInputPortValue>> {
+        &mut self.input_port_values
+    }
+
     fn num_input_ports(&self) -> usize {
         self.input_port_values.len()
     }

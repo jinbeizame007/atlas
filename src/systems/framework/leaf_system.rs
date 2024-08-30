@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 extern crate nalgebra as na;
 
 use crate::common::atlas_scalar::AtlasScalar;
@@ -136,7 +138,7 @@ pub trait LeafSystem<T: AtlasScalar>: System<T> {
         self.create_vector_leaf_output_port(size, Self::make_allocate_callback(model_vector), calc)
     }
 
-    fn make_allocate_callback<OutputType: Clone + 'static>(
+    fn make_allocate_callback<OutputType: Clone + Debug + 'static>(
         model_value: OutputType,
     ) -> Box<AllocateCallback> {
         Box::new(move || {
@@ -181,8 +183,9 @@ pub trait LeafSystem<T: AtlasScalar>: System<T> {
                 let context = leaf_context as &mut dyn Context<T>;
                 let basic_vector = abstract_value
                     .as_any_mut()
-                    .downcast_mut::<BasicVector<T>>()
-                    .unwrap();
+                    .downcast_mut::<Value<BasicVector<T>>>()
+                    .unwrap()
+                    .get_mutable_value();
 
                 (calc)(context, basic_vector)
             },

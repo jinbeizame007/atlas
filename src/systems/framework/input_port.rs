@@ -1,4 +1,5 @@
 use std::any::Any;
+use std::fmt::Debug;
 use std::marker::PhantomData;
 
 use crate::common::atlas_scalar::AtlasScalar;
@@ -68,20 +69,24 @@ impl<T: AtlasScalar> InputPort<T> {
         self.eval = eval;
     }
 
-    pub fn eval<ValueType: Clone + 'static>(&mut self, context: &mut dyn Context<T>) -> ValueType {
+    pub fn eval<ValueType: Clone + Debug + 'static>(
+        &self,
+        context: &mut dyn Context<T>,
+    ) -> ValueType {
         let context_base = context.as_mutable_base();
         let abstract_value = (self.eval)(context_base);
         self.port_eval_cast::<ValueType>(abstract_value.as_ref())
     }
 
-    fn port_eval_cast<ValueType: Clone + 'static>(
+    fn port_eval_cast<ValueType: Clone + Debug + 'static>(
         &self,
         abstract_value: &dyn AbstractValue,
     ) -> ValueType {
         abstract_value
             .as_any()
-            .downcast_ref::<ValueType>()
+            .downcast_ref::<Value<ValueType>>()
             .unwrap()
+            .get_value()
             .clone()
     }
 
@@ -89,7 +94,7 @@ impl<T: AtlasScalar> InputPort<T> {
         self.alloc = alloc;
     }
 
-    pub fn fix_value<'a, ValueType: Clone + 'static>(
+    pub fn fix_value<'a, ValueType: Clone + Debug + 'static>(
         &self,
         context: &'a mut dyn Context<T>,
         value: ValueType,

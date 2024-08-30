@@ -1,8 +1,9 @@
 use std::any::Any;
+use std::fmt::Debug;
 use std::marker::PhantomData;
 
 use crate::common::atlas_scalar::AtlasScalar;
-use crate::common::value::AbstractValue;
+use crate::common::value::{AbstractValue, Value};
 use crate::systems::framework::cache_entry::CacheEntry;
 use crate::systems::framework::context::Context;
 use crate::systems::framework::framework_common::{OutputPortIndex, PortDataType, SystemId};
@@ -73,11 +74,15 @@ impl<T: AtlasScalar> LeafOutputPort<T> {
         }
     }
 
-    pub fn eval<ValueType: Clone + 'static>(&self, context: &mut dyn Context<T>) -> ValueType {
+    pub fn eval<ValueType: Clone + Debug + 'static>(
+        &self,
+        context: &mut dyn Context<T>,
+    ) -> ValueType {
         self.eval_abstract(context)
             .as_any()
-            .downcast_ref::<ValueType>()
+            .downcast_ref::<Value<ValueType>>()
             .unwrap()
+            .get_value()
             .clone()
     }
 
