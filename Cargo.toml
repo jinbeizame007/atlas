@@ -10,3 +10,4 @@ nalgebra = "0.33.0"
 num-traits = "0.2.19"
 proc-macro2 = "1.0.86"
 quote = "1.0.37"
+syn = {version = "2.0.76", features = ["derive"]}
