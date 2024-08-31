@@ -14,6 +14,14 @@ impl<'a, T: AtlasScalar> Subvector<'a, T> {
     pub fn new(vector: na::DVectorViewMut<'a, T>) -> Self {
         Subvector { vector }
     }
+
+    pub fn value(&self) -> &na::DVectorViewMut<'a, T> {
+        &self.vector
+    }
+
+    pub fn value_mut(&mut self) -> &mut na::DVectorViewMut<'a, T> {
+        &mut self.vector
+    }
 }
 
 impl<'a, T: AtlasScalar> Index<usize> for Subvector<'a, T> {
