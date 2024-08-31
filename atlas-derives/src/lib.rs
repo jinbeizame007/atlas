@@ -2,7 +2,7 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{parse_macro_input, Data, DeriveInput, Fields};
 
-#[proc_macro_derive(LeafSystem)]
+#[proc_macro_derive(SystemBase)]
 pub fn derive_system_base(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     let name = &input.ident;
@@ -15,7 +15,7 @@ pub fn derive_system_base(input: TokenStream) -> TokenStream {
         _ => panic!("SystemBase can only be derived for structs"),
     };
 
-    let impl_leaf_system = quote! {
+    let impl_system_base = quote! {
         impl<T: AtlasScalar> SystemBase for #name<T> {
             fn input_ports(&self) -> Vec<&dyn InputPortBase> {
                 self.input_ports
@@ -69,7 +69,25 @@ pub fn derive_system_base(input: TokenStream) -> TokenStream {
                 self.parent_service.as_ref().map(|p| p.as_ref())
             }
         }
+    };
 
+    impl_system_base.into()
+}
+
+#[proc_macro_derive(System)]
+pub fn derive_system(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    let name = &input.ident;
+
+    let _fields = match &input.data {
+        Data::Struct(data) => match &data.fields {
+            Fields::Named(fields) => &fields.named,
+            _ => panic!("SystemBase can only be derived for structs with named fields"),
+        },
+        _ => panic!("SystemBase can only be derived for structs"),
+    };
+
+    let impl_system = quote! {
         impl<T: AtlasScalar> System<T> for #name<T> {
             fn input_ports(&self) -> Vec<&InputPort<T>> {
                 self.input_ports.iter().collect()
@@ -133,7 +151,25 @@ pub fn derive_system_base(input: TokenStream) -> TokenStream {
                 LeafSystem::<T>::set_default_state(self, context)
             }
         }
+    };
 
+    impl_system.into()
+}
+
+#[proc_macro_derive(LeafSystem)]
+pub fn derive_leaf_system(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    let name = &input.ident;
+
+    let _fields = match &input.data {
+        Data::Struct(data) => match &data.fields {
+            Fields::Named(fields) => &fields.named,
+            _ => panic!("SystemBase can only be derived for structs with named fields"),
+        },
+        _ => panic!("SystemBase can only be derived for structs"),
+    };
+
+    let impl_leaf_system = quote! {
         impl<T: AtlasScalar> LeafSystem<T> for #name<T> {
             fn model_input_values(&self) -> &ModelValues {
                 &self.model_input_values
