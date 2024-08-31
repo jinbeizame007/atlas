@@ -70,7 +70,7 @@ pub fn derive_system_base(input: TokenStream) -> TokenStream {
             }
         }
 
-        impl<T: AtlasScalar> System<T> for Adder<T> {
+        impl<T: AtlasScalar> System<T> for #name<T> {
             fn input_ports(&self) -> Vec<&InputPort<T>> {
                 self.input_ports.iter().collect()
             }
@@ -134,7 +134,7 @@ pub fn derive_system_base(input: TokenStream) -> TokenStream {
             }
         }
 
-        impl<T: AtlasScalar> LeafSystem<T> for Adder<T> {
+        impl<T: AtlasScalar> LeafSystem<T> for #name<T> {
             fn model_input_values(&self) -> &ModelValues {
                 &self.model_input_values
             }
