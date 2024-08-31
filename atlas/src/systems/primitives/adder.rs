@@ -56,7 +56,7 @@ impl<T: AtlasScalar> Adder<T> {
             let self_ptr = &*adder as *const Self;
             Box::new(
                 move |context: &mut dyn Context<T>, sum: &mut BasicVector<T>| unsafe {
-                    &(*self_ptr).calc_sum(context, sum);
+                    (*self_ptr).calc_sum(context, sum);
                 },
             )
         };

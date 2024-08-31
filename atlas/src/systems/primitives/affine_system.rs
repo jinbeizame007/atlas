@@ -11,7 +11,7 @@ use crate::systems::framework::continuous_state::ContinuousState;
 use crate::systems::framework::framework_common::InputPortIndex;
 use crate::systems::framework::framework_common::OutputPortIndex;
 use crate::systems::framework::framework_common::{
-    CacheIndex, PortDataType, SystemId, SystemParentServiceInterface,
+    CacheIndex, SystemId, SystemParentServiceInterface,
 };
 use crate::systems::framework::input_port::InputPort;
 use crate::systems::framework::input_port_base::InputPortBase;
@@ -23,7 +23,6 @@ use crate::systems::framework::output_port_base::OutputPortBase;
 use crate::systems::framework::system::System;
 use crate::systems::framework::system_base::ContextSizes;
 use crate::systems::framework::system_base::SystemBase;
-use crate::systems::framework::vector_base::VectorBase;
 
 // TODO: implement
 #[derive(LeafSystem)]
@@ -95,25 +94,25 @@ fn calc_num_states<T: AtlasScalar>(
 ) -> usize {
     let mut num_states = 0;
 
-    if a.len() > 0 {
+    if !a.is_empty() {
         num_states = a.nrows();
         assert_eq!(a.nrows(), a.ncols());
     }
-    if b.len() > 0 {
+    if !b.is_empty() {
         if num_states > 0 {
             assert_eq!(b.nrows(), b.ncols());
         } else {
             num_states = b.nrows();
         }
     }
-    if f0.len() > 0 {
+    if !f0.is_empty() {
         if num_states > 0 {
             assert_eq!(f0.len(), num_states);
         } else {
             num_states = f0.len();
         }
     }
-    if c.len() > 0 {
+    if !c.is_empty() {
         if num_states > 0 {
             assert_eq!(c.ncols(), num_states);
         } else {
@@ -127,10 +126,10 @@ fn calc_num_states<T: AtlasScalar>(
 fn calc_num_inputs<T: AtlasScalar>(b: &na::DMatrix<T>, d: &na::DMatrix<T>) -> usize {
     let mut num_inputs = 0;
 
-    if b.len() > 0 {
+    if !b.is_empty() {
         num_inputs = b.ncols();
     }
-    if d.len() > 0 {
+    if !d.is_empty() {
         if num_inputs > 0 {
             assert_eq!(d.nrows(), d.ncols());
         } else {
@@ -147,17 +146,17 @@ fn calc_num_outputs<T: AtlasScalar>(
     y0: &na::DVector<T>,
 ) -> usize {
     let mut num_outputs = 0;
-    if c.len() > 0 {
+    if !c.is_empty() {
         num_outputs = c.nrows();
     }
-    if d.len() > 0 {
+    if !d.is_empty() {
         if num_outputs > 0 {
             assert_eq!(d.nrows(), d.ncols());
         } else {
             num_outputs = d.nrows();
         }
     }
-    if y0.len() > 0 {
+    if !y0.is_empty() {
         if num_outputs > 0 {
             assert_eq!(y0.len(), num_outputs);
         } else {
