@@ -16,6 +16,7 @@ pub trait Context<T: AtlasScalar>: ContextBase {
         *self.continuous_state_mut() = continuous_state;
     }
     fn continuous_state_vector(&self) -> &dyn VectorBase<T, Output = T>;
+    fn continuous_state_vector_mut(&mut self) -> &mut dyn VectorBase<T, Output = T>;
     fn as_base(&self) -> &dyn ContextBase;
     fn as_mutable_base(&mut self) -> &mut dyn ContextBase;
 }

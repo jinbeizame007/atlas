@@ -1,4 +1,4 @@
-use atlas_derives::LeafSystem;
+use atlas_derives::{LeafSystem, System, SystemBase};
 
 extern crate nalgebra as na;
 
@@ -25,7 +25,7 @@ use crate::systems::framework::system_base::ContextSizes;
 use crate::systems::framework::system_base::SystemBase;
 
 // TODO: implement
-#[derive(LeafSystem)]
+#[derive(LeafSystem, System, SystemBase)]
 pub struct AffineSystem<T: AtlasScalar> {
     a: na::DMatrix<T>,
     b: na::DMatrix<T>,

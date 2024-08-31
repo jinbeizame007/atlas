@@ -114,6 +114,10 @@ impl<T: AtlasScalar> Context<T> for LeafContext<T> {
         self.state.continuous_state().vector()
     }
 
+    fn continuous_state_vector_mut(&mut self) -> &mut dyn VectorBase<T, Output = T> {
+        self.state.continuous_state_mut().vector_mut()
+    }
+
     fn as_base(&self) -> &dyn ContextBase {
         self
     }

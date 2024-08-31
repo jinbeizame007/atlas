@@ -1,4 +1,4 @@
-use atlas_derives::LeafSystem;
+use atlas_derives::{LeafSystem, System, SystemBase};
 
 extern crate nalgebra as na;
 
@@ -25,7 +25,7 @@ use crate::systems::framework::system_base::ContextSizes;
 use crate::systems::framework::system_base::SystemBase;
 use crate::systems::framework::vector_base::VectorBase;
 
-#[derive(LeafSystem)]
+#[derive(LeafSystem, System, SystemBase)]
 pub struct Adder<T: AtlasScalar> {
     input_ports: Vec<InputPort<T>>,
     output_ports: Vec<Box<LeafOutputPort<T>>>,
