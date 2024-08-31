@@ -27,8 +27,7 @@ use crate::systems::framework::vector_base::VectorBase;
 
 #[derive(LeafSystem)]
 pub struct Adder<T: AtlasScalar> {
-    #[allow(clippy::box_collection)]
-    input_ports: Box<Vec<InputPort<T>>>,
+    input_ports: Vec<InputPort<T>>,
     output_ports: Vec<Box<LeafOutputPort<T>>>,
     cache_entries: Vec<CacheEntry>,
     context_sizes: ContextSizes,
@@ -40,9 +39,9 @@ pub struct Adder<T: AtlasScalar> {
 }
 
 impl<T: AtlasScalar> Adder<T> {
-    pub fn new(num_inputs: usize, size: usize) -> Self {
-        let mut adder = Self {
-            input_ports: Box::<Vec<InputPort<T>>>::default(),
+    pub fn new(num_inputs: usize, size: usize) -> Box<Self> {
+        let mut adder = Box::new(Self {
+            input_ports: vec![],
             output_ports: vec![],
             cache_entries: vec![],
             context_sizes: ContextSizes::default(),
@@ -51,13 +50,13 @@ impl<T: AtlasScalar> Adder<T> {
             time_derivatives_cache_index: CacheIndex::new(0),
             model_input_values: ModelValues::default(),
             model_continuous_state_vector: BasicVector::<T>::zeros(0),
-        };
+        });
 
         let calc = {
-            let input_ports_calc = adder.input_ports.as_ref() as *const Vec<InputPort<T>>;
+            let self_ptr = &*adder as *const Self;
             Box::new(
                 move |context: &mut dyn Context<T>, sum: &mut BasicVector<T>| unsafe {
-                    Adder::<T>::calc_sum(&(*input_ports_calc), context, sum)
+                    &(*self_ptr).calc_sum(context, sum);
                 },
             )
         };
@@ -70,13 +69,9 @@ impl<T: AtlasScalar> Adder<T> {
         adder
     }
 
-    fn calc_sum(
-        input_ports: &[InputPort<T>],
-        context: &mut dyn Context<T>,
-        sum: &mut BasicVector<T>,
-    ) {
+    fn calc_sum(&self, context: &mut dyn Context<T>, sum: &mut BasicVector<T>) {
         VectorBase::fill(sum, &T::zero());
-        for input_port in input_ports.iter() {
+        for input_port in self.input_ports.iter() {
             *sum += input_port.eval::<BasicVector<T>>(context);
         }
     }
@@ -89,8 +84,8 @@ mod tests {
     #[test]
     fn test_constructor() {
         let adder = Adder::<f64>::new(2, 3);
-        assert_eq!(System::<f64>::input_ports(&adder).len(), 2);
-        assert_eq!(System::<f64>::output_ports(&adder).len(), 1);
+        assert_eq!(System::<f64>::input_ports(adder.as_ref()).len(), 2);
+        assert_eq!(System::<f64>::output_ports(adder.as_ref()).len(), 1);
     }
 
     #[test]

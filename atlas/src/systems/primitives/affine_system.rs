@@ -36,7 +36,7 @@ pub struct AffineSystem<T: AtlasScalar> {
     y0: na::DVector<T>,
     time_period: f64,
     #[allow(clippy::box_collection)]
-    input_ports: Box<Vec<InputPort<T>>>,
+    input_ports: Vec<InputPort<T>>,
     output_ports: Vec<Box<LeafOutputPort<T>>>,
     cache_entries: Vec<CacheEntry>,
     context_sizes: ContextSizes,
@@ -56,7 +56,7 @@ impl<T: AtlasScalar> AffineSystem<T> {
         d: na::DMatrix<T>,
         y0: na::DVector<T>,
         time_period: f64,
-    ) -> Self {
+    ) -> Box<Self> {
         let num_states = calc_num_states(&a, &b, &f0, &c);
         let num_inputs = calc_num_inputs(&b, &d);
         let num_outputs = calc_num_outputs(&c, &d, &y0);
@@ -64,7 +64,7 @@ impl<T: AtlasScalar> AffineSystem<T> {
         assert!(num_inputs > 0);
         assert!(num_outputs > 0);
 
-        let mut affine_system = Self {
+        let affine_system = Box::new(Self {
             a,
             b,
             f0,
@@ -72,7 +72,7 @@ impl<T: AtlasScalar> AffineSystem<T> {
             d,
             y0,
             time_period,
-            input_ports: Box::<Vec<InputPort<T>>>::default(),
+            input_ports: vec![],
             output_ports: vec![],
             cache_entries: vec![],
             context_sizes: ContextSizes::default(),
@@ -81,7 +81,7 @@ impl<T: AtlasScalar> AffineSystem<T> {
             time_derivatives_cache_index: CacheIndex::new(0),
             model_input_values: ModelValues::default(),
             model_continuous_state_vector: BasicVector::<T>::zeros(0),
-        };
+        });
 
         affine_system
     }
