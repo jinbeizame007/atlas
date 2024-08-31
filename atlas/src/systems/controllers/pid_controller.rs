@@ -1,0 +1,138 @@
+use atlas_derives::LeafSystem;
+
+extern crate nalgebra as na;
+
+use crate::common::atlas_scalar::AtlasScalar;
+use crate::common::value::AbstractValue;
+use crate::systems::framework::basic_vector::BasicVector;
+use crate::systems::framework::cache_entry::CacheEntry;
+use crate::systems::framework::context::Context;
+use crate::systems::framework::continuous_state::ContinuousState;
+use crate::systems::framework::framework_common::InputPortIndex;
+use crate::systems::framework::framework_common::OutputPortIndex;
+use crate::systems::framework::framework_common::{
+    CacheIndex, SystemId, SystemParentServiceInterface,
+};
+use crate::systems::framework::input_port::InputPort;
+use crate::systems::framework::input_port_base::InputPortBase;
+use crate::systems::framework::leaf_output_port::LeafOutputPort;
+use crate::systems::framework::leaf_system::LeafSystem;
+use crate::systems::framework::model_values::ModelValues;
+use crate::systems::framework::output_port::OutputPort;
+use crate::systems::framework::output_port_base::OutputPortBase;
+use crate::systems::framework::system::System;
+use crate::systems::framework::system_base::ContextSizes;
+use crate::systems::framework::system_base::SystemBase;
+
+#[derive(LeafSystem)]
+pub struct PIDController<T: AtlasScalar> {
+    kp: na::DVector<T>,
+    ki: na::DVector<T>,
+    kd: na::DVector<T>,
+    input_port_index_state: InputPortIndex,
+    input_port_index_desired_state: InputPortIndex,
+    output_port_index_control: OutputPortIndex,
+    num_controlled_q: usize,
+    #[allow(clippy::box_collection)]
+    input_ports: Vec<InputPort<T>>,
+    output_ports: Vec<Box<LeafOutputPort<T>>>,
+    cache_entries: Vec<CacheEntry>,
+    context_sizes: ContextSizes,
+    system_id: SystemId,
+    parent_service: Option<Box<dyn SystemParentServiceInterface>>,
+    time_derivatives_cache_index: CacheIndex,
+    model_input_values: ModelValues,
+    model_continuous_state_vector: BasicVector<T>,
+}
+
+impl<T: AtlasScalar> PIDController<T> {
+    pub fn new(kp: na::DVector<T>, ki: na::DVector<T>, kd: na::DVector<T>) -> Box<Self> {
+        let num_controlled_q = kp.len();
+
+        let mut pid_controller = Box::new(Self {
+            kp,
+            ki,
+            kd,
+            input_port_index_state: InputPortIndex::default(),
+            input_port_index_desired_state: InputPortIndex::default(),
+            output_port_index_control: OutputPortIndex::default(),
+            num_controlled_q,
+            input_ports: vec![],
+            output_ports: vec![],
+            cache_entries: vec![],
+            context_sizes: ContextSizes::default(),
+            system_id: SystemId::new(0),
+            parent_service: None,
+            time_derivatives_cache_index: CacheIndex::new(0),
+            model_input_values: ModelValues::default(),
+            model_continuous_state_vector: BasicVector::<T>::zeros(0),
+        });
+
+        pid_controller.declare_continuous_state(num_controlled_q, 0, 0);
+
+        let calc = {
+            let self_ptr = &*pid_controller as *const Self;
+            Box::new(
+                move |context: &mut dyn Context<T>, control: &mut BasicVector<T>| unsafe {
+                    (*self_ptr).calc_control(context, control);
+                },
+            )
+        };
+
+        pid_controller.output_port_index_control = pid_controller
+            .declare_vector_output_port(num_controlled_q, calc)
+            .index()
+            .clone();
+
+        pid_controller.input_port_index_state = pid_controller
+            .declare_vector_input_port(num_controlled_q * 2)
+            .index()
+            .clone();
+
+        pid_controller.input_port_index_desired_state = pid_controller
+            .declare_vector_input_port(num_controlled_q * 2)
+            .index()
+            .clone();
+
+        pid_controller
+    }
+
+    pub fn calc_control(&self, context: &mut dyn Context<T>, control: &mut BasicVector<T>) {
+        let state = self
+            .input_port_estimated_state()
+            .eval::<BasicVector<T>>(context);
+        let desired_state = self
+            .input_port_desired_state()
+            .eval::<BasicVector<T>>(context);
+
+        let controlled_state_diff = &desired_state - &state;
+
+        let integrated_controlled_state_diff =
+            context.continuous_state_mut().generalized_position_mut();
+
+        let control_vector = self
+            .kp
+            .component_mul(&controlled_state_diff.value().rows(0, self.num_controlled_q))
+            + self
+                .ki
+                .component_mul(integrated_controlled_state_diff.value())
+            + self.kd.component_mul(
+                &controlled_state_diff
+                    .value()
+                    .rows(self.num_controlled_q, self.num_controlled_q),
+            );
+        control.set_value(&control_vector);
+    }
+
+    fn input_port_estimated_state(&self) -> &InputPort<T> {
+        &self.input_ports[&self.input_port_index_state]
+    }
+
+    fn input_port_desired_state(&self) -> &InputPort<T> {
+        &self.input_ports[&self.input_port_index_desired_state]
+    }
+
+    fn output_port_control(&self) -> &LeafOutputPort<T> {
+        &self.output_ports[&self.output_port_index_control]
+    }
+}
