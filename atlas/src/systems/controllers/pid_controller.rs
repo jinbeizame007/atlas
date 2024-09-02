@@ -1,4 +1,4 @@
-use atlas_derives::{LeafSystem, System, SystemBase};
+use atlas_derives::{LeafSystem, SystemBase};
 
 extern crate nalgebra as na;
 
@@ -15,11 +15,15 @@ use crate::systems::framework::framework_common::{
 };
 use crate::systems::framework::input_port::InputPort;
 use crate::systems::framework::input_port_base::InputPortBase;
+use crate::systems::framework::leaf_context::LeafContext;
+use crate::systems::framework::leaf_continuous_state::LeafContinuousState;
 use crate::systems::framework::leaf_output_port::LeafOutputPort;
+use crate::systems::framework::leaf_state::LeafState;
 use crate::systems::framework::leaf_system::LeafSystem;
 use crate::systems::framework::model_values::ModelValues;
 use crate::systems::framework::output_port::OutputPort;
 use crate::systems::framework::output_port_base::OutputPortBase;
+use crate::systems::framework::state::State;
 use crate::systems::framework::system::System;
 use crate::systems::framework::system_base::ContextSizes;
 use crate::systems::framework::system_base::SystemBase;
@@ -73,7 +77,7 @@ impl<T: AtlasScalar> PIDController<T> {
         let calc = {
             let self_ptr = &*pid_controller as *const Self;
             Box::new(
-                move |context: &mut dyn Context<T>, control: &mut BasicVector<T>| unsafe {
+                move |context: &mut LeafContext<T>, control: &mut BasicVector<T>| unsafe {
                     (*self_ptr).calc_control(context, control);
                 },
             )
@@ -99,28 +103,28 @@ impl<T: AtlasScalar> PIDController<T> {
 
     pub fn do_calc_time_derivatives(
         &mut self,
-        context: &mut dyn Context<T>,
-        derivatives: &mut ContinuousState<T>,
+        context: &mut LeafContext<T>,
+        derivatives: &mut LeafContinuousState<T>,
     ) {
         let state = self
             .input_port_estimated_state()
-            .eval::<BasicVector<T>>(context);
+            .eval::<LeafState<T>, BasicVector<T>>(context);
         let desired_state = self
             .input_port_desired_state()
-            .eval::<BasicVector<T>>(context);
+            .eval::<LeafState<T>, BasicVector<T>>(context);
 
         let derivatives_vector = derivatives.vector_mut();
         let controlled_state_diff = &desired_state - &state;
         derivatives_vector.set_from_vector(controlled_state_diff.value());
     }
 
-    pub fn calc_control(&self, context: &mut dyn Context<T>, control: &mut BasicVector<T>) {
+    pub fn calc_control(&self, context: &mut LeafContext<T>, control: &mut BasicVector<T>) {
         let state = self
             .input_port_estimated_state()
-            .eval::<BasicVector<T>>(context);
+            .eval::<LeafState<T>, BasicVector<T>>(context);
         let desired_state = self
             .input_port_desired_state()
-            .eval::<BasicVector<T>>(context);
+            .eval::<LeafState<T>, BasicVector<T>>(context);
 
         let controlled_state_diff = &desired_state - &state;
 
@@ -141,7 +145,7 @@ impl<T: AtlasScalar> PIDController<T> {
         control.set_value(&control_vector);
     }
 
-    pub fn set_integral_value(&self, context: &mut dyn Context<T>, value: &na::DVector<T>) {
+    pub fn set_integral_value(&self, context: &mut LeafContext<T>, value: &na::DVector<T>) {
         let integrated_controlled_state_diff = context.continuous_state_vector_mut();
         integrated_controlled_state_diff.set_from_vector(value)
     }
@@ -160,6 +164,8 @@ impl<T: AtlasScalar> PIDController<T> {
 }
 
 impl<T: AtlasScalar> System<T> for PIDController<T> {
+    type CN = LeafContext<T>;
+
     fn input_ports(&self) -> Vec<&InputPort<T>> {
         self.input_ports.iter().collect()
     }
@@ -180,25 +186,28 @@ impl<T: AtlasScalar> System<T> for PIDController<T> {
         self.input_ports.push(input_port);
     }
 
-    fn output_ports(&self) -> Vec<&dyn OutputPort<T>> {
+    fn output_ports(&self) -> Vec<&dyn OutputPort<T, CN = Self::CN>> {
         self.output_ports
             .iter()
-            .map(|p| p.as_ref() as &dyn OutputPort<T>)
+            .map(|p| p.as_ref() as &dyn OutputPort<T, CN = Self::CN>)
             .collect()
     }
 
-    fn output_ports_mut(&mut self) -> Vec<&mut dyn OutputPort<T>> {
+    fn output_ports_mut(&mut self) -> Vec<&mut dyn OutputPort<T, CN = Self::CN>> {
         self.output_ports
             .iter_mut()
-            .map(|p| p.as_mut() as &mut dyn OutputPort<T>)
+            .map(|p| p.as_mut() as &mut dyn OutputPort<T, CN = Self::CN>)
             .collect()
     }
 
-    fn output_port(&self, index: &OutputPortIndex) -> &dyn OutputPort<T> {
+    fn output_port(&self, index: &OutputPortIndex) -> &dyn OutputPort<T, CN = Self::CN> {
         self.output_ports[index].as_ref()
     }
 
-    fn output_port_mut(&mut self, index: &OutputPortIndex) -> &mut dyn OutputPort<T> {
+    fn output_port_mut(
+        &mut self,
+        index: &OutputPortIndex,
+    ) -> &mut dyn OutputPort<T, CN = Self::CN> {
         self.output_ports[index].as_mut()
     }
 
@@ -206,7 +215,7 @@ impl<T: AtlasScalar> System<T> for PIDController<T> {
         &self.time_derivatives_cache_index
     }
 
-    fn allocate_context(&self) -> Box<dyn Context<T>> {
+    fn allocate_context(&self) -> Box<Self::CN> {
         LeafSystem::<T>::allocate_context(self)
     }
 
@@ -214,18 +223,18 @@ impl<T: AtlasScalar> System<T> for PIDController<T> {
         LeafSystem::<T>::do_allocate_input(self, input_port)
     }
 
-    fn allocate_time_derivatives(&mut self) -> ContinuousState<T> {
+    fn allocate_time_derivatives(&mut self) -> Box<<<Self::CN as Context<T>>::S as State<T>>::CS> {
         LeafSystem::<T>::allocate_time_derivatives(self)
     }
 
-    fn set_default_state(&self, context: &mut dyn Context<T>) {
+    fn set_default_state(&self, context: &mut Self::CN) {
         LeafSystem::<T>::set_default_state(self, context)
     }
 
     fn do_calc_time_derivatives(
         &mut self,
-        context: &mut dyn Context<T>,
-        derivatives: &mut ContinuousState<T>,
+        context: &mut Self::CN,
+        derivatives: &mut <<Self::CN as Context<T>>::S as State<T>>::CS,
     ) {
         PIDController::<T>::do_calc_time_derivatives(self, context, derivatives)
     }

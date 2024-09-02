@@ -7,7 +7,6 @@ use crate::common::value::AbstractValue;
 use crate::systems::framework::basic_vector::BasicVector;
 use crate::systems::framework::cache_entry::CacheEntry;
 use crate::systems::framework::context::Context;
-use crate::systems::framework::continuous_state::ContinuousState;
 use crate::systems::framework::framework_common::InputPortIndex;
 use crate::systems::framework::framework_common::OutputPortIndex;
 use crate::systems::framework::framework_common::{
@@ -15,11 +14,14 @@ use crate::systems::framework::framework_common::{
 };
 use crate::systems::framework::input_port::InputPort;
 use crate::systems::framework::input_port_base::InputPortBase;
+use crate::systems::framework::leaf_context::LeafContext;
 use crate::systems::framework::leaf_output_port::LeafOutputPort;
+use crate::systems::framework::leaf_state::LeafState;
 use crate::systems::framework::leaf_system::LeafSystem;
 use crate::systems::framework::model_values::ModelValues;
 use crate::systems::framework::output_port::OutputPort;
 use crate::systems::framework::output_port_base::OutputPortBase;
+use crate::systems::framework::state::State;
 use crate::systems::framework::system::System;
 use crate::systems::framework::system_base::ContextSizes;
 use crate::systems::framework::system_base::SystemBase;
@@ -55,7 +57,7 @@ impl<T: AtlasScalar> Adder<T> {
         let calc = {
             let self_ptr = &*adder as *const Self;
             Box::new(
-                move |context: &mut dyn Context<T>, sum: &mut BasicVector<T>| unsafe {
+                move |context: &mut LeafContext<T>, sum: &mut BasicVector<T>| unsafe {
                     (*self_ptr).calc_sum(context, sum);
                 },
             )
@@ -69,10 +71,10 @@ impl<T: AtlasScalar> Adder<T> {
         adder
     }
 
-    fn calc_sum(&self, context: &mut dyn Context<T>, sum: &mut BasicVector<T>) {
+    fn calc_sum(&self, context: &mut <Self as System<T>>::CN, sum: &mut BasicVector<T>) {
         VectorBase::fill(sum, &T::zero());
         for input_port in self.input_ports.iter() {
-            *sum += input_port.eval::<BasicVector<T>>(context);
+            *sum += input_port.eval::<LeafState<T>, BasicVector<T>>(context);
         }
     }
 }
