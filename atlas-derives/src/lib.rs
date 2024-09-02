@@ -89,6 +89,8 @@ pub fn derive_system(input: TokenStream) -> TokenStream {
 
     let impl_system = quote! {
         impl<T: AtlasScalar> System<T> for #name<T> {
+            type CN = LeafContext<T>;
+
             fn input_ports(&self) -> Vec<&InputPort<T>> {
                 self.input_ports.iter().collect()
             }
@@ -109,25 +111,28 @@ pub fn derive_system(input: TokenStream) -> TokenStream {
                 self.input_ports.push(input_port);
             }
 
-            fn output_ports(&self) -> Vec<&dyn OutputPort<T>> {
+            fn output_ports(&self) -> Vec<&dyn OutputPort<T, CN = Self::CN>> {
                 self.output_ports
                     .iter()
-                    .map(|p| p.as_ref() as &dyn OutputPort<T>)
+                    .map(|p| p.as_ref() as &dyn OutputPort<T, CN = Self::CN>)
                     .collect()
             }
 
-            fn output_ports_mut(&mut self) -> Vec<&mut dyn OutputPort<T>> {
+            fn output_ports_mut(&mut self) -> Vec<&mut dyn OutputPort<T, CN = Self::CN>> {
                 self.output_ports
                     .iter_mut()
-                    .map(|p| p.as_mut() as &mut dyn OutputPort<T>)
+                    .map(|p| p.as_mut() as &mut dyn OutputPort<T, CN = Self::CN>)
                     .collect()
             }
 
-            fn output_port(&self, index: &OutputPortIndex) -> &dyn OutputPort<T> {
+            fn output_port(&self, index: &OutputPortIndex) -> &dyn OutputPort<T, CN = Self::CN> {
                 self.output_ports[index].as_ref()
             }
 
-            fn output_port_mut(&mut self, index: &OutputPortIndex) -> &mut dyn OutputPort<T> {
+            fn output_port_mut(
+                &mut self,
+                index: &OutputPortIndex,
+            ) -> &mut dyn OutputPort<T, CN = Self::CN> {
                 self.output_ports[index].as_mut()
             }
 
@@ -135,7 +140,7 @@ pub fn derive_system(input: TokenStream) -> TokenStream {
                 &self.time_derivatives_cache_index
             }
 
-            fn allocate_context(&self) -> Box<dyn Context<T>> {
+            fn allocate_context(&self) -> Box<Self::CN> {
                 LeafSystem::<T>::allocate_context(self)
             }
 
@@ -143,11 +148,11 @@ pub fn derive_system(input: TokenStream) -> TokenStream {
                 LeafSystem::<T>::do_allocate_input(self, input_port)
             }
 
-            fn allocate_time_derivatives(&mut self) -> ContinuousState<T> {
+            fn allocate_time_derivatives(&mut self) -> Box<<<Self::CN as Context<T>>::S as State<T>>::CS> {
                 LeafSystem::<T>::allocate_time_derivatives(self)
             }
 
-            fn set_default_state(&self, context: &mut dyn Context<T>) {
+            fn set_default_state(&self, context: &mut Self::CN) {
                 LeafSystem::<T>::set_default_state(self, context)
             }
         }
