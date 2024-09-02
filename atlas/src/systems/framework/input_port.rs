@@ -9,6 +9,7 @@ use crate::systems::framework::fixed_input_port_value::FixedInputPortValue;
 use crate::systems::framework::framework_common::{InputPortIndex, PortDataType, SystemId};
 use crate::systems::framework::input_port_base::{EvalAbstractCallback, InputPortBase};
 use crate::systems::framework::port_base::PortBase;
+use crate::systems::framework::state::State;
 use crate::systems::framework::value_producer::AllocateCallback;
 
 pub struct InputPort<T: AtlasScalar> {
@@ -69,9 +70,9 @@ impl<T: AtlasScalar> InputPort<T> {
         self.eval = eval;
     }
 
-    pub fn eval<ValueType: Clone + Debug + 'static>(
+    pub fn eval<S: State<T> + 'static, ValueType: Clone + Debug + 'static>(
         &self,
-        context: &mut dyn Context<T>,
+        context: &mut dyn Context<T, S = S>,
     ) -> ValueType {
         let context_base = context.as_mutable_base();
         let abstract_value = (self.eval)(context_base);
@@ -96,7 +97,7 @@ impl<T: AtlasScalar> InputPort<T> {
 
     pub fn fix_value<'a, ValueType: Clone + Debug + 'static>(
         &self,
-        context: &'a mut dyn Context<T>,
+        context: &'a mut impl Context<T>,
         value: ValueType,
     ) -> Option<&'a FixedInputPortValue> {
         let abstract_value = Value::<ValueType>::new(value);

@@ -8,6 +8,7 @@ use crate::systems::framework::context_base::ContextBase;
 use crate::systems::framework::continuous_state::ContinuousState;
 use crate::systems::framework::fixed_input_port_value::FixedInputPortValue;
 use crate::systems::framework::framework_common::SystemId;
+use crate::systems::framework::leaf_state::LeafState;
 use crate::systems::framework::state::State;
 use crate::systems::framework::vector_base::VectorBase;
 
@@ -17,7 +18,7 @@ pub struct LeafContext<T: AtlasScalar> {
     parent: Option<Arc<Mutex<dyn ContextBase>>>,
     cache: Cache,
     time: T,
-    state: State<T>,
+    state: Box<LeafState<T>>,
     input_port_values: Vec<Option<FixedInputPortValue>>,
     is_context_base_initialized: bool,
 }
@@ -82,19 +83,21 @@ impl<T: AtlasScalar> ContextBase for LeafContext<T> {
 }
 
 impl<T: AtlasScalar> Context<T> for LeafContext<T> {
+    type S = LeafState<T>;
+
     fn time(&self) -> &T {
         &self.time
     }
 
-    fn state(&self) -> &State<T> {
+    fn state(&self) -> &Self::S {
         &self.state
     }
 
-    fn state_mut(&mut self) -> &mut State<T> {
+    fn state_mut(&mut self) -> &mut Self::S {
         &mut self.state
     }
 
-    fn init_continuous_state(&mut self, continuous_state: ContinuousState<T>) {
+    fn init_continuous_state(&mut self, continuous_state: Box<<Self::S as State<T>>::CS>) {
         self.set_continuous_state(continuous_state);
     }
 
@@ -102,11 +105,11 @@ impl<T: AtlasScalar> Context<T> for LeafContext<T> {
         self.state.continuous_state().size()
     }
 
-    fn continuous_state(&self) -> &ContinuousState<T> {
+    fn continuous_state(&self) -> &<Self::S as State<T>>::CS {
         self.state.continuous_state()
     }
 
-    fn continuous_state_mut(&mut self) -> &mut ContinuousState<T> {
+    fn continuous_state_mut(&mut self) -> &mut <Self::S as State<T>>::CS {
         self.state.continuous_state_mut()
     }
 
@@ -123,6 +126,16 @@ impl<T: AtlasScalar> Context<T> for LeafContext<T> {
     }
 
     fn as_mutable_base(&mut self) -> &mut dyn ContextBase {
+        self
+    }
+}
+
+impl<T: AtlasScalar> LeafContext<T> {
+    pub fn as_context(&self) -> &dyn Context<T, S = LeafState<T>> {
+        self
+    }
+
+    pub fn as_context_mut(&mut self) -> &mut dyn Context<T, S = LeafState<T>> {
         self
     }
 }

@@ -7,6 +7,8 @@ use crate::common::value::{AbstractValue, Value};
 use crate::systems::framework::cache_entry::CacheEntry;
 use crate::systems::framework::context::Context;
 use crate::systems::framework::framework_common::{OutputPortIndex, PortDataType, SystemId};
+use crate::systems::framework::leaf_context::LeafContext;
+use crate::systems::framework::leaf_state::LeafState;
 use crate::systems::framework::output_port::OutputPort;
 use crate::systems::framework::output_port_base::OutputPortBase;
 use crate::systems::framework::port_base::PortBase;
@@ -41,17 +43,19 @@ impl<T: AtlasScalar> OutputPortBase for LeafOutputPort<T> {
 }
 
 impl<T: AtlasScalar> OutputPort<T> for LeafOutputPort<T> {
+    type CN = LeafContext<T>;
+
     fn allocate(&mut self) -> Box<dyn AbstractValue> {
         self.cache_entry().allocate()
     }
 
-    fn eval_abstract(&self, context: &mut dyn Context<T>) -> Box<dyn AbstractValue> {
+    fn eval_abstract(&self, context: &mut Self::CN) -> Box<dyn AbstractValue> {
         self.cache_entry()
             .eval_abstract(context.as_mutable_base())
             .clone_box()
     }
 
-    fn calc(&self, context: &mut dyn Context<T>, value: &mut dyn AbstractValue) {
+    fn calc(&self, context: &mut Self::CN, value: &mut dyn AbstractValue) {
         self.cache_entry().calc(context.as_mutable_base(), value)
     }
 }
@@ -76,7 +80,7 @@ impl<T: AtlasScalar> LeafOutputPort<T> {
 
     pub fn eval<ValueType: Clone + Debug + 'static>(
         &self,
-        context: &mut dyn Context<T>,
+        context: &mut <Self as OutputPort<T>>::CN,
     ) -> ValueType {
         self.eval_abstract(context)
             .as_any()

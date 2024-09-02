@@ -15,6 +15,7 @@ use crate::systems::framework::framework_common::{
 use crate::systems::framework::input_port::InputPort;
 use crate::systems::framework::input_port_base::InputPortBase;
 use crate::systems::framework::leaf_context::LeafContext;
+use crate::systems::framework::leaf_continuous_state::LeafContinuousState;
 use crate::systems::framework::leaf_output_port::LeafOutputPort;
 use crate::systems::framework::model_values::ModelValues;
 use crate::systems::framework::port_base::PortBase;
@@ -64,17 +65,17 @@ pub trait LeafSystem<T: AtlasScalar>: System<T> {
         LeafContext::<T>::default()
     }
 
-    fn allocate_time_derivatives(&mut self) -> ContinuousState<T> {
+    fn allocate_time_derivatives(&mut self) -> Box<LeafContinuousState<T>> {
         self.allocate_continuous_state()
     }
-    fn allocate_continuous_state(&self) -> ContinuousState<T> {
+    fn allocate_continuous_state(&self) -> Box<LeafContinuousState<T>> {
         let context_sizes = self.context_sizes();
-        let mut continuous_state = ContinuousState::<T>::new(
+        let mut continuous_state = Box::new(LeafContinuousState::<T>::new(
             Box::new(self.model_continuous_state_vector().clone()),
             context_sizes.num_generalized_positions,
             context_sizes.num_generalized_velocities,
             context_sizes.num_misc_continuous_states,
-        );
+        ));
         continuous_state.set_system_id(self.system_id().clone());
 
         continuous_state
@@ -84,7 +85,7 @@ pub trait LeafSystem<T: AtlasScalar>: System<T> {
         *self.model_continuous_state_vector_mut() = model_continuous_state_vector;
     }
 
-    fn set_default_state(&self, context: &mut dyn Context<T>) {
+    fn set_default_state(&self, context: &mut Self::CN) {
         self.validate_context(context.as_base());
 
         let continuous_state = context.continuous_state_mut();
@@ -132,7 +133,7 @@ pub trait LeafSystem<T: AtlasScalar>: System<T> {
     fn declare_vector_output_port(
         &mut self,
         size: usize,
-        calc: Box<dyn Fn(&mut dyn Context<T>, &mut BasicVector<T>)>,
+        calc: Box<dyn Fn(&mut Self::CN, &mut BasicVector<T>)>,
     ) -> &LeafOutputPort<T> {
         let model_vector = BasicVector::<T>::zeros(size);
         self.create_vector_leaf_output_port(size, Self::make_allocate_callback(model_vector), calc)
@@ -150,16 +151,16 @@ pub trait LeafSystem<T: AtlasScalar>: System<T> {
     fn declare_abstract_output_port<OutputType>(
         &mut self,
         alloc: Box<AllocateCallback>,
-        calc: Box<dyn Fn(&mut dyn Context<T>, &mut dyn AbstractValue)>,
+        calc: Box<dyn Fn(&mut Self::CN, &mut dyn AbstractValue)>,
     ) -> &LeafOutputPort<T> {
         let calc_ = Box::new(
             move |context_base: &mut dyn ContextBase, abstract_value: &mut dyn AbstractValue| {
                 let leaf_context = context_base
                     .as_any_mut()
-                    .downcast_mut::<LeafContext<T>>()
+                    .downcast_mut::<Self::CN>()
                     .unwrap();
-                let context = leaf_context as &mut dyn Context<T>;
-                (calc)(context, abstract_value)
+                // let context = leaf_context.as_context_mut();
+                (calc)(leaf_context, abstract_value)
             },
         );
         let value_producer = ValueProducer::new(alloc, calc_);
@@ -172,22 +173,22 @@ pub trait LeafSystem<T: AtlasScalar>: System<T> {
         &mut self,
         fixed_size: usize,
         alloc: Box<AllocateCallback>,
-        calc: Box<dyn Fn(&mut dyn Context<T>, &mut BasicVector<T>)>,
+        calc: Box<dyn Fn(&mut Self::CN, &mut BasicVector<T>)>,
     ) -> &LeafOutputPort<T> {
         let cache_calc = Box::new(
             move |context_base: &mut dyn ContextBase, abstract_value: &mut dyn AbstractValue| {
                 let leaf_context = context_base
                     .as_any_mut()
-                    .downcast_mut::<LeafContext<T>>()
+                    .downcast_mut::<Self::CN>()
                     .unwrap();
-                let context = leaf_context as &mut dyn Context<T>;
+                // let context = leaf_context.as_context_mut();
                 let basic_vector = abstract_value
                     .as_any_mut()
                     .downcast_mut::<Value<BasicVector<T>>>()
                     .unwrap()
                     .value_mut();
 
-                (calc)(context, basic_vector)
+                (calc)(leaf_context, basic_vector)
             },
         );
         let value_producer = ValueProducer::new(alloc, cache_calc);
