@@ -5,65 +5,33 @@ use crate::systems::framework::framework_common::SystemId;
 use crate::systems::framework::subvector::Subvector;
 use crate::systems::framework::vector_base::VectorBase;
 
-#[derive(Default)]
-pub struct ContinuousState<T: AtlasScalar> {
-    state: Box<dyn VectorBase<T, Output = T>>,
-    num_q: usize,
-    num_v: usize,
-    num_z: usize,
-    system_id: SystemId,
-}
+pub trait ContinuousState<T: AtlasScalar>: Default {
+    fn size(&self) -> usize;
+    fn system_id(&self) -> &SystemId;
+    fn set_system_id(&mut self, system_id: SystemId);
 
-impl<T: AtlasScalar> ContinuousState<T> {
-    pub fn new(
-        state: Box<dyn VectorBase<T, Output = T>>,
-        num_q: usize,
-        num_v: usize,
-        num_z: usize,
-    ) -> Self {
-        ContinuousState::<T> {
-            state,
-            num_q,
-            num_v,
-            num_z,
-            system_id: SystemId::new(0),
-        }
+    fn num_q(&self) -> usize;
+    fn num_v(&self) -> usize;
+    fn num_z(&self) -> usize;
+    fn vector(&self) -> &dyn VectorBase<T, Output = T>;
+    fn vector_mut(&mut self) -> &mut dyn VectorBase<T, Output = T>;
+    fn set_from_vector(&mut self, value: &na::DVector<T>) {
+        self.vector_mut().set_from_vector(value);
     }
 
-    pub fn size(&self) -> usize {
-        self.state.size()
+    fn generalized_position_mut(&mut self) -> Subvector<T> {
+        let num_q = self.num_q();
+        self.vector_mut().subvector_mut(0, num_q)
     }
-
-    pub fn system_id(&self) -> &SystemId {
-        &self.system_id
+    fn generalized_velocity_mut(&mut self) -> Subvector<T> {
+        let num_q = self.num_q();
+        let num_v = self.num_v();
+        self.vector_mut().subvector_mut(num_q, num_v)
     }
-
-    pub fn set_system_id(&mut self, system_id: SystemId) {
-        self.system_id = system_id;
-    }
-
-    pub fn set_from_vector(&mut self, value: &na::DVector<T>) {
-        self.state.set_from_vector(value);
-    }
-
-    pub fn vector(&self) -> &dyn VectorBase<T, Output = T> {
-        self.state.as_ref()
-    }
-
-    pub fn vector_mut(&mut self) -> &mut dyn VectorBase<T, Output = T> {
-        self.state.as_mut()
-    }
-
-    pub fn generalized_position_mut(&mut self) -> Subvector<T> {
-        self.state.subvector_mut(0, self.num_q)
-    }
-
-    pub fn generalized_velocity_mut(&mut self) -> Subvector<T> {
-        self.state.subvector_mut(self.num_q, self.num_v)
-    }
-
-    pub fn misc_continuous_state_mut(&mut self) -> Subvector<T> {
-        self.state
-            .subvector_mut(self.num_q + self.num_v, self.num_z)
+    fn misc_continuous_state_mut(&mut self) -> Subvector<T> {
+        let num_q = self.num_q();
+        let num_v = self.num_v();
+        let num_z = self.num_z();
+        self.vector_mut().subvector_mut(num_q + num_v, num_z)
     }
 }
