@@ -3,6 +3,7 @@ use crate::common::value::AbstractValue;
 use crate::systems::framework::basic_vector::BasicVector;
 use crate::systems::framework::cache_entry::CacheEntry;
 use crate::systems::framework::context::Context;
+use crate::systems::framework::context_base::ContextBase;
 use crate::systems::framework::continuous_state::ContinuousState;
 use crate::systems::framework::framework_common::{
     CacheIndex, InputPortIndex, OutputPortIndex, PortDataType,
@@ -11,27 +12,29 @@ use crate::systems::framework::input_port::InputPort;
 use crate::systems::framework::input_port_base::InputPortBase;
 use crate::systems::framework::output_port::OutputPort;
 use crate::systems::framework::port_base::PortBase;
+use crate::systems::framework::state::State;
 use crate::systems::framework::system_base::SystemBase;
-
-use super::context_base::ContextBase;
 
 pub trait System<T: AtlasScalar>: SystemBase
 where
     Self: 'static,
 {
+    type CN: Context<T>;
+
     // Getters and setters without default implementations
     fn input_ports(&self) -> Vec<&InputPort<T>>;
     fn input_ports_mut(&mut self) -> Vec<&mut InputPort<T>>;
     fn input_port(&self, index: &InputPortIndex) -> &InputPort<T>;
     fn input_port_mut(&mut self, index: &InputPortIndex) -> &mut InputPort<T>;
     fn add_input_port(&mut self, input_port: InputPort<T>);
-    fn output_ports(&self) -> Vec<&dyn OutputPort<T>>;
-    fn output_ports_mut(&mut self) -> Vec<&mut dyn OutputPort<T>>;
-    fn output_port(&self, index: &OutputPortIndex) -> &dyn OutputPort<T>;
-    fn output_port_mut(&mut self, index: &OutputPortIndex) -> &mut dyn OutputPort<T>;
+    fn output_ports(&self) -> Vec<&dyn OutputPort<T, CN = Self::CN>>;
+    fn output_ports_mut(&mut self) -> Vec<&mut dyn OutputPort<T, CN = Self::CN>>;
+    fn output_port(&self, index: &OutputPortIndex) -> &dyn OutputPort<T, CN = Self::CN>;
+    fn output_port_mut(&mut self, index: &OutputPortIndex)
+        -> &mut dyn OutputPort<T, CN = Self::CN>;
 
     // Resource allocation and initializaion
-    fn allocate_context(&self) -> Box<dyn Context<T>>;
+    fn allocate_context(&self) -> Box<Self::CN>;
     // fn allocate_context(&mut self) -> Box<dyn Context<T>> {
     //     self.do_allocate_context().as_ref().
     // }
@@ -84,24 +87,24 @@ where
     fn allocate_input_abstract(&self, input_port: &InputPort<T>) -> Box<dyn AbstractValue> {
         self.do_allocate_input(input_port)
     }
-    fn allocate_time_derivatives(&mut self) -> ContinuousState<T>;
-    fn create_default_context(&mut self) -> Box<dyn Context<T>> {
+    fn allocate_time_derivatives(&mut self) -> Box<<<Self::CN as Context<T>>::S as State<T>>::CS>;
+    fn create_default_context(&mut self) -> Box<Self::CN> {
         let mut context = self.allocate_context();
         self.set_default_context(context.as_mut());
         context
     }
 
     // TODO: Consider inputting &dyn Context<T> and &mut State<T>
-    fn set_default_state(&self, context: &mut dyn Context<T>);
-    fn set_default_context(&mut self, context: &mut dyn Context<T>) {
+    fn set_default_state(&self, context: &mut Self::CN);
+    fn set_default_context(&mut self, context: &mut Self::CN) {
         self.set_default_state(context);
     }
 
     // Cached evaluations
     fn eval_time_derivatives<'a>(
         &mut self,
-        context: &'a mut dyn Context<T>,
-    ) -> &'a ContinuousState<T> {
+        context: &'a mut Self::CN,
+    ) -> &'a <<Self::CN as Context<T>>::S as State<T>>::CS {
         let cache_entry = self.time_derivatives_cache_entry();
 
         cache_entry.eval(context.as_mutable_base())
@@ -114,8 +117,8 @@ where
     // Calculations
     fn calc_time_derivatives(
         &mut self,
-        context: &mut dyn Context<T>,
-        derivatives: Option<&mut ContinuousState<T>>,
+        context: &mut Self::CN,
+        derivatives: Option<&mut <<Self::CN as Context<T>>::S as State<T>>::CS>,
     ) {
         self.validate_context(context.as_base());
         self.do_calc_time_derivatives(context, derivatives.unwrap());
@@ -123,8 +126,8 @@ where
 
     fn do_calc_time_derivatives(
         &mut self,
-        _context: &mut dyn Context<T>,
-        derivatives: &mut ContinuousState<T>,
+        _context: &mut Self::CN,
+        derivatives: &mut <<Self::CN as Context<T>>::S as State<T>>::CS,
     ) {
         // This default implementation is only valid for Systems with no continuous
         // state. Other Systems must override this method!
