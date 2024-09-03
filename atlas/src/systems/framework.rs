@@ -5,6 +5,7 @@ pub mod context;
 pub mod context_base;
 pub mod continuous_state;
 pub mod diagram;
+pub mod diagram_builder;
 pub mod diagram_context;
 pub mod diagram_continuous_state;
 pub mod diagram_state;

@@ -15,13 +15,13 @@ pub enum SystemPtr<T: AtlasScalar> {
 }
 
 #[derive(Clone)]
-struct InputPortLocator<T: AtlasScalar> {
+pub struct InputPortLocator<T: AtlasScalar> {
     pub system_ptr: SystemPtr<T>,
     pub input_port_index: InputPortIndex,
 }
 
 #[derive(Clone)]
-struct OutputPortLocator<T: AtlasScalar> {
+pub struct OutputPortLocator<T: AtlasScalar> {
     pub system_ptr: SystemPtr<T>,
     pub input_port_index: OutputPortIndex,
 }
