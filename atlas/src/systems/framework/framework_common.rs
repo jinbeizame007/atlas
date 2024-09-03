@@ -15,6 +15,12 @@ pub type CacheIndex = TypeSafeIndex<CacheTag>;
 
 #[allow(dead_code)]
 #[derive(Clone, Debug, Default)]
+pub struct SubsystemTag;
+
+pub type SubsystemIndex = TypeSafeIndex<SubsystemTag>;
+
+#[allow(dead_code)]
+#[derive(Clone, Debug, Default)]
 pub struct InputPortTag;
 
 pub type InputPortIndex = TypeSafeIndex<InputPortTag>;
