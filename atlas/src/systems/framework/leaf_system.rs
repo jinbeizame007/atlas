@@ -139,6 +139,7 @@ pub trait LeafSystem<T: AtlasScalar>: System<T> {
         self.create_vector_leaf_output_port(size, Self::make_allocate_callback(model_vector), calc)
     }
 
+    // fn make_allocate_callback<OutputType: Clone + Debug + 'static>(
     fn make_allocate_callback<OutputType: Clone + Debug + 'static>(
         model_value: OutputType,
     ) -> Box<AllocateCallback> {
@@ -148,7 +149,7 @@ pub trait LeafSystem<T: AtlasScalar>: System<T> {
     }
 
     #[allow(clippy::type_complexity)]
-    fn declare_abstract_output_port<OutputType>(
+    fn declare_abstract_output_port(
         &mut self,
         alloc: Box<AllocateCallback>,
         calc: Box<dyn Fn(&mut Self::CN, &mut dyn AbstractValue)>,
