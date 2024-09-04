@@ -31,9 +31,8 @@ impl<T: AtlasScalar> DiagramBuilder<T> {
         S: System<T, CN = LeafContext<T>>,
         T: AtlasScalar,
     {
-        let system_ptr = SystemPtr::LeafSystemPtr(
-            system.as_system_mut() as *mut dyn System<T, CN = LeafContext<T>>
-        );
+        let system_ptr =
+            SystemPtr::LeafSystemPtr(system.as_mut() as *mut dyn System<T, CN = LeafContext<T>>);
 
         self.owned_systems.push(system);
 
@@ -45,9 +44,8 @@ impl<T: AtlasScalar> DiagramBuilder<T> {
         S: System<T, CN = DiagramContext<T>>,
         T: AtlasScalar,
     {
-        let system_ptr = SystemPtr::DiagramPtr(
-            system.as_system_mut() as *mut dyn System<T, CN = DiagramContext<T>>
-        );
+        let system_ptr =
+            SystemPtr::DiagramPtr(system.as_mut() as *mut dyn System<T, CN = DiagramContext<T>>);
 
         self.owned_systems.push(system);
 

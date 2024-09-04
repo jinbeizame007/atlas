@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use crate::common::atlas_scalar::AtlasScalar;
+use crate::systems::framework::diagram_context::DiagramContext;
 use crate::systems::framework::framework_common::{
     InputPortIndex, OutputPortIndex, SubsystemIndex,
 };
@@ -10,7 +11,7 @@ use crate::systems::framework::system::{AbstractSystem, System};
 #[derive(Clone)]
 pub enum SystemPtr<T: AtlasScalar> {
     LeafSystemPtr(*mut dyn System<T, CN = LeafContext<T>>),
-    DiagramPtr(*mut Diagram<T>),
+    DiagramPtr(*mut dyn System<T, CN = DiagramContext<T>>),
 }
 
 #[derive(Clone)]
