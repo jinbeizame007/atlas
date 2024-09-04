@@ -4,6 +4,7 @@ use crate::common::atlas_scalar::AtlasScalar;
 use crate::systems::framework::diagram::{
     Diagram, InputPortLocator, OutputPortLocator, OwnedSystems, SystemPtr,
 };
+use crate::systems::framework::diagram_context::DiagramContext;
 use crate::systems::framework::framework_common::{
     InputPortIndex, OutputPortIndex, SubsystemIndex,
 };
@@ -25,17 +26,31 @@ impl<T: AtlasScalar> DiagramBuilder<T> {
         Self::default()
     }
 
-    // pub fn add_system<S: System<T>>(&mut self, mut system: Box<S>) -> SystemPtr<T> {
-    //     let system_ptr = if system.as_any().is::<Diagram<T>>() {
-    //         SystemPtr::DiagramPtr(
-    //             &mut *system.as_any_mut().downcast_ref::<Diagram<T>>().unwrap() as *mut Diagram<T>,
-    //         )
-    //     } else {
-    //         SystemPtr::LeafSystemPtr(system as *mut dyn System<T, CN = LeafContext<T>>)
-    //     };
+    pub fn add_leaf_system<S>(&mut self, mut system: Box<S>) -> SystemPtr<T>
+    where
+        S: System<T, CN = LeafContext<T>>,
+        T: AtlasScalar,
+    {
+        let system_ptr = SystemPtr::LeafSystemPtr(
+            system.as_system_mut() as *mut dyn System<T, CN = LeafContext<T>>
+        );
 
-    //     self.owned_systems.push(system);
+        self.owned_systems.push(system);
 
-    //     system_ptr
-    // }
+        system_ptr
+    }
+
+    pub fn add_diagram<S>(&mut self, mut system: Box<S>) -> SystemPtr<T>
+    where
+        S: System<T, CN = DiagramContext<T>>,
+        T: AtlasScalar,
+    {
+        let system_ptr = SystemPtr::DiagramPtr(
+            system.as_system_mut() as *mut dyn System<T, CN = DiagramContext<T>>
+        );
+
+        self.owned_systems.push(system);
+
+        system_ptr
+    }
 }
