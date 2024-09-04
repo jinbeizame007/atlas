@@ -1,3 +1,5 @@
+use std::any::Any;
+
 use crate::common::atlas_scalar::AtlasScalar;
 use crate::common::value::AbstractValue;
 use crate::systems::framework::basic_vector::BasicVector;
@@ -15,7 +17,12 @@ use crate::systems::framework::port_base::PortBase;
 use crate::systems::framework::state::State;
 use crate::systems::framework::system_base::SystemBase;
 
-pub trait System<T: AtlasScalar>: SystemBase
+pub trait AbstractSystem: Any {
+    fn as_any(&self) -> &dyn Any;
+    fn as_any_mut(&mut self) -> &mut dyn Any;
+}
+
+pub trait System<T: AtlasScalar>: AbstractSystem + SystemBase
 where
     Self: 'static,
 {

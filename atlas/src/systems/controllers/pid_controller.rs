@@ -1,4 +1,6 @@
-use atlas_derives::{LeafSystem, SystemBase};
+use std::any::Any;
+
+use atlas_derives::{AbstractSystem, LeafSystem, SystemBase};
 
 extern crate nalgebra as na;
 
@@ -24,11 +26,11 @@ use crate::systems::framework::model_values::ModelValues;
 use crate::systems::framework::output_port::OutputPort;
 use crate::systems::framework::output_port_base::OutputPortBase;
 use crate::systems::framework::state::State;
-use crate::systems::framework::system::System;
+use crate::systems::framework::system::{AbstractSystem, System};
 use crate::systems::framework::system_base::ContextSizes;
 use crate::systems::framework::system_base::SystemBase;
 
-#[derive(SystemBase, LeafSystem)]
+#[derive(SystemBase, AbstractSystem, LeafSystem)]
 pub struct PIDController<T: AtlasScalar> {
     kp: na::DVector<T>,
     ki: na::DVector<T>,

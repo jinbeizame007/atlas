@@ -74,6 +74,34 @@ pub fn derive_system_base(input: TokenStream) -> TokenStream {
     impl_system_base.into()
 }
 
+#[proc_macro_derive(AbstractSystem)]
+pub fn derive_abstract_system(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    let name = &input.ident;
+
+    let _fields = match &input.data {
+        Data::Struct(data) => match &data.fields {
+            Fields::Named(fields) => &fields.named,
+            _ => panic!("SystemBase can only be derived for structs with named fields"),
+        },
+        _ => panic!("SystemBase can only be derived for structs"),
+    };
+
+    let impl_abstract_system = quote! {
+        impl<T: AtlasScalar> AbstractSystem for #name<T> {
+            fn as_any(&self) -> &dyn Any {
+                self
+            }
+
+            fn as_any_mut(&mut self) -> &mut dyn Any {
+                self
+            }
+        }
+    };
+
+    impl_abstract_system.into()
+}
+
 #[proc_macro_derive(System)]
 pub fn derive_system(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
