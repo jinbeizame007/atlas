@@ -1,7 +1,9 @@
+use std::cmp::{Eq, PartialEq};
+use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
 use std::ops::{Add, Index, IndexMut};
 
-#[derive(Debug, Default, Clone, Copy)]
+#[derive(Debug, Default, Clone, Copy, Eq)]
 pub struct TypeSafeIndex<Tag: Default> {
     index: usize,
     _marker: PhantomData<Tag>,
@@ -17,6 +19,12 @@ impl<Tag: Default> TypeSafeIndex<Tag> {
 
     pub fn value(&self) -> usize {
         self.index
+    }
+}
+
+impl<Tag: Default> Hash for TypeSafeIndex<Tag> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.index.hash(state);
     }
 }
 
