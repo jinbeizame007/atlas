@@ -105,13 +105,13 @@ impl<T: AtlasScalar> DiagramBuilder<T> {
             .insert(input_port_locator, output_port_locator);
     }
 
-    // pub fn export_input_port(&mut self, input_port: &InputPort<T>) -> InputPortLocator<T> {
-    //     self.assert_if_already_built();
-    //     let diagram_port_index = self.declare_input(input_port);
-    //     self.connect_input_port(diagram_port_index, input_port);
+    pub fn export_input_port(&mut self, input_port: &InputPort<T>) -> InputPortIndex {
+        self.assert_if_already_built();
+        let diagram_port_index = self.declare_input_port(input_port);
+        self.connect_input_port(diagram_port_index.clone(), input_port);
 
-    //     diagram_port_index
-    // }
+        diagram_port_index
+    }
 
     pub fn declare_input_port(&mut self, input_port: &InputPort<T>) -> InputPortIndex {
         let input_port_locator = InputPortLocator {
