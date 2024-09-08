@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 use crate::common::atlas_scalar::AtlasScalar;
 use crate::systems::framework::diagram::{
-    Diagram, InputPortLocator, OutputPortLocator, OwnedSystems, SystemPtr,
+    Diagram, DiagramBlueprint, InputPortLocator, OutputPortLocator, OwnedSystems, SystemPtr,
 };
 use crate::systems::framework::diagram_context::DiagramContext;
 use crate::systems::framework::framework_common::{InputPortIndex, PortDataType};
@@ -21,8 +21,8 @@ pub struct DiagramBuilder<T: AtlasScalar> {
     output_port_ids: Vec<OutputPortLocator<T>>,
     diagram_input_data: Vec<ExportedInputPortData<T>>,
     connection_map: HashMap<InputPortLocator<T>, OutputPortLocator<T>>,
-    systems: HashSet<SystemPtr<T>>,
-    owned_systems: OwnedSystems,
+    system_ptrs: Vec<SystemPtr<T>>,
+    registered_systems: OwnedSystems,
     already_built: bool,
 }
 
@@ -31,12 +31,12 @@ impl<T: AtlasScalar> DiagramBuilder<T> {
         Self::default()
     }
 
-    pub fn systems(&self) -> &HashSet<SystemPtr<T>> {
-        &self.systems
+    pub fn system_ptrs(&self) -> &Vec<SystemPtr<T>> {
+        &self.system_ptrs
     }
 
-    pub fn systems_mut(&mut self) -> &mut HashSet<SystemPtr<T>> {
-        &mut self.systems
+    pub fn systems_mut(&mut self) -> &mut Vec<SystemPtr<T>> {
+        &mut self.system_ptrs
     }
 
     pub fn connection_map(&self) -> &HashMap<InputPortLocator<T>, OutputPortLocator<T>> {
@@ -57,7 +57,8 @@ impl<T: AtlasScalar> DiagramBuilder<T> {
         let system_ptr =
             SystemPtr::LeafSystemPtr(system.as_mut() as *mut dyn System<T, CN = LeafContext<T>>);
 
-        self.owned_systems.push(system);
+        self.system_ptrs.push(system_ptr.clone());
+        self.registered_systems.push(system);
 
         system_ptr
     }
@@ -70,7 +71,7 @@ impl<T: AtlasScalar> DiagramBuilder<T> {
         let system_ptr =
             SystemPtr::DiagramPtr(system.as_mut() as *mut dyn System<T, CN = DiagramContext<T>>);
 
-        self.owned_systems.push(system);
+        self.registered_systems.push(system);
 
         system_ptr
     }
@@ -171,6 +172,29 @@ impl<T: AtlasScalar> DiagramBuilder<T> {
         self.input_port_ids.push(input_port_locator.clone());
     }
 
+    // pub fn build(mut self) -> Diagram<T> {
+    //     self.assert_if_already_built();
+    //     let blueprint = self.compile();
+    //     Diagram::initialize(blueprint)
+    // }
+
+    fn compile(mut self) -> DiagramBlueprint<T> {
+        if self.registered_systems.systems.is_empty() {
+            panic!("Cannot compile an empty DiagramBuilder");
+        }
+
+        let mut blueprint = DiagramBlueprint::new();
+
+        self.already_built = true;
+        blueprint.input_port_ids = self.input_port_ids.clone();
+        blueprint.output_port_ids = self.output_port_ids.clone();
+        blueprint.connection_map = self.connection_map.clone();
+        blueprint.system_ptrs = self.system_ptrs.clone();
+        blueprint.registered_systems = self.registered_systems;
+
+        blueprint
+    }
+
     fn assert_if_already_built(&self) {
         if self.already_built {
             panic!("DiagramBuilder already built");
@@ -184,7 +208,7 @@ impl<T: AtlasScalar> DiagramBuilder<T> {
     }
 
     fn assert_if_system_not_registered(&self, system: &SystemPtr<T>) {
-        if !self.systems.contains(system) {
+        if !self.system_ptrs.contains(system) {
             panic!("System has not been registered to this DiagramBuilder");
         }
     }
