@@ -10,6 +10,7 @@ use crate::systems::framework::basic_vector::BasicVector;
 use crate::systems::framework::cache_entry::CacheEntry;
 use crate::systems::framework::context::Context;
 use crate::systems::framework::continuous_state::ContinuousState;
+use crate::systems::framework::diagram::SystemPtr;
 use crate::systems::framework::framework_common::InputPortIndex;
 use crate::systems::framework::framework_common::OutputPortIndex;
 use crate::systems::framework::framework_common::{

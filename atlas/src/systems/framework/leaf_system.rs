@@ -13,7 +13,6 @@ use crate::systems::framework::framework_common::{
     ContinuousStateIndex, OutputPortIndex, PortDataType,
 };
 use crate::systems::framework::input_port::InputPort;
-use crate::systems::framework::input_port_base::InputPortBase;
 use crate::systems::framework::leaf_context::LeafContext;
 use crate::systems::framework::leaf_continuous_state::LeafContinuousState;
 use crate::systems::framework::leaf_output_port::LeafOutputPort;
@@ -22,7 +21,7 @@ use crate::systems::framework::port_base::PortBase;
 use crate::systems::framework::system::System;
 use crate::systems::framework::value_producer::{AllocateCallback, ValueProducer};
 
-pub trait LeafSystem<T: AtlasScalar>: System<T> {
+pub trait LeafSystem<T: AtlasScalar>: System<T, CN = LeafContext<T>> {
     // Getters and setters without default implementations
     fn model_input_values(&self) -> &ModelValues;
     fn model_input_values_mut(&mut self) -> &mut ModelValues;
@@ -112,7 +111,10 @@ pub trait LeafSystem<T: AtlasScalar>: System<T> {
     }
 
     // Declare input port
-    fn declare_vector_input_port(&mut self, size: usize) -> &InputPort<T> {
+    fn declare_vector_input_port(&mut self, size: usize) -> &InputPort<T>
+    where
+        Self: Sized,
+    {
         let model_vector = BasicVector::<T>::zeros(size);
         let input_port_index = self.num_input_ports();
         self.model_input_values_mut()
@@ -120,7 +122,10 @@ pub trait LeafSystem<T: AtlasScalar>: System<T> {
 
         self.declare_input_port(PortDataType::VectorValued, size)
     }
-    fn declare_abstract_input_port(&mut self, model_value: &dyn AbstractValue) -> &InputPort<T> {
+    fn declare_abstract_input_port(&mut self, model_value: &dyn AbstractValue) -> &InputPort<T>
+    where
+        Self: Sized,
+    {
         let next_input_port_index = self.num_input_ports();
         let model_input_values = self.model_input_values_mut();
         model_input_values.add_model(next_input_port_index, model_value.clone_box());
@@ -216,6 +221,7 @@ pub trait LeafSystem<T: AtlasScalar>: System<T> {
         let output_port = if let Some(size) = fixed_size {
             let data_type = PortDataType::VectorValued;
             Box::new(LeafOutputPort::<T>::new(
+                self.system_ptr(),
                 _system_id,
                 output_port_index.clone(),
                 data_type,
@@ -226,6 +232,7 @@ pub trait LeafSystem<T: AtlasScalar>: System<T> {
             let data_type = PortDataType::AbstractValued;
             let size = 0;
             Box::new(LeafOutputPort::<T>::new(
+                self.system_ptr(),
                 _system_id,
                 output_port_index.clone(),
                 data_type,

@@ -1,10 +1,10 @@
 use std::any::Any;
 use std::fmt::Debug;
-use std::marker::PhantomData;
 
 use crate::common::atlas_scalar::AtlasScalar;
 use crate::common::value::{AbstractValue, Value};
 use crate::systems::framework::context::Context;
+use crate::systems::framework::diagram::SystemPtr;
 use crate::systems::framework::fixed_input_port_value::FixedInputPortValue;
 use crate::systems::framework::framework_common::{InputPortIndex, PortDataType, SystemId};
 use crate::systems::framework::input_port_base::{EvalAbstractCallback, InputPortBase};
@@ -13,13 +13,13 @@ use crate::systems::framework::state::State;
 use crate::systems::framework::value_producer::AllocateCallback;
 
 pub struct InputPort<T: AtlasScalar> {
+    system_ptr: SystemPtr<T>,
     _system_id: SystemId,
     index: InputPortIndex,
     data_type: PortDataType,
     size: usize,
     eval: Box<EvalAbstractCallback>,
     alloc: Box<AllocateCallback>,
-    _phantom: PhantomData<T>,
 }
 
 impl<T: AtlasScalar> PortBase for InputPort<T> {
@@ -48,6 +48,7 @@ impl<T: AtlasScalar> InputPortBase for InputPort<T> {
 
 impl<T: AtlasScalar> InputPort<T> {
     pub fn new(
+        system_ptr: SystemPtr<T>,
         _system_id: SystemId,
         index: InputPortIndex,
         data_type: PortDataType,
@@ -55,15 +56,23 @@ impl<T: AtlasScalar> InputPort<T> {
         eval: Box<EvalAbstractCallback>,
         alloc: Box<AllocateCallback>,
     ) -> Self {
-        InputPort::<T> {
+        InputPort {
+            system_ptr,
             _system_id,
             index,
             data_type,
             size,
             eval,
             alloc,
-            _phantom: PhantomData::<T>,
         }
+    }
+
+    pub fn system_ptr(&self) -> SystemPtr<T> {
+        self.system_ptr.clone()
+    }
+
+    pub fn index(&self) -> &InputPortIndex {
+        &self.index
     }
 
     pub fn set_eval(&mut self, eval: Box<EvalAbstractCallback>) {

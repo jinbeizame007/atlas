@@ -1,25 +1,24 @@
 use std::any::Any;
 use std::fmt::Debug;
-use std::marker::PhantomData;
 
 use crate::common::atlas_scalar::AtlasScalar;
 use crate::common::value::{AbstractValue, Value};
 use crate::systems::framework::cache_entry::CacheEntry;
 use crate::systems::framework::context::Context;
+use crate::systems::framework::diagram::SystemPtr;
 use crate::systems::framework::framework_common::{OutputPortIndex, PortDataType, SystemId};
 use crate::systems::framework::leaf_context::LeafContext;
-use crate::systems::framework::leaf_state::LeafState;
 use crate::systems::framework::output_port::OutputPort;
 use crate::systems::framework::output_port_base::OutputPortBase;
 use crate::systems::framework::port_base::PortBase;
 
 pub struct LeafOutputPort<T: AtlasScalar> {
+    system_ptr: SystemPtr<T>,
     _system_id: SystemId,
     index: OutputPortIndex,
     data_type: PortDataType,
     size: usize,
     cache_entry: *const CacheEntry,
-    _phantom: PhantomData<T>,
 }
 
 impl<T: AtlasScalar> PortBase for LeafOutputPort<T> {
@@ -58,10 +57,15 @@ impl<T: AtlasScalar> OutputPort<T> for LeafOutputPort<T> {
     fn calc(&self, context: &mut Self::CN, value: &mut dyn AbstractValue) {
         self.cache_entry().calc(context.as_mutable_base(), value)
     }
+
+    fn system_ptr(&self) -> SystemPtr<T> {
+        self.system_ptr.clone()
+    }
 }
 
 impl<T: AtlasScalar> LeafOutputPort<T> {
     pub fn new(
+        system_ptr: SystemPtr<T>,
         _system_id: SystemId,
         index: OutputPortIndex,
         data_type: PortDataType,
@@ -69,12 +73,12 @@ impl<T: AtlasScalar> LeafOutputPort<T> {
         cache_entry: *const CacheEntry,
     ) -> Self {
         LeafOutputPort::<T> {
+            system_ptr,
             _system_id,
             index,
             data_type,
             size,
             cache_entry,
-            _phantom: PhantomData::<T>,
         }
     }
 
