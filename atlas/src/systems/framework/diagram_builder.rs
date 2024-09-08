@@ -11,10 +11,15 @@ use crate::systems::framework::leaf_context::LeafContext;
 use crate::systems::framework::output_port::OutputPort;
 use crate::systems::framework::system::System;
 
+struct ExportedInputPortData<T: AtlasScalar> {
+    model_input: InputPortLocator<T>,
+}
+
 #[derive(Default)]
 pub struct DiagramBuilder<T: AtlasScalar> {
     input_port_ids: Vec<InputPortLocator<T>>,
     output_port_ids: Vec<OutputPortLocator<T>>,
+    exported_input_ports: Vec<ExportedInputPortData<T>>,
     connection_map: HashMap<InputPortLocator<T>, OutputPortLocator<T>>,
     systems: HashSet<SystemPtr<T>>,
     owned_systems: OwnedSystems,
@@ -99,6 +104,21 @@ impl<T: AtlasScalar> DiagramBuilder<T> {
         self.connection_map
             .insert(input_port_locator, output_port_locator);
     }
+
+    // pub fn export_input_port(&mut self, input_port: &InputPort<T>) -> InputPortLocator<T> {
+    //     self.assert_if_already_built();
+    //     let diagram_port_index = self.declare_input(input_port);
+    // }
+
+    // pub fn connect_input_port(&mut self, input_port: &InputPort<T>) {
+    //     self.assert_if_already_built();
+    //     let input_port_locator = InputPortLocator {
+    //         system_ptr: input_port.system_ptr(),
+    //         input_port_index: input_port.index().clone(),
+    //     };
+
+    //     let data = self.
+    // }
 
     pub fn assert_if_already_built(&self) {
         if self.already_built {
