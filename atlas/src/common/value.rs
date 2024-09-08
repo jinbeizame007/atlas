@@ -1,4 +1,5 @@
 use std::any::Any;
+use std::any::TypeId;
 use std::fmt::Debug;
 
 pub trait AbstractValue: Debug {
@@ -6,6 +7,7 @@ pub trait AbstractValue: Debug {
     fn as_any_mut(&mut self) -> &mut dyn Any;
     fn set_from(&mut self, abstract_value: &dyn AbstractValue);
     fn clone_box(&self) -> Box<dyn AbstractValue>;
+    fn type_id(&self) -> TypeId;
 }
 
 impl Default for Box<dyn AbstractValue> {
@@ -57,6 +59,10 @@ impl<T: 'static + Clone + Debug> AbstractValue for Value<T> {
 
     fn clone_box(&self) -> Box<dyn AbstractValue> {
         Box::new(self.clone())
+    }
+
+    fn type_id(&self) -> TypeId {
+        TypeId::of::<T>()
     }
 }
 
