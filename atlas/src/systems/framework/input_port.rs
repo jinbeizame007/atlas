@@ -67,6 +67,10 @@ impl<T: AtlasScalar> InputPort<T> {
         }
     }
 
+    pub fn data_type(&self) -> &PortDataType {
+        &self.data_type
+    }
+
     pub fn system_ptr(&self) -> SystemPtr<T> {
         self.system_ptr.clone()
     }

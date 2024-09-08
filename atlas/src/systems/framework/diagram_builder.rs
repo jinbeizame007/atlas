@@ -5,21 +5,21 @@ use crate::systems::framework::diagram::{
     Diagram, InputPortLocator, OutputPortLocator, OwnedSystems, SystemPtr,
 };
 use crate::systems::framework::diagram_context::DiagramContext;
-use crate::systems::framework::framework_common::PortDataType;
+use crate::systems::framework::framework_common::{InputPortIndex, PortDataType};
 use crate::systems::framework::input_port::InputPort;
 use crate::systems::framework::leaf_context::LeafContext;
 use crate::systems::framework::output_port::OutputPort;
 use crate::systems::framework::system::System;
 
 struct ExportedInputPortData<T: AtlasScalar> {
-    model_input: InputPortLocator<T>,
+    pub input_port_locator: InputPortLocator<T>,
 }
 
 #[derive(Default)]
 pub struct DiagramBuilder<T: AtlasScalar> {
     input_port_ids: Vec<InputPortLocator<T>>,
     output_port_ids: Vec<OutputPortLocator<T>>,
-    exported_input_ports: Vec<ExportedInputPortData<T>>,
+    diagram_input_data: Vec<ExportedInputPortData<T>>,
     connection_map: HashMap<InputPortLocator<T>, OutputPortLocator<T>>,
     systems: HashSet<SystemPtr<T>>,
     owned_systems: OwnedSystems,
@@ -110,15 +110,47 @@ impl<T: AtlasScalar> DiagramBuilder<T> {
     //     let diagram_port_index = self.declare_input(input_port);
     // }
 
-    // pub fn connect_input_port(&mut self, input_port: &InputPort<T>) {
-    //     self.assert_if_already_built();
-    //     let input_port_locator = InputPortLocator {
-    //         system_ptr: input_port.system_ptr(),
-    //         input_port_index: input_port.index().clone(),
-    //     };
+    pub fn connect_input_port(
+        &mut self,
+        diagram_input_port_index: InputPortIndex,
+        input_port: &InputPort<T>,
+    ) {
+        self.assert_if_already_built();
+        let input_port_locator = InputPortLocator {
+            system_ptr: input_port.system_ptr(),
+            input_port_index: input_port.index().clone(),
+        };
 
-    //     let data = self.
-    // }
+        // Check that port types match.
+        let exported_input_port_data = &self.diagram_input_data[diagram_input_port_index.value()];
+        let input_port_locator = &exported_input_port_data.input_port_locator;
+        let diagram_input_port = input_port_locator
+            .system_ptr
+            .input_port(input_port_locator.input_port_index.clone());
+        if input_port.data_type() != diagram_input_port.data_type() {
+            panic!(
+                "DiagramBuilder::connect_input_port: Cannot mix vector-valued and abstract-valued ports while connecting input port (data type {:?}) of System to input port (data type {:?}) of Diagram",
+                input_port.data_type(),
+                input_port.data_type(),
+            );
+        }
+
+        if *input_port.data_type() == PortDataType::AbstractValued {
+            let input_port_model = input_port.system_ptr().allocate_input_abstract(input_port);
+            let diagram_input_port_model = diagram_input_port
+                .system_ptr()
+                .allocate_input_abstract(diagram_input_port);
+            if input_port_model.type_id() != diagram_input_port_model.type_id() {
+                panic!(
+                    "DiagramBuilder::connect_input_port: Mismatched value types while connecting input port (type {:?}) of System to input port (type {:?}) of Diagram",
+                    input_port_model.type_id(),
+                    diagram_input_port_model.type_id()
+                );
+            }
+        }
+
+        self.input_port_ids.push(input_port_locator.clone());
+    }
 
     pub fn assert_if_already_built(&self) {
         if self.already_built {
