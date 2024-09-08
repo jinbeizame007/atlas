@@ -1,29 +1,83 @@
+use std::cmp::{Eq, PartialEq};
 use std::collections::HashMap;
+use std::hash::{Hash, Hasher};
 
 use crate::common::atlas_scalar::AtlasScalar;
+use crate::common::value::AbstractValue;
 use crate::systems::framework::diagram_context::DiagramContext;
 use crate::systems::framework::framework_common::{
     InputPortIndex, OutputPortIndex, SubsystemIndex,
 };
+use crate::systems::framework::input_port::InputPort;
 use crate::systems::framework::leaf_context::LeafContext;
 use crate::systems::framework::system::{AbstractSystem, System};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum SystemPtr<T: AtlasScalar> {
     LeafSystemPtr(*mut dyn System<T, CN = LeafContext<T>>),
     DiagramPtr(*mut dyn System<T, CN = DiagramContext<T>>),
 }
 
-#[derive(Clone)]
+impl<T: AtlasScalar> PartialEq for SystemPtr<T> {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (SystemPtr::LeafSystemPtr(a), SystemPtr::LeafSystemPtr(b)) => *a == *b,
+            (SystemPtr::DiagramPtr(a), SystemPtr::DiagramPtr(b)) => *a == *b,
+            _ => false,
+        }
+    }
+}
+
+impl<T: AtlasScalar> Eq for SystemPtr<T> {}
+
+impl<T: AtlasScalar> Hash for SystemPtr<T> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        let addr = match self {
+            SystemPtr::LeafSystemPtr(ptr) => (*ptr as *const ()) as usize,
+            SystemPtr::DiagramPtr(ptr) => (*ptr as *const ()) as usize,
+        };
+        addr.hash(state);
+    }
+}
+
+impl<T: AtlasScalar> SystemPtr<T> {
+    pub fn allocate_input_abstract(&self, input_port: &InputPort<T>) -> Box<dyn AbstractValue> {
+        match self {
+            SystemPtr::LeafSystemPtr(system) => unsafe {
+                (**system).allocate_input_abstract(input_port)
+            },
+            SystemPtr::DiagramPtr(system) => unsafe {
+                (**system).allocate_input_abstract(input_port)
+            },
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
 pub struct InputPortLocator<T: AtlasScalar> {
     pub system_ptr: SystemPtr<T>,
     pub input_port_index: InputPortIndex,
 }
 
-#[derive(Clone)]
+impl<T: AtlasScalar> PartialEq for InputPortLocator<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.system_ptr == other.system_ptr && self.input_port_index == other.input_port_index
+    }
+}
+
+impl<T: AtlasScalar> Eq for InputPortLocator<T> {}
+
+impl<T: AtlasScalar> Hash for InputPortLocator<T> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.system_ptr.hash(state);
+        self.input_port_index.hash(state);
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct OutputPortLocator<T: AtlasScalar> {
     pub system_ptr: SystemPtr<T>,
-    pub input_port_index: OutputPortIndex,
+    pub output_port_index: OutputPortIndex,
 }
 
 struct Blueprint<T: AtlasScalar> {
