@@ -87,15 +87,9 @@ pub struct OutputPortLocator<T: AtlasScalar> {
     pub output_port_index: OutputPortIndex,
 }
 
-struct Blueprint<T: AtlasScalar> {
-    input_port_ids: Vec<InputPortLocator<T>>,
-    output_port_ids: Vec<OutputPortLocator<T>>,
-    connection_map: HashMap<InputPortLocator<T>, OutputPortLocator<T>>,
-}
-
 #[derive(Default)]
 pub struct OwnedSystems {
-    systems: Vec<Box<dyn AbstractSystem>>,
+    pub systems: Vec<Box<dyn AbstractSystem>>,
 }
 
 impl OwnedSystems {
@@ -104,10 +98,68 @@ impl OwnedSystems {
     }
 }
 
+#[derive(Default)]
+pub struct DiagramBlueprint<T: AtlasScalar> {
+    pub input_port_ids: Vec<InputPortLocator<T>>,
+    pub output_port_ids: Vec<OutputPortLocator<T>>,
+    pub connection_map: HashMap<InputPortLocator<T>, OutputPortLocator<T>>,
+    pub system_ptrs: Vec<SystemPtr<T>>,
+    pub registered_systems: OwnedSystems,
+}
+
+impl<T: AtlasScalar> DiagramBlueprint<T> {
+    pub fn new() -> Self {
+        Self::default()
+    }
+}
+
+#[derive(Default)]
 pub struct Diagram<T: AtlasScalar> {
     connection_map: HashMap<InputPortLocator<T>, OutputPortLocator<T>>,
     registered_systems: OwnedSystems,
     system_index_map: HashMap<SystemPtr<T>, SubsystemIndex>,
     output_port_ids: Vec<OutputPortLocator<T>>,
     input_port_map: HashMap<InputPortIndex, InputPortLocator<T>>,
+}
+
+impl<T: AtlasScalar> Diagram<T> {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn num_subsystems(&self) -> usize {
+        self.registered_systems.systems.len()
+    }
+
+    // pub fn from_blueprint(blueprint: DiagramBlueprint<T>) -> Self {
+    //     let mut diagram = Self::new();
+    //     diagram.initialize(blueprint);
+    //     diagram
+    // }
+
+    // pub fn initialize(&mut self, blueprint: DiagramBlueprint<T>) {
+    //     assert!(!blueprint.registered_systems.systems.is_empty());
+    //     assert!(self.registered_systems.systems.is_empty());
+
+    //     self.connection_map = blueprint.connection_map;
+    //     self.output_port_ids = blueprint.output_port_ids;
+    //     self.registered_systems = blueprint.registered_systems;
+
+    //     // Generate a map from the System pointer to its index in the registered order.
+    //     for (index, system_ptr) in blueprint.system_ptrs.iter().enumerate() {
+    //         self.system_index_map
+    //             .insert(system_ptr.clone(), SubsystemIndex::new(index));
+    //     }
+
+    //     // Every system must appear exactly once.
+    //     assert_eq!(self.num_subsystems(), self.registered_systems.systems.len());
+
+    // }
+
+    // fn export_or_connect_input(&mut self, input_port_locator: InputPortLocator<T>) {
+    //     let system_ptr = input_port_locator.system_ptr;
+    //     let input_port_index = input_port_locator.input_port_index;
+
+    //     if
+    // }
 }
