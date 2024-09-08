@@ -41,6 +41,13 @@ impl<T: AtlasScalar> Hash for SystemPtr<T> {
 }
 
 impl<T: AtlasScalar> SystemPtr<T> {
+    pub fn input_port(&self, input_port_index: InputPortIndex) -> &InputPort<T> {
+        match self {
+            SystemPtr::LeafSystemPtr(system) => unsafe { (**system).input_port(&input_port_index) },
+            SystemPtr::DiagramPtr(system) => unsafe { (**system).input_port(&input_port_index) },
+        }
+    }
+
     pub fn allocate_input_abstract(&self, input_port: &InputPort<T>) -> Box<dyn AbstractValue> {
         match self {
             SystemPtr::LeafSystemPtr(system) => unsafe {
