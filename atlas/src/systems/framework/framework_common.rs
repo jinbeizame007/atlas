@@ -8,31 +8,31 @@ use crate::systems::framework::input_port_base::InputPortBase;
 use crate::systems::framework::system_base::SystemBase;
 
 #[allow(dead_code)]
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Eq, PartialEq, Hash)]
 pub struct CacheTag;
 
 pub type CacheIndex = TypeSafeIndex<CacheTag>;
 
 #[allow(dead_code)]
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Eq, PartialEq, Hash)]
 pub struct SubsystemTag;
 
 pub type SubsystemIndex = TypeSafeIndex<SubsystemTag>;
 
 #[allow(dead_code)]
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Eq, PartialEq, Hash)]
 pub struct InputPortTag;
 
 pub type InputPortIndex = TypeSafeIndex<InputPortTag>;
 
 #[allow(dead_code)]
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Eq, PartialEq, Hash)]
 pub struct OutputPortTag;
 
 pub type OutputPortIndex = TypeSafeIndex<OutputPortTag>;
 
 #[allow(dead_code)]
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Eq, PartialEq, Hash)]
 pub struct ContinuousStateTag;
 
 pub type ContinuousStateIndex = TypeSafeIndex<ContinuousStateTag>;
@@ -44,7 +44,7 @@ pub enum PortDataType {
 }
 
 #[allow(dead_code)]
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Clone, Debug, Default, Eq, PartialEq, Hash)]
 pub struct SystemIdTag;
 
 pub type SystemId = Identifier<SystemIdTag>;
