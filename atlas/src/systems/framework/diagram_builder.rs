@@ -120,6 +120,7 @@ impl<T: AtlasScalar> DiagramBuilder<T> {
             system_ptr: input_port.system_ptr(),
             input_port_index: input_port.index().clone(),
         };
+        self.assert_if_input_already_connected(&input_port_locator);
 
         // Check that port types match.
         let exported_input_port_data = &self.diagram_input_data[diagram_input_port_index.value()];
@@ -152,9 +153,15 @@ impl<T: AtlasScalar> DiagramBuilder<T> {
         self.input_port_ids.push(input_port_locator.clone());
     }
 
-    pub fn assert_if_already_built(&self) {
+    fn assert_if_already_built(&self) {
         if self.already_built {
             panic!("DiagramBuilder already built");
+        }
+    }
+
+    fn assert_if_input_already_connected(&self, input_port_locator: &InputPortLocator<T>) {
+        if self.connection_map.contains_key(input_port_locator) {
+            panic!(" Input port is already connected");
         }
     }
 }
