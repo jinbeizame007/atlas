@@ -1,4 +1,6 @@
 use std::any::Any;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 use atlas_derives::{AbstractSystem, LeafSystem, System, SystemBase};
 
@@ -44,8 +46,8 @@ pub struct Adder<T: AtlasScalar> {
 }
 
 impl<T: AtlasScalar> Adder<T> {
-    pub fn new(num_inputs: usize, size: usize) -> Box<Self> {
-        let mut adder = Box::new(Self {
+    pub fn new(num_inputs: usize, size: usize) -> Rc<RefCell<Self>> {
+        let adder = Rc::new(RefCell::new(Self {
             input_ports: vec![],
             output_ports: vec![],
             cache_entries: vec![],
@@ -55,21 +57,24 @@ impl<T: AtlasScalar> Adder<T> {
             time_derivatives_cache_index: CacheIndex::new(0),
             model_input_values: ModelValues::default(),
             model_continuous_state_vector: BasicVector::<T>::zeros(0),
-        });
+        }));
 
         let calc = {
-            let self_ptr = &*adder as *const Self;
+            let weak_adder = Rc::downgrade(&adder);
             Box::new(
-                move |context: &mut LeafContext<T>, sum: &mut BasicVector<T>| unsafe {
-                    (*self_ptr).calc_sum(context, sum);
+                move |context: &mut LeafContext<T>, sum: &mut BasicVector<T>| {
+                    let adder = weak_adder.upgrade().unwrap();
+                    adder.borrow().calc_sum(context, sum);
                 },
             )
         };
 
         for _ in 0..num_inputs {
-            adder.declare_input_port(PortDataType::VectorValued, size);
+            adder
+                .borrow_mut()
+                .declare_input_port(PortDataType::VectorValued, size);
         }
-        adder.declare_vector_output_port(size, calc);
+        adder.borrow_mut().declare_vector_output_port(size, calc);
 
         adder
     }
@@ -89,31 +94,38 @@ mod tests {
     #[test]
     fn test_constructor() {
         let adder = Adder::<f64>::new(2, 3);
-        assert_eq!(System::<f64>::input_ports(adder.as_ref()).len(), 2);
-        assert_eq!(System::<f64>::output_ports(adder.as_ref()).len(), 1);
+        assert_eq!(adder.borrow().input_ports.len(), 2);
+        assert_eq!(adder.borrow().output_ports.len(), 1);
     }
 
     #[test]
     fn test_create_default_context() {
-        let mut adder = Adder::<f64>::new(2, 3);
-        let _context = adder.create_default_context();
+        let adder = Adder::<f64>::new(2, 3);
+        let _context = adder.borrow_mut().create_default_context();
     }
 
     #[test]
     fn test_fix_input_port_values() {
-        let mut adder = Adder::<f64>::new(2, 3);
-        let mut context = adder.create_default_context();
+        let adder = Adder::<f64>::new(2, 3);
+        let mut context = adder.borrow_mut().create_default_context();
 
-        adder.input_port_mut(&InputPortIndex::new(0)).fix_value(
-            context.as_mut(),
-            BasicVector::<f64>::from_vec(vec![1.0, 2.0, 3.0]),
-        );
-        adder.input_port_mut(&InputPortIndex::new(1)).fix_value(
-            context.as_mut(),
-            BasicVector::<f64>::from_vec(vec![0.5, 1.2, 0.3]),
-        );
+        adder
+            .borrow_mut()
+            .input_port_mut(&InputPortIndex::new(0))
+            .fix_value(
+                context.as_mut(),
+                BasicVector::<f64>::from_vec(vec![1.0, 2.0, 3.0]),
+            );
+        adder
+            .borrow_mut()
+            .input_port_mut(&InputPortIndex::new(1))
+            .fix_value(
+                context.as_mut(),
+                BasicVector::<f64>::from_vec(vec![0.5, 1.2, 0.3]),
+            );
 
         let sum = adder
+            .borrow()
             .leaf_output_port(&OutputPortIndex::new(0))
             .eval::<BasicVector<f64>>(context.as_mut());
         assert_eq!(
