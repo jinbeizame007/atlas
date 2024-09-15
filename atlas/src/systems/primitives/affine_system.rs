@@ -1,4 +1,6 @@
 use std::any::Any;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 use atlas_derives::{AbstractSystem, LeafSystem, System, SystemBase};
 
@@ -9,7 +11,6 @@ use crate::common::value::AbstractValue;
 use crate::systems::framework::basic_vector::BasicVector;
 use crate::systems::framework::cache_entry::CacheEntry;
 use crate::systems::framework::context::Context;
-use crate::systems::framework::continuous_state::ContinuousState;
 use crate::systems::framework::diagram::SystemPtr;
 use crate::systems::framework::framework_common::InputPortIndex;
 use crate::systems::framework::framework_common::OutputPortIndex;
@@ -60,7 +61,7 @@ impl<T: AtlasScalar> AffineSystem<T> {
         d: na::DMatrix<T>,
         y0: na::DVector<T>,
         time_period: f64,
-    ) -> Box<Self> {
+    ) -> Rc<RefCell<Self>> {
         let num_states = calc_num_states(&a, &b, &f0, &c);
         let num_inputs = calc_num_inputs(&b, &d);
         let num_outputs = calc_num_outputs(&c, &d, &y0);
@@ -68,7 +69,7 @@ impl<T: AtlasScalar> AffineSystem<T> {
         assert!(num_inputs > 0);
         assert!(num_outputs > 0);
 
-        let affine_system = Box::new(Self {
+        let affine_system = Rc::new(RefCell::new(Self {
             a,
             b,
             f0,
@@ -85,7 +86,7 @@ impl<T: AtlasScalar> AffineSystem<T> {
             time_derivatives_cache_index: CacheIndex::new(0),
             model_input_values: ModelValues::default(),
             model_continuous_state_vector: BasicVector::<T>::zeros(0),
-        });
+        }));
 
         affine_system
     }
