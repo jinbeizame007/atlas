@@ -1,4 +1,6 @@
 use std::any::Any;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 use atlas_derives::{AbstractSystem, LeafSystem, SystemBase};
 
@@ -53,10 +55,10 @@ pub struct PIDController<T: AtlasScalar> {
 }
 
 impl<T: AtlasScalar> PIDController<T> {
-    pub fn new(kp: na::DVector<T>, ki: na::DVector<T>, kd: na::DVector<T>) -> Box<Self> {
+    pub fn new(kp: na::DVector<T>, ki: na::DVector<T>, kd: na::DVector<T>) -> Rc<RefCell<Self>> {
         let num_controlled_q = kp.len();
 
-        let mut pid_controller = Box::new(Self {
+        let mut pid_controller = Rc::new(RefCell::new(Self {
             kp,
             ki,
             kd,
@@ -73,30 +75,36 @@ impl<T: AtlasScalar> PIDController<T> {
             time_derivatives_cache_index: CacheIndex::new(0),
             model_input_values: ModelValues::default(),
             model_continuous_state_vector: BasicVector::<T>::zeros(0),
-        });
+        }));
 
-        pid_controller.declare_continuous_state(num_controlled_q, 0, 0);
+        pid_controller
+            .borrow_mut()
+            .declare_continuous_state(num_controlled_q, 0, 0);
 
         let calc = {
-            let self_ptr = &*pid_controller as *const Self;
+            let pid_controller_weak = Rc::downgrade(&pid_controller);
             Box::new(
-                move |context: &mut LeafContext<T>, control: &mut BasicVector<T>| unsafe {
-                    (*self_ptr).calc_control(context, control);
+                move |context: &mut LeafContext<T>, control: &mut BasicVector<T>| {
+                    let pid_controller = pid_controller_weak.upgrade().unwrap();
+                    pid_controller.borrow().calc_control(context, control);
                 },
             )
         };
 
-        pid_controller.output_port_index_control = pid_controller
+        pid_controller.borrow_mut().output_port_index_control = pid_controller
+            .borrow_mut()
             .declare_vector_output_port(num_controlled_q, calc)
             .index()
             .clone();
 
-        pid_controller.input_port_index_state = pid_controller
+        pid_controller.borrow_mut().input_port_index_state = pid_controller
+            .borrow_mut()
             .declare_vector_input_port(num_controlled_q * 2)
             .index()
             .clone();
 
-        pid_controller.input_port_index_desired_state = pid_controller
+        pid_controller.borrow_mut().input_port_index_desired_state = pid_controller
+            .borrow_mut()
             .declare_vector_input_port(num_controlled_q * 2)
             .index()
             .clone();
