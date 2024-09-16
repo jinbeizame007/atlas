@@ -1,9 +1,12 @@
+use std::cell::{Ref, RefCell};
 use std::cmp::{Eq, PartialEq};
 use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
+use std::rc::{Rc, Weak};
 
 use crate::common::atlas_scalar::AtlasScalar;
 use crate::common::value::AbstractValue;
+use crate::systems::framework::context_base::ContextBase;
 use crate::systems::framework::diagram_context::DiagramContext;
 use crate::systems::framework::framework_common::{
     InputPortIndex, OutputPortIndex, SubsystemIndex,
@@ -12,63 +15,193 @@ use crate::systems::framework::input_port::InputPort;
 use crate::systems::framework::leaf_context::LeafContext;
 use crate::systems::framework::system::{AbstractSystem, System};
 
-#[derive(Clone, Debug)]
-pub enum SystemPtr<T: AtlasScalar> {
-    LeafSystemPtr(*mut dyn System<T, CN = LeafContext<T>>),
-    DiagramPtr(*mut dyn System<T, CN = DiagramContext<T>>),
+#[derive(Clone)]
+pub enum SystemLink<T: AtlasScalar> {
+    LeafSystemLink(LeafSystemLink<T>),
+    DiagramLink(DiagramLink<T>),
 }
 
-impl<T: AtlasScalar> PartialEq for SystemPtr<T> {
+type LeafSystemLink<T: AtlasScalar> = Rc<RefCell<dyn System<T, CN = LeafContext<T>>>>;
+type DiagramLink<T: AtlasScalar> = Rc<RefCell<dyn System<T, CN = DiagramContext<T>>>>;
+
+impl<T: AtlasScalar> PartialEq for SystemLink<T> {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
-            (SystemPtr::LeafSystemPtr(a), SystemPtr::LeafSystemPtr(b)) => *a == *b,
-            (SystemPtr::DiagramPtr(a), SystemPtr::DiagramPtr(b)) => *a == *b,
+            (SystemLink::LeafSystemLink(a), SystemLink::LeafSystemLink(b)) => {
+                a.as_ptr() == b.as_ptr()
+            }
+            (SystemLink::DiagramLink(a), SystemLink::DiagramLink(b)) => a.as_ptr() == b.as_ptr(),
             _ => false,
         }
     }
 }
 
-impl<T: AtlasScalar> Eq for SystemPtr<T> {}
+impl<T: AtlasScalar> Eq for SystemLink<T> {}
 
-impl<T: AtlasScalar> Hash for SystemPtr<T> {
+impl<T: AtlasScalar> Hash for SystemLink<T> {
     fn hash<H: Hasher>(&self, state: &mut H) {
         let addr = match self {
-            SystemPtr::LeafSystemPtr(ptr) => (*ptr as *const ()) as usize,
-            SystemPtr::DiagramPtr(ptr) => (*ptr as *const ()) as usize,
+            SystemLink::LeafSystemLink(system) => (system.as_ptr() as *const ()) as usize,
+            SystemLink::DiagramLink(system) => (system.as_ptr() as *const ()) as usize,
         };
+
         addr.hash(state);
     }
 }
 
-impl<T: AtlasScalar> SystemPtr<T> {
-    pub fn input_port(&self, input_port_index: InputPortIndex) -> &InputPort<T> {
+impl<T: AtlasScalar> SystemLink<T> {
+    pub fn input_port(&self, input_port_index: InputPortIndex) -> Ref<InputPort<T>> {
         match self {
-            SystemPtr::LeafSystemPtr(system) => unsafe { (**system).input_port(&input_port_index) },
-            SystemPtr::DiagramPtr(system) => unsafe { (**system).input_port(&input_port_index) },
+            SystemLink::LeafSystemLink(system) => {
+                Ref::map(system.borrow(), |s| s.input_port(&input_port_index))
+            }
+            SystemLink::DiagramLink(system) => {
+                Ref::map(system.borrow(), |s| s.input_port(&input_port_index))
+            }
         }
     }
 
     pub fn allocate_input_abstract(&self, input_port: &InputPort<T>) -> Box<dyn AbstractValue> {
         match self {
-            SystemPtr::LeafSystemPtr(system) => unsafe {
-                (**system).allocate_input_abstract(input_port)
-            },
-            SystemPtr::DiagramPtr(system) => unsafe {
-                (**system).allocate_input_abstract(input_port)
-            },
+            SystemLink::LeafSystemLink(system) => {
+                system.borrow().allocate_input_abstract(input_port)
+            }
+            SystemLink::DiagramLink(system) => system.borrow().allocate_input_abstract(input_port),
+        }
+    }
+
+    pub fn eval_abstract_input(
+        &self,
+        context: &dyn ContextBase,
+        input_port_index: &InputPortIndex,
+    ) -> Box<dyn AbstractValue> {
+        match self {
+            SystemLink::LeafSystemLink(system) => system
+                .borrow()
+                .eval_abstract_input(context, input_port_index),
+            SystemLink::DiagramLink(system) => system
+                .borrow()
+                .eval_abstract_input(context, input_port_index),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub enum SystemWeakLink<T: AtlasScalar> {
+    LeafSystemWeakLink(LeafSystemWeakLink<T>),
+    DiagramWeakLink(DiagramWeakLink<T>),
+}
+
+type LeafSystemWeakLink<T: AtlasScalar> = Weak<RefCell<dyn System<T, CN = LeafContext<T>>>>;
+type DiagramWeakLink<T: AtlasScalar> = Weak<RefCell<dyn System<T, CN = DiagramContext<T>>>>;
+
+impl<T: AtlasScalar> PartialEq for SystemWeakLink<T> {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (SystemWeakLink::LeafSystemWeakLink(a), SystemWeakLink::LeafSystemWeakLink(b)) => {
+                a.as_ptr() == b.as_ptr()
+            }
+            (SystemWeakLink::DiagramWeakLink(a), SystemWeakLink::DiagramWeakLink(b)) => {
+                a.as_ptr() == b.as_ptr()
+            }
+            _ => false,
+        }
+    }
+}
+
+impl<T: AtlasScalar> Eq for SystemWeakLink<T> {}
+
+impl<T: AtlasScalar> Hash for SystemWeakLink<T> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        let addr = match self {
+            SystemWeakLink::LeafSystemWeakLink(system) => {
+                (system.upgrade().unwrap().as_ptr() as *const ()) as usize
+            }
+            SystemWeakLink::DiagramWeakLink(system) => {
+                (system.upgrade().unwrap().as_ptr() as *const ()) as usize
+            }
+        };
+
+        addr.hash(state);
+    }
+}
+
+impl<T: AtlasScalar> SystemWeakLink<T> {
+    pub fn as_leaf_system_weak_link(&self) -> Option<&LeafSystemWeakLink<T>> {
+        match self {
+            SystemWeakLink::LeafSystemWeakLink(ref leaf) => Some(leaf),
+            _ => None,
+        }
+    }
+
+    // DiagramWeakLink を返すメソッド
+    pub fn as_diagram_weak_link(&self) -> Option<&DiagramWeakLink<T>> {
+        match self {
+            SystemWeakLink::DiagramWeakLink(ref diagram) => Some(diagram),
+            _ => None,
+        }
+    }
+
+    // pub fn input_port(&self, input_port_index: InputPortIndex) -> Ref<InputPort<T>> {
+    //     match self {
+    //         SystemWeakLink::LeafSystemWeakLink(system) => {
+    //             // 一時的な変数にupgrade()の結果を格納
+    //             let strong_system = system.upgrade().unwrap();
+    //             Ref::map(strong_system.borrow(), |s| s.input_port(&input_port_index))
+    //         }
+    //         SystemWeakLink::DiagramWeakLink(system) => {
+    //             // 一時的な変数にupgrade()の結果を格納
+    //             let strong_system = system.upgrade().unwrap();
+    //             Ref::map(strong_system.borrow(), |s| s.input_port(&input_port_index))
+    //         }
+    //     }
+    // }
+
+    pub fn allocate_input_abstract(&self, input_port: &InputPort<T>) -> Box<dyn AbstractValue> {
+        match self {
+            SystemWeakLink::LeafSystemWeakLink(system) => system
+                .upgrade()
+                .unwrap()
+                .borrow()
+                .allocate_input_abstract(input_port),
+            SystemWeakLink::DiagramWeakLink(system) => system
+                .upgrade()
+                .unwrap()
+                .borrow()
+                .allocate_input_abstract(input_port),
+        }
+    }
+
+    pub fn eval_abstract_input(
+        &self,
+        context: &dyn ContextBase,
+        input_port_index: &InputPortIndex,
+    ) -> Box<dyn AbstractValue> {
+        match self {
+            SystemWeakLink::LeafSystemWeakLink(system) => system
+                .upgrade()
+                .unwrap()
+                .borrow()
+                .eval_abstract_input(context, input_port_index),
+            SystemWeakLink::DiagramWeakLink(system) => system
+                .upgrade()
+                .unwrap()
+                .borrow()
+                .eval_abstract_input(context, input_port_index),
         }
     }
 }
 
 #[derive(Clone, Debug)]
 pub struct InputPortLocator<T: AtlasScalar> {
-    pub system_ptr: SystemPtr<T>,
+    pub system_weak_link: SystemWeakLink<T>,
     pub input_port_index: InputPortIndex,
 }
 
 impl<T: AtlasScalar> PartialEq for InputPortLocator<T> {
     fn eq(&self, other: &Self) -> bool {
-        self.system_ptr == other.system_ptr && self.input_port_index == other.input_port_index
+        self.system_weak_link == other.system_weak_link
+            && self.input_port_index == other.input_port_index
     }
 }
 
@@ -76,24 +209,24 @@ impl<T: AtlasScalar> Eq for InputPortLocator<T> {}
 
 impl<T: AtlasScalar> Hash for InputPortLocator<T> {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        self.system_ptr.hash(state);
+        self.system_weak_link.hash(state);
         self.input_port_index.hash(state);
     }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct OutputPortLocator<T: AtlasScalar> {
-    pub system_ptr: SystemPtr<T>,
+    pub system_weak_link: SystemWeakLink<T>,
     pub output_port_index: OutputPortIndex,
 }
 
 #[derive(Default)]
-pub struct OwnedSystems {
-    pub systems: Vec<Box<dyn AbstractSystem>>,
+pub struct OwnedSystems<T: AtlasScalar> {
+    pub systems: Vec<SystemLink<T>>,
 }
 
-impl OwnedSystems {
-    pub fn push<T: AtlasScalar, S: System<T>>(&mut self, system: Box<S>) {
+impl<T: AtlasScalar> OwnedSystems<T> {
+    pub fn push(&mut self, system: SystemLink<T>) {
         self.systems.push(system);
     }
 }
@@ -103,8 +236,8 @@ pub struct DiagramBlueprint<T: AtlasScalar> {
     pub input_port_ids: Vec<InputPortLocator<T>>,
     pub output_port_ids: Vec<OutputPortLocator<T>>,
     pub connection_map: HashMap<InputPortLocator<T>, OutputPortLocator<T>>,
-    pub system_ptrs: Vec<SystemPtr<T>>,
-    pub registered_systems: OwnedSystems,
+    pub system_weak_links: Vec<SystemWeakLink<T>>,
+    pub registered_systems: OwnedSystems<T>,
 }
 
 impl<T: AtlasScalar> DiagramBlueprint<T> {
@@ -116,8 +249,8 @@ impl<T: AtlasScalar> DiagramBlueprint<T> {
 #[derive(Default)]
 pub struct Diagram<T: AtlasScalar> {
     connection_map: HashMap<InputPortLocator<T>, OutputPortLocator<T>>,
-    registered_systems: OwnedSystems,
-    system_index_map: HashMap<SystemPtr<T>, SubsystemIndex>,
+    registered_systems: OwnedSystems<T>,
+    system_index_map: HashMap<SystemLink<T>, SubsystemIndex>,
     output_port_ids: Vec<OutputPortLocator<T>>,
     input_port_map: HashMap<InputPortIndex, InputPortLocator<T>>,
 }
@@ -146,9 +279,9 @@ impl<T: AtlasScalar> Diagram<T> {
     //     self.registered_systems = blueprint.registered_systems;
 
     //     // Generate a map from the System pointer to its index in the registered order.
-    //     for (index, system_ptr) in blueprint.system_ptrs.iter().enumerate() {
+    //     for (index, system) in blueprint.systems.iter().enumerate() {
     //         self.system_index_map
-    //             .insert(system_ptr.clone(), SubsystemIndex::new(index));
+    //             .insert(system.clone(), SubsystemIndex::new(index));
     //     }
 
     //     // Every system must appear exactly once.
@@ -157,7 +290,7 @@ impl<T: AtlasScalar> Diagram<T> {
     // }
 
     // fn export_or_connect_input(&mut self, input_port_locator: InputPortLocator<T>) {
-    //     let system_ptr = input_port_locator.system_ptr;
+    //     let system = input_port_locator.system;
     //     let input_port_index = input_port_locator.input_port_index;
 
     //     if
