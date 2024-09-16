@@ -1,8 +1,11 @@
+use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
+use std::rc::Rc;
 
 use crate::common::atlas_scalar::AtlasScalar;
 use crate::systems::framework::diagram::{
-    Diagram, DiagramBlueprint, InputPortLocator, OutputPortLocator, OwnedSystems, SystemPtr,
+    Diagram, DiagramBlueprint, InputPortLocator, OutputPortLocator, OwnedSystems, SystemLink,
+    SystemWeakLink,
 };
 use crate::systems::framework::diagram_context::DiagramContext;
 use crate::systems::framework::framework_common::{InputPortIndex, PortDataType};
@@ -21,8 +24,8 @@ pub struct DiagramBuilder<T: AtlasScalar> {
     output_port_ids: Vec<OutputPortLocator<T>>,
     diagram_input_data: Vec<ExportedInputPortData<T>>,
     connection_map: HashMap<InputPortLocator<T>, OutputPortLocator<T>>,
-    system_ptrs: Vec<SystemPtr<T>>,
-    registered_systems: OwnedSystems,
+    system_weak_links: Vec<SystemWeakLink<T>>,
+    registered_systems: OwnedSystems<T>,
     already_built: bool,
 }
 
@@ -31,12 +34,12 @@ impl<T: AtlasScalar> DiagramBuilder<T> {
         Self::default()
     }
 
-    pub fn system_ptrs(&self) -> &Vec<SystemPtr<T>> {
-        &self.system_ptrs
+    pub fn system_weak_links(&self) -> &Vec<SystemWeakLink<T>> {
+        &self.system_weak_links
     }
 
-    pub fn systems_mut(&mut self) -> &mut Vec<SystemPtr<T>> {
-        &mut self.system_ptrs
+    pub fn systems_weak_links(&mut self) -> &mut Vec<SystemWeakLink<T>> {
+        &mut self.system_weak_links
     }
 
     pub fn connection_map(&self) -> &HashMap<InputPortLocator<T>, OutputPortLocator<T>> {
@@ -49,31 +52,32 @@ impl<T: AtlasScalar> DiagramBuilder<T> {
         &mut self.connection_map
     }
 
-    pub fn add_leaf_system<S>(&mut self, mut system: Box<S>) -> SystemPtr<T>
+    pub fn add_leaf_system<S>(&mut self, mut system: Rc<RefCell<S>>) -> SystemLink<T>
     where
         S: System<T, CN = LeafContext<T>>,
         T: AtlasScalar,
     {
-        let system_ptr =
-            SystemPtr::LeafSystemPtr(system.as_mut() as *mut dyn System<T, CN = LeafContext<T>>);
+        let system_link = SystemLink::LeafSystemLink(system.clone());
 
-        self.system_ptrs.push(system_ptr.clone());
-        self.registered_systems.push(system);
+        self.system_weak_links
+            .push(system.borrow().system_weak_link());
+        self.registered_systems.push(system_link.clone());
 
-        system_ptr
+        system_link
     }
 
-    pub fn add_diagram<S>(&mut self, mut system: Box<S>) -> SystemPtr<T>
+    pub fn add_diagram<S>(&mut self, mut system: Rc<RefCell<S>>) -> SystemLink<T>
     where
         S: System<T, CN = DiagramContext<T>>,
         T: AtlasScalar,
     {
-        let system_ptr =
-            SystemPtr::DiagramPtr(system.as_mut() as *mut dyn System<T, CN = DiagramContext<T>>);
+        let system_link = SystemLink::DiagramLink(system.clone());
 
-        self.registered_systems.push(system);
+        self.system_weak_links
+            .push(system.borrow().system_weak_link());
+        self.registered_systems.push(system_link.clone());
 
-        system_ptr
+        system_link
     }
 
     pub fn connect<O>(&mut self, output_port: &mut O, input_port: &InputPort<T>)
@@ -83,17 +87,19 @@ impl<T: AtlasScalar> DiagramBuilder<T> {
         self.assert_if_already_built();
 
         let input_port_locator = InputPortLocator::<T> {
-            system_ptr: input_port.system_ptr(),
+            system_weak_link: input_port.system_weak_link().clone(),
             input_port_index: input_port.index().clone(),
         };
         let output_port_locator = OutputPortLocator::<T> {
-            system_ptr: output_port.system_ptr(),
+            system_weak_link: output_port.system_weak_link().clone(),
             output_port_index: output_port.index().clone(),
         };
 
         if *output_port.data_type() == PortDataType::AbstractValued {
             let model_output = output_port.allocate();
-            let model_input = input_port.system_ptr().allocate_input_abstract(input_port);
+            let model_input = input_port
+                .system_weak_link()
+                .allocate_input_abstract(input_port);
             if model_output.type_id() != model_input.type_id() {
                 panic!(
                     "Mismatched value types while connecting output port (type {:?}) to input port (type {:?})",
@@ -116,10 +122,10 @@ impl<T: AtlasScalar> DiagramBuilder<T> {
 
     pub fn declare_input_port(&mut self, input_port: &InputPort<T>) -> InputPortIndex {
         let input_port_locator = InputPortLocator {
-            system_ptr: input_port.system_ptr(),
+            system_weak_link: input_port.system_weak_link().clone(),
             input_port_index: input_port.index().clone(),
         };
-        self.assert_if_system_not_registered(&input_port.system_ptr());
+        self.assert_if_system_not_registered(input_port.system_weak_link());
 
         let input_port_index = InputPortIndex::new(self.diagram_input_data.len());
         self.diagram_input_data
@@ -135,39 +141,42 @@ impl<T: AtlasScalar> DiagramBuilder<T> {
     ) {
         self.assert_if_already_built();
         let input_port_locator = InputPortLocator {
-            system_ptr: input_port.system_ptr(),
+            system_weak_link: input_port.system_weak_link().clone(),
             input_port_index: input_port.index().clone(),
         };
         self.assert_if_input_already_connected(&input_port_locator);
-        self.assert_if_system_not_registered(&input_port.system_ptr());
+        self.assert_if_system_not_registered(input_port.system_weak_link());
 
+        // TODO: Restore
         // Check that port types match.
-        let exported_input_port_data = &self.diagram_input_data[diagram_input_port_index.value()];
-        let input_port_locator = &exported_input_port_data.input_port_locator;
-        let diagram_input_port = input_port_locator
-            .system_ptr
-            .input_port(input_port_locator.input_port_index.clone());
-        if input_port.data_type() != diagram_input_port.data_type() {
-            panic!(
-                "DiagramBuilder::connect_input_port: Cannot mix vector-valued and abstract-valued ports while connecting input port (data type {:?}) of System to input port (data type {:?}) of Diagram",
-                input_port.data_type(),
-                input_port.data_type(),
-            );
-        }
+        // let exported_input_port_data = &self.diagram_input_data[diagram_input_port_index.value()];
+        // let input_port_locator = &exported_input_port_data.input_port_locator;
+        // let diagram_input_port = input_port_locator
+        //     .system_ptr
+        //     .input_port(input_port_locator.input_port_index.clone());
+        // if input_port.data_type() != diagram_input_port.data_type() {
+        //     panic!(
+        //         "DiagramBuilder::connect_input_port: Cannot mix vector-valued and abstract-valued ports while connecting input port (data type {:?}) of System to input port (data type {:?}) of Diagram",
+        //         input_port.data_type(),
+        //         input_port.data_type(),
+        //     );
+        // }
 
-        if *input_port.data_type() == PortDataType::AbstractValued {
-            let input_port_model = input_port.system_ptr().allocate_input_abstract(input_port);
-            let diagram_input_port_model = diagram_input_port
-                .system_ptr()
-                .allocate_input_abstract(diagram_input_port);
-            if input_port_model.type_id() != diagram_input_port_model.type_id() {
-                panic!(
-                    "DiagramBuilder::connect_input_port: Mismatched value types while connecting input port (type {:?}) of System to input port (type {:?}) of Diagram",
-                    input_port_model.type_id(),
-                    diagram_input_port_model.type_id()
-                );
-            }
-        }
+        // if *input_port.data_type() == PortDataType::AbstractValued {
+        //     let input_port_model = input_port
+        //         .system_weak_link()
+        //         .allocate_input_abstract(input_port);
+        //     let diagram_input_port_model = diagram_input_port
+        //         .system_weak_link()
+        //         .allocate_input_abstract(&diagram_input_port);
+        //     if input_port_model.type_id() != diagram_input_port_model.type_id() {
+        //         panic!(
+        //             "DiagramBuilder::connect_input_port: Mismatched value types while connecting input port (type {:?}) of System to input port (type {:?}) of Diagram",
+        //             input_port_model.type_id(),
+        //             diagram_input_port_model.type_id()
+        //         );
+        //     }
+        // }
 
         self.input_port_ids.push(input_port_locator.clone());
     }
@@ -189,7 +198,7 @@ impl<T: AtlasScalar> DiagramBuilder<T> {
         blueprint.input_port_ids = self.input_port_ids.clone();
         blueprint.output_port_ids = self.output_port_ids.clone();
         blueprint.connection_map = self.connection_map.clone();
-        blueprint.system_ptrs = self.system_ptrs.clone();
+        blueprint.system_weak_links = self.system_weak_links.clone();
         blueprint.registered_systems = self.registered_systems;
 
         blueprint
@@ -207,8 +216,8 @@ impl<T: AtlasScalar> DiagramBuilder<T> {
         }
     }
 
-    fn assert_if_system_not_registered(&self, system: &SystemPtr<T>) {
-        if !self.system_ptrs.contains(system) {
+    fn assert_if_system_not_registered(&self, system_weak_link: &SystemWeakLink<T>) {
+        if !self.system_weak_links.contains(system_weak_link) {
             panic!("System has not been registered to this DiagramBuilder");
         }
     }

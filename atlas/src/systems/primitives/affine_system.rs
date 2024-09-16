@@ -11,7 +11,7 @@ use crate::common::value::AbstractValue;
 use crate::systems::framework::basic_vector::BasicVector;
 use crate::systems::framework::cache_entry::CacheEntry;
 use crate::systems::framework::context::Context;
-use crate::systems::framework::diagram::SystemPtr;
+use crate::systems::framework::diagram::SystemWeakLink;
 use crate::systems::framework::framework_common::InputPortIndex;
 use crate::systems::framework::framework_common::OutputPortIndex;
 use crate::systems::framework::framework_common::{
@@ -46,6 +46,7 @@ pub struct AffineSystem<T: AtlasScalar> {
     cache_entries: Vec<CacheEntry>,
     context_sizes: ContextSizes,
     system_id: SystemId,
+    system_weak_link: Option<SystemWeakLink<T>>,
     parent_service: Option<Box<dyn SystemParentServiceInterface>>,
     time_derivatives_cache_index: CacheIndex,
     model_input_values: ModelValues,
@@ -82,6 +83,7 @@ impl<T: AtlasScalar> AffineSystem<T> {
             cache_entries: vec![],
             context_sizes: ContextSizes::default(),
             system_id: SystemId::new(0),
+            system_weak_link: None,
             parent_service: None,
             time_derivatives_cache_index: CacheIndex::new(0),
             model_input_values: ModelValues::default(),

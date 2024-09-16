@@ -164,8 +164,8 @@ pub fn derive_system(input: TokenStream) -> TokenStream {
                 self.output_ports[index].as_mut()
             }
 
-            fn system_ptr(&mut self) -> SystemPtr<T> {
-                SystemPtr::LeafSystemPtr(self as *mut dyn System<T, CN = LeafContext<T>>)
+            fn system_weak_link(&self) -> SystemWeakLink<T> {
+                self.system_weak_link.clone().unwrap()
             }
 
             fn time_derivatives_cache_index(&self) -> &CacheIndex {

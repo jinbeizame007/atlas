@@ -1,6 +1,6 @@
 use std::any::Any;
 use std::cell::RefCell;
-use std::rc::Rc;
+use std::rc::{Rc, Weak};
 
 use atlas_derives::{AbstractSystem, LeafSystem, SystemBase};
 
@@ -12,7 +12,7 @@ use crate::systems::framework::basic_vector::BasicVector;
 use crate::systems::framework::cache_entry::CacheEntry;
 use crate::systems::framework::context::Context;
 use crate::systems::framework::continuous_state::ContinuousState;
-use crate::systems::framework::diagram::SystemPtr;
+use crate::systems::framework::diagram::SystemWeakLink;
 use crate::systems::framework::framework_common::InputPortIndex;
 use crate::systems::framework::framework_common::OutputPortIndex;
 use crate::systems::framework::framework_common::{
@@ -43,6 +43,7 @@ pub struct PIDController<T: AtlasScalar> {
     output_port_index_control: OutputPortIndex,
     num_controlled_q: usize,
     #[allow(clippy::box_collection)]
+    system_weak_link: Option<SystemWeakLink<T>>,
     input_ports: Vec<InputPort<T>>,
     output_ports: Vec<Box<LeafOutputPort<T>>>,
     cache_entries: Vec<CacheEntry>,
@@ -66,6 +67,7 @@ impl<T: AtlasScalar> PIDController<T> {
             input_port_index_desired_state: InputPortIndex::default(),
             output_port_index_control: OutputPortIndex::default(),
             num_controlled_q,
+            system_weak_link: None,
             input_ports: vec![],
             output_ports: vec![],
             cache_entries: vec![],
@@ -76,6 +78,16 @@ impl<T: AtlasScalar> PIDController<T> {
             model_input_values: ModelValues::default(),
             model_continuous_state_vector: BasicVector::<T>::zeros(0),
         }));
+
+        unsafe {
+            let pid_controller_weak = Rc::downgrade(&pid_controller);
+            let pid_controller_weak_ptr = Weak::into_raw(pid_controller_weak);
+            let system_weak = Weak::<RefCell<dyn System<T, CN = LeafContext<T>>>>::from_raw(
+                pid_controller_weak_ptr,
+            );
+            pid_controller.borrow_mut().system_weak_link =
+                Some(SystemWeakLink::LeafSystemWeakLink(system_weak));
+        }
 
         pid_controller
             .borrow_mut()
@@ -222,8 +234,8 @@ impl<T: AtlasScalar> System<T> for PIDController<T> {
         self.output_ports[index].as_mut()
     }
 
-    fn system_ptr(&mut self) -> SystemPtr<T> {
-        SystemPtr::LeafSystemPtr(self as *mut dyn System<T, CN = LeafContext<T>>)
+    fn system_weak_link(&self) -> SystemWeakLink<T> {
+        self.system_weak_link.clone().unwrap()
     }
 
     fn time_derivatives_cache_index(&self) -> &CacheIndex {
