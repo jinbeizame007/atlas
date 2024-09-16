@@ -4,7 +4,7 @@ use std::fmt::Debug;
 use crate::common::atlas_scalar::AtlasScalar;
 use crate::common::value::{AbstractValue, Value};
 use crate::systems::framework::context::Context;
-use crate::systems::framework::diagram::SystemPtr;
+use crate::systems::framework::diagram::SystemWeakLink;
 use crate::systems::framework::fixed_input_port_value::FixedInputPortValue;
 use crate::systems::framework::framework_common::{InputPortIndex, PortDataType, SystemId};
 use crate::systems::framework::input_port_base::{EvalAbstractCallback, InputPortBase};
@@ -13,7 +13,7 @@ use crate::systems::framework::state::State;
 use crate::systems::framework::value_producer::AllocateCallback;
 
 pub struct InputPort<T: AtlasScalar> {
-    system_ptr: SystemPtr<T>,
+    system_weak_link: SystemWeakLink<T>,
     _system_id: SystemId,
     index: InputPortIndex,
     data_type: PortDataType,
@@ -48,7 +48,7 @@ impl<T: AtlasScalar> InputPortBase for InputPort<T> {
 
 impl<T: AtlasScalar> InputPort<T> {
     pub fn new(
-        system_ptr: SystemPtr<T>,
+        system_weak_link: SystemWeakLink<T>,
         _system_id: SystemId,
         index: InputPortIndex,
         data_type: PortDataType,
@@ -57,7 +57,7 @@ impl<T: AtlasScalar> InputPort<T> {
         alloc: Box<AllocateCallback>,
     ) -> Self {
         InputPort {
-            system_ptr,
+            system_weak_link,
             _system_id,
             index,
             data_type,
@@ -71,8 +71,8 @@ impl<T: AtlasScalar> InputPort<T> {
         &self.data_type
     }
 
-    pub fn system_ptr(&self) -> SystemPtr<T> {
-        self.system_ptr.clone()
+    pub fn system_weak_link(&self) -> &SystemWeakLink<T> {
+        &self.system_weak_link
     }
 
     pub fn index(&self) -> &InputPortIndex {

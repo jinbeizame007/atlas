@@ -1,6 +1,6 @@
 use std::any::Any;
 use std::cell::RefCell;
-use std::rc::Rc;
+use std::rc::{Rc, Weak};
 
 use atlas_derives::{AbstractSystem, LeafSystem, System, SystemBase};
 
@@ -11,7 +11,7 @@ use crate::common::value::AbstractValue;
 use crate::systems::framework::basic_vector::BasicVector;
 use crate::systems::framework::cache_entry::CacheEntry;
 use crate::systems::framework::context::Context;
-use crate::systems::framework::diagram::SystemPtr;
+use crate::systems::framework::diagram::SystemWeakLink;
 use crate::systems::framework::framework_common::InputPortIndex;
 use crate::systems::framework::framework_common::OutputPortIndex;
 use crate::systems::framework::framework_common::{
@@ -39,6 +39,7 @@ pub struct Adder<T: AtlasScalar> {
     cache_entries: Vec<CacheEntry>,
     context_sizes: ContextSizes,
     system_id: SystemId,
+    system_weak_link: Option<SystemWeakLink<T>>,
     parent_service: Option<Box<dyn SystemParentServiceInterface>>,
     time_derivatives_cache_index: CacheIndex,
     model_input_values: ModelValues,
@@ -53,11 +54,23 @@ impl<T: AtlasScalar> Adder<T> {
             cache_entries: vec![],
             context_sizes: ContextSizes::default(),
             system_id: SystemId::new(0),
+            system_weak_link: None,
             parent_service: None,
             time_derivatives_cache_index: CacheIndex::new(0),
             model_input_values: ModelValues::default(),
             model_continuous_state_vector: BasicVector::<T>::zeros(0),
         }));
+        // adder.borrow_mut().system_weak_link =
+        //     SystemWeakLink::LeafSystemWeakLink(Rc::downgrade(&adder));
+
+        unsafe {
+            let adder_weak = Rc::downgrade(&adder);
+            let adder_weak_ptr = Weak::into_raw(adder_weak);
+            let system_weak =
+                Weak::<RefCell<dyn System<T, CN = LeafContext<T>>>>::from_raw(adder_weak_ptr);
+            adder.borrow_mut().system_weak_link =
+                Some(SystemWeakLink::LeafSystemWeakLink(system_weak));
+        }
 
         let calc = {
             let weak_adder = Rc::downgrade(&adder);

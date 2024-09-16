@@ -1,4 +1,6 @@
 use std::any::Any;
+use std::cell::RefCell;
+use std::rc::{Rc, Weak};
 
 use crate::common::atlas_scalar::AtlasScalar;
 use crate::common::value::AbstractValue;
@@ -7,7 +9,7 @@ use crate::systems::framework::cache_entry::CacheEntry;
 use crate::systems::framework::context::Context;
 use crate::systems::framework::context_base::ContextBase;
 use crate::systems::framework::continuous_state::ContinuousState;
-use crate::systems::framework::diagram::SystemPtr;
+use crate::systems::framework::diagram::SystemWeakLink;
 use crate::systems::framework::framework_common::{
     CacheIndex, InputPortIndex, OutputPortIndex, PortDataType,
 };
@@ -40,7 +42,7 @@ where
     fn output_port(&self, index: &OutputPortIndex) -> &dyn OutputPort<T, CN = Self::CN>;
     fn output_port_mut(&mut self, index: &OutputPortIndex)
         -> &mut dyn OutputPort<T, CN = Self::CN>;
-    fn system_ptr(&mut self) -> SystemPtr<T>;
+    fn system_weak_link(&self) -> SystemWeakLink<T>;
 
     // Resource allocation and initializaion
     fn allocate_context(&self) -> Box<Self::CN>;
@@ -51,23 +53,26 @@ where
         let input_port_index = InputPortIndex::new(self.num_input_ports());
         let eval = {
             let cloned_input_port_index = input_port_index.clone();
-            let self_ptr: *mut Self = &mut *self;
-            Box::new(move |context_base: &mut dyn ContextBase| unsafe {
-                (*self_ptr).eval_abstract_input(context_base, &cloned_input_port_index)
+            let system_weak_link = self.system_weak_link();
+            Box::new(move |context_base: &mut dyn ContextBase| {
+                system_weak_link.eval_abstract_input(context_base, &cloned_input_port_index)
             })
         };
         let alloc = {
             let cloned_input_port_index = input_port_index.clone();
-            let self_ptr: *mut Self = &mut *self;
-            Box::new(move || unsafe {
-                (*self_ptr)
-                    .allocate_input_abstract((*self_ptr).input_port(&cloned_input_port_index))
+            let system_weak_link = self.system_weak_link();
+            Box::new(move || {
+                let leaf_system_weak_link = system_weak_link.as_leaf_system_weak_link().unwrap();
+                let system_rc = leaf_system_weak_link.upgrade().unwrap();
+                let system = system_rc.borrow();
+                let input_port = system.input_port(&cloned_input_port_index);
+                system.allocate_input_abstract(&input_port)
             })
         };
         let input_port = {
-            let self_ptr = self.system_ptr();
+            let system_weak_link = self.system_weak_link();
             InputPort::<T>::new(
-                self_ptr,
+                system_weak_link,
                 self.system_id().clone(),
                 input_port_index.clone(),
                 data_type,

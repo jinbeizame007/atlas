@@ -221,7 +221,7 @@ pub trait LeafSystem<T: AtlasScalar>: System<T, CN = LeafContext<T>> {
         let output_port = if let Some(size) = fixed_size {
             let data_type = PortDataType::VectorValued;
             Box::new(LeafOutputPort::<T>::new(
-                self.system_ptr(),
+                self.system_weak_link(),
                 _system_id,
                 output_port_index.clone(),
                 data_type,
@@ -232,7 +232,7 @@ pub trait LeafSystem<T: AtlasScalar>: System<T, CN = LeafContext<T>> {
             let data_type = PortDataType::AbstractValued;
             let size = 0;
             Box::new(LeafOutputPort::<T>::new(
-                self.system_ptr(),
+                self.system_weak_link(),
                 _system_id,
                 output_port_index.clone(),
                 data_type,
