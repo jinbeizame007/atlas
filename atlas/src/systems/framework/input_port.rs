@@ -13,6 +13,7 @@ use crate::systems::framework::state::State;
 use crate::systems::framework::value_producer::AllocateCallback;
 
 pub struct InputPort<T: AtlasScalar> {
+    name: String,
     system_weak_link: SystemWeakLink<T>,
     _system_id: SystemId,
     index: InputPortIndex,
@@ -21,8 +22,11 @@ pub struct InputPort<T: AtlasScalar> {
     eval: Box<EvalAbstractCallback>,
     alloc: Box<AllocateCallback>,
 }
-
 impl<T: AtlasScalar> PortBase for InputPort<T> {
+    fn name(&self) -> &str {
+        &self.name
+    }
+
     fn as_any(&self) -> &dyn Any {
         self
     }
@@ -48,6 +52,7 @@ impl<T: AtlasScalar> InputPortBase for InputPort<T> {
 
 impl<T: AtlasScalar> InputPort<T> {
     pub fn new(
+        name: String,
         system_weak_link: SystemWeakLink<T>,
         _system_id: SystemId,
         index: InputPortIndex,
@@ -57,6 +62,7 @@ impl<T: AtlasScalar> InputPort<T> {
         alloc: Box<AllocateCallback>,
     ) -> Self {
         InputPort {
+            name,
             system_weak_link,
             _system_id,
             index,
