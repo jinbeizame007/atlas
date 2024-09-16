@@ -82,12 +82,16 @@ impl<T: AtlasScalar> Adder<T> {
             )
         };
 
-        for _ in 0..num_inputs {
-            adder
-                .borrow_mut()
-                .declare_input_port(PortDataType::VectorValued, size);
+        for i in 0..num_inputs {
+            adder.borrow_mut().declare_input_port(
+                format!("input_{}", i),
+                PortDataType::VectorValued,
+                size,
+            );
         }
-        adder.borrow_mut().declare_vector_output_port(size, calc);
+        adder
+            .borrow_mut()
+            .declare_vector_output_port("sum".to_string(), size, calc);
 
         adder
     }

@@ -49,7 +49,12 @@ where
     // fn allocate_context(&mut self) -> Box<dyn Context<T>> {
     //     self.do_allocate_context().as_ref().
     // }
-    fn declare_input_port(&mut self, data_type: PortDataType, size: usize) -> &InputPort<T> {
+    fn declare_input_port(
+        &mut self,
+        name: String,
+        data_type: PortDataType,
+        size: usize,
+    ) -> &InputPort<T> {
         let input_port_index = InputPortIndex::new(self.num_input_ports());
         let eval = {
             let cloned_input_port_index = input_port_index.clone();
@@ -72,6 +77,7 @@ where
         let input_port = {
             let system_weak_link = self.system_weak_link();
             InputPort::<T>::new(
+                name,
                 system_weak_link,
                 self.system_id().clone(),
                 input_port_index.clone(),

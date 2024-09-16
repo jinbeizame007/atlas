@@ -105,19 +105,19 @@ impl<T: AtlasScalar> PIDController<T> {
 
         pid_controller.borrow_mut().output_port_index_control = pid_controller
             .borrow_mut()
-            .declare_vector_output_port(num_controlled_q, calc)
+            .declare_vector_output_port("control".to_string(), num_controlled_q, calc)
             .index()
             .clone();
 
         pid_controller.borrow_mut().input_port_index_state = pid_controller
             .borrow_mut()
-            .declare_vector_input_port(num_controlled_q * 2)
+            .declare_vector_input_port("estimated_state".to_string(), num_controlled_q * 2)
             .index()
             .clone();
 
         pid_controller.borrow_mut().input_port_index_desired_state = pid_controller
             .borrow_mut()
-            .declare_vector_input_port(num_controlled_q * 2)
+            .declare_vector_input_port("desired_state".to_string(), num_controlled_q * 2)
             .index()
             .clone();
 

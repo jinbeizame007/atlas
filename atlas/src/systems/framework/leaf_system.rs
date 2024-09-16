@@ -111,7 +111,7 @@ pub trait LeafSystem<T: AtlasScalar>: System<T, CN = LeafContext<T>> {
     }
 
     // Declare input port
-    fn declare_vector_input_port(&mut self, size: usize) -> &InputPort<T>
+    fn declare_vector_input_port(&mut self, name: String, size: usize) -> &InputPort<T>
     where
         Self: Sized,
     {
@@ -120,9 +120,13 @@ pub trait LeafSystem<T: AtlasScalar>: System<T, CN = LeafContext<T>> {
         self.model_input_values_mut()
             .add_vector_model(input_port_index, model_vector);
 
-        self.declare_input_port(PortDataType::VectorValued, size)
+        self.declare_input_port(name, PortDataType::VectorValued, size)
     }
-    fn declare_abstract_input_port(&mut self, model_value: &dyn AbstractValue) -> &InputPort<T>
+    fn declare_abstract_input_port(
+        &mut self,
+        name: String,
+        model_value: &dyn AbstractValue,
+    ) -> &InputPort<T>
     where
         Self: Sized,
     {
@@ -130,18 +134,24 @@ pub trait LeafSystem<T: AtlasScalar>: System<T, CN = LeafContext<T>> {
         let model_input_values = self.model_input_values_mut();
         model_input_values.add_model(next_input_port_index, model_value.clone_box());
 
-        self.declare_input_port(PortDataType::AbstractValued, 0)
+        self.declare_input_port(name, PortDataType::AbstractValued, 0)
     }
 
     // Declare output port
     #[allow(clippy::type_complexity)]
     fn declare_vector_output_port(
         &mut self,
+        name: String,
         size: usize,
         calc: Box<dyn Fn(&mut Self::CN, &mut BasicVector<T>)>,
     ) -> &LeafOutputPort<T> {
         let model_vector = BasicVector::<T>::zeros(size);
-        self.create_vector_leaf_output_port(size, Self::make_allocate_callback(model_vector), calc)
+        self.create_vector_leaf_output_port(
+            name,
+            size,
+            Self::make_allocate_callback(model_vector),
+            calc,
+        )
     }
 
     // fn make_allocate_callback<OutputType: Clone + Debug + 'static>(
@@ -156,6 +166,7 @@ pub trait LeafSystem<T: AtlasScalar>: System<T, CN = LeafContext<T>> {
     #[allow(clippy::type_complexity)]
     fn declare_abstract_output_port(
         &mut self,
+        name: String,
         alloc: Box<AllocateCallback>,
         calc: Box<dyn Fn(&mut Self::CN, &mut dyn AbstractValue)>,
     ) -> &LeafOutputPort<T> {
@@ -171,12 +182,13 @@ pub trait LeafSystem<T: AtlasScalar>: System<T, CN = LeafContext<T>> {
         );
         let value_producer = ValueProducer::new(alloc, calc_);
 
-        self.create_abstract_leaf_output_port(value_producer)
+        self.create_abstract_leaf_output_port(name, value_producer)
     }
 
     #[allow(clippy::type_complexity)]
     fn create_vector_leaf_output_port(
         &mut self,
+        name: String,
         fixed_size: usize,
         alloc: Box<AllocateCallback>,
         calc: Box<dyn Fn(&mut Self::CN, &mut BasicVector<T>)>,
@@ -199,18 +211,20 @@ pub trait LeafSystem<T: AtlasScalar>: System<T, CN = LeafContext<T>> {
         );
         let value_producer = ValueProducer::new(alloc, cache_calc);
 
-        self.create_cached_leaf_output_port(Some(fixed_size), value_producer)
+        self.create_cached_leaf_output_port(name, Some(fixed_size), value_producer)
     }
 
     fn create_abstract_leaf_output_port(
         &mut self,
+        name: String,
         value_producer: ValueProducer,
     ) -> &LeafOutputPort<T> {
-        self.create_cached_leaf_output_port(None, value_producer)
+        self.create_cached_leaf_output_port(name, None, value_producer)
     }
 
     fn create_cached_leaf_output_port(
         &mut self,
+        name: String,
         fixed_size: Option<usize>,
         value_producer: ValueProducer,
     ) -> &LeafOutputPort<T> {
@@ -221,6 +235,7 @@ pub trait LeafSystem<T: AtlasScalar>: System<T, CN = LeafContext<T>> {
         let output_port = if let Some(size) = fixed_size {
             let data_type = PortDataType::VectorValued;
             Box::new(LeafOutputPort::<T>::new(
+                name,
                 self.system_weak_link(),
                 _system_id,
                 output_port_index.clone(),
@@ -232,6 +247,7 @@ pub trait LeafSystem<T: AtlasScalar>: System<T, CN = LeafContext<T>> {
             let data_type = PortDataType::AbstractValued;
             let size = 0;
             Box::new(LeafOutputPort::<T>::new(
+                name,
                 self.system_weak_link(),
                 _system_id,
                 output_port_index.clone(),
