@@ -13,6 +13,7 @@ use crate::systems::framework::output_port_base::OutputPortBase;
 use crate::systems::framework::port_base::PortBase;
 
 pub struct LeafOutputPort<T: AtlasScalar> {
+    name: String,
     system_weak_link: SystemWeakLink<T>,
     _system_id: SystemId,
     index: OutputPortIndex,
@@ -22,6 +23,10 @@ pub struct LeafOutputPort<T: AtlasScalar> {
 }
 
 impl<T: AtlasScalar> PortBase for LeafOutputPort<T> {
+    fn name(&self) -> &str {
+        &self.name
+    }
+
     fn as_any(&self) -> &dyn Any {
         self
     }
@@ -65,6 +70,7 @@ impl<T: AtlasScalar> OutputPort<T> for LeafOutputPort<T> {
 
 impl<T: AtlasScalar> LeafOutputPort<T> {
     pub fn new(
+        name: String,
         system_weak_link: SystemWeakLink<T>,
         _system_id: SystemId,
         index: OutputPortIndex,
@@ -73,6 +79,7 @@ impl<T: AtlasScalar> LeafOutputPort<T> {
         cache_entry: *const CacheEntry,
     ) -> Self {
         LeafOutputPort::<T> {
+            name,
             system_weak_link,
             _system_id,
             index,
