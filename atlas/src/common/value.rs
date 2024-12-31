@@ -16,6 +16,16 @@ impl Default for Box<dyn AbstractValue> {
     }
 }
 
+impl dyn AbstractValue {
+    pub fn cast<T: 'static + Clone + Debug>(&self) -> Option<&Value<T>> {
+        self.as_any().downcast_ref::<Value<T>>()
+    }
+
+    pub fn cast_mut<T: 'static + Clone + Debug>(&mut self) -> Option<&mut Value<T>> {
+        self.as_any_mut().downcast_mut::<Value<T>>()
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct Value<T: Clone + Debug> {
     value: T,
@@ -79,7 +89,10 @@ mod tests {
     #[test]
     fn test_constructor() {
         let value = Value::<i64>::new(22);
-        assert_eq!(22, *value.as_any().downcast_ref::<i64>().unwrap());
+        assert_eq!(
+            22,
+            *value.as_any().downcast_ref::<Value<i64>>().unwrap().value()
+        );
     }
 
     #[test]
@@ -89,13 +102,6 @@ mod tests {
         let value2 = Value::<i64>::new(22);
         let abstract_value2 = Box::new(value2) as Box<dyn AbstractValue>;
         abstract_value1.set_from(abstract_value2.as_ref());
-        assert_eq!(
-            22,
-            *abstract_value1
-                .as_any()
-                .downcast_ref::<Value<i64>>()
-                .unwrap()
-                .value()
-        )
+        assert_eq!(22, *abstract_value1.cast::<i64>().unwrap().value())
     }
 }
