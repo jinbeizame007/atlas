@@ -17,12 +17,24 @@ impl Default for Box<dyn AbstractValue> {
 }
 
 impl dyn AbstractValue {
-    pub fn cast<T: 'static + Clone + Debug>(&self) -> Option<&Value<T>> {
-        self.as_any().downcast_ref::<Value<T>>()
+    pub fn get_value<T: 'static + Clone + Debug>(&self) -> &T {
+        self.cast::<T>().value()
     }
 
-    pub fn cast_mut<T: 'static + Clone + Debug>(&mut self) -> Option<&mut Value<T>> {
-        self.as_any_mut().downcast_mut::<Value<T>>()
+    pub fn get_value_mut<T: 'static + Clone + Debug>(&mut self) -> &mut T {
+        self.cast_mut::<T>().value_mut()
+    }
+
+    pub fn set_value<T: 'static + Clone + Debug>(&mut self, value: T) {
+        self.cast_mut::<T>().set_value(value);
+    }
+
+    fn cast<T: 'static + Clone + Debug>(&self) -> &Value<T> {
+        self.as_any().downcast_ref::<Value<T>>().unwrap()
+    }
+
+    fn cast_mut<T: 'static + Clone + Debug>(&mut self) -> &mut Value<T> {
+        self.as_any_mut().downcast_mut::<Value<T>>().unwrap()
     }
 }
 
@@ -44,8 +56,8 @@ impl<T: 'static + Clone + Debug> Value<T> {
         &mut self.value
     }
 
-    pub fn set_value(&mut self, value: &T) {
-        self.value = value.clone();
+    pub fn set_value(&mut self, value: T) {
+        self.value = value;
     }
 }
 
@@ -64,7 +76,7 @@ impl<T: 'static + Clone + Debug> AbstractValue for Value<T> {
             .downcast_ref::<Value<T>>()
             .unwrap()
             .value();
-        self.set_value(value);
+        self.set_value(value.clone());
     }
 
     fn clone_box(&self) -> Box<dyn AbstractValue> {
@@ -102,6 +114,9 @@ mod tests {
         let value2 = Value::<i64>::new(22);
         let abstract_value2 = Box::new(value2) as Box<dyn AbstractValue>;
         abstract_value1.set_from(abstract_value2.as_ref());
-        assert_eq!(22, *abstract_value1.cast::<i64>().unwrap().value())
+        assert_eq!(22, *abstract_value1.get_value::<i64>());
+
+        abstract_value1.set_value(33_i64);
+        assert_eq!(33, *abstract_value1.get_value::<i64>());
     }
 }
