@@ -8,7 +8,7 @@ use crate::systems::framework::context_base::ContextBase;
 use crate::systems::framework::continuous_state::ContinuousState;
 use crate::systems::framework::diagram_state::DiagramState;
 use crate::systems::framework::fixed_input_port_value::FixedInputPortValue;
-use crate::systems::framework::framework_common::SystemId;
+use crate::systems::framework::framework_common::{SubsystemIndex, SystemId};
 use crate::systems::framework::leaf_context::LeafContext;
 use crate::systems::framework::state::State;
 use crate::systems::framework::vector_base::VectorBase;
@@ -16,6 +16,17 @@ use crate::systems::framework::vector_base::VectorBase;
 pub enum ContextPtr<T: AtlasScalar> {
     LeafContextPtr(*mut LeafContext<T>),
     DiagramContextPtr(*mut DiagramContext<T>),
+}
+
+impl<T: AtlasScalar> ContextPtr<T> {
+    pub fn as_leaf_context(&mut self) -> &mut LeafContext<T> {
+        match self {
+            ContextPtr::LeafContextPtr(ptr) => unsafe { &mut **ptr },
+            ContextPtr::DiagramContextPtr(ptr) => {
+                todo!()
+            }
+        }
+    }
 }
 
 #[derive(Default)]
@@ -134,5 +145,11 @@ impl<T: AtlasScalar> Context<T> for DiagramContext<T> {
 
     fn as_mutable_base(&mut self) -> &mut dyn ContextBase {
         self
+    }
+}
+
+impl<T: AtlasScalar> DiagramContext<T> {
+    pub fn get_subcontext(&mut self, subsystem_index: &SubsystemIndex) -> &mut LeafContext<T> {
+        self.contexts[subsystem_index].as_leaf_context()
     }
 }
