@@ -8,6 +8,7 @@ pub mod diagram;
 pub mod diagram_builder;
 pub mod diagram_context;
 pub mod diagram_continuous_state;
+pub mod diagram_output_port;
 pub mod diagram_state;
 pub mod fixed_input_port_value;
 pub mod framework_common;
