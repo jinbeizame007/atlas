@@ -37,6 +37,11 @@ where
     fn input_port(&self, index: &InputPortIndex) -> &InputPort<T>;
     fn input_port_mut(&mut self, index: &InputPortIndex) -> &mut InputPort<T>;
     fn add_input_port(&mut self, input_port: InputPort<T>);
+    fn has_input_port(&self, name: &str) -> bool {
+        <Self as System<T>>::input_ports(self)
+            .iter()
+            .any(|ip| ip.name() == name)
+    }
     fn output_ports(&self) -> Vec<&dyn OutputPort<T, CN = Self::CN>>;
     fn output_ports_mut(&mut self) -> Vec<&mut dyn OutputPort<T, CN = Self::CN>>;
     fn output_port(&self, index: &OutputPortIndex) -> &dyn OutputPort<T, CN = Self::CN>;
