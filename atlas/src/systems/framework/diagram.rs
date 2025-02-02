@@ -514,11 +514,11 @@ impl<T: AtlasScalar> Diagram<T> {
         self.output_ports.push(output_port);
     }
 
-    // pub fn from_blueprint(blueprint: DiagramBlueprint<T>) -> Self {
-    //     let mut diagram = Self::new();
-    //     diagram.initialize(blueprint);
-    //     diagram
-    // }
+    pub fn from_blueprint(blueprint: DiagramBlueprint<T>) -> Self {
+        let mut diagram = Self::new();
+        diagram.initialize(blueprint);
+        diagram
+    }
 
     pub fn initialize(&mut self, blueprint: DiagramBlueprint<T>) {
         assert!(!blueprint.registered_systems.systems.is_empty());
@@ -554,6 +554,8 @@ impl<T: AtlasScalar> Diagram<T> {
             );
         }
         self.output_port_ids = blueprint.output_port_ids;
+
+        // TODO: Set implicit time derivatives residual size.
     }
 
     fn export_or_connect_input(&mut self, input_port_locator: InputPortLocator<T>, name: &str) {
