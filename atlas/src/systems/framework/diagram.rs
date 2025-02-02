@@ -525,7 +525,6 @@ impl<T: AtlasScalar> Diagram<T> {
         assert!(self.registered_systems.systems.is_empty());
 
         self.connection_map = blueprint.connection_map;
-        self.output_port_ids = blueprint.output_port_ids;
         self.registered_systems = blueprint.registered_systems;
 
         // Generate a map from the System pointer to its index in the registered order.
@@ -544,6 +543,17 @@ impl<T: AtlasScalar> Diagram<T> {
                 &blueprint.input_port_names[index],
             );
         }
+
+        for (index, output_port_locator) in blueprint.output_port_ids.iter().enumerate() {
+            let subsystem_index =
+                self.system_index_map[&output_port_locator.system_weak_link].clone();
+            self.export_output(
+                output_port_locator,
+                &subsystem_index,
+                &blueprint.output_port_names[index],
+            );
+        }
+        self.output_port_ids = blueprint.output_port_ids;
     }
 
     fn export_or_connect_input(&mut self, input_port_locator: InputPortLocator<T>, name: &str) {
