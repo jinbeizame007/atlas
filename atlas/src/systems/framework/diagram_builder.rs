@@ -185,11 +185,12 @@ impl<T: AtlasScalar> DiagramBuilder<T> {
         self.input_port_ids.push(input_port_locator.clone());
     }
 
-    // pub fn build(mut self) -> Diagram<T> {
-    //     self.assert_if_already_built();
-    //     let blueprint = self.compile();
-    //     Diagram::initialize(blueprint)
-    // }
+    pub fn build(self) -> Diagram<T> {
+        self.assert_if_already_built();
+        let blueprint = self.compile();
+
+        Diagram::from_blueprint(blueprint)
+    }
 
     fn compile(mut self) -> DiagramBlueprint<T> {
         if self.registered_systems.systems.is_empty() {
