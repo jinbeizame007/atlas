@@ -24,6 +24,7 @@ use crate::systems::framework::leaf_context::LeafContext;
 use crate::systems::framework::leaf_system::LeafSystem;
 use crate::systems::framework::output_port::OutputPort;
 use crate::systems::framework::output_port_base::OutputPortBase;
+use crate::systems::framework::port_base::PortBase;
 use crate::systems::framework::state::State;
 use crate::systems::framework::system::{AbstractSystem, System};
 use crate::systems::framework::system_base::ContextSizes;
@@ -531,15 +532,24 @@ impl<T: AtlasScalar> Diagram<T> {
     //     assert_eq!(self.num_subsystems(), self.registered_systems.systems.len());
     // }
 
-    // fn export_or_connect_input(&mut self, input_port_locator: InputPortLocator<T>, name: &str) {
-    //     if !input_port_locator.system_weak_link.has_input_port(name) {
-    //         self.input_port_map.insert(
-    //             input_port_locator.clone(),
-    //             input_port_locator.input_port_index,
-    //         );
-    //     } else {
-    //         let new_port =
-    //             (&mut self).declare_input_port(name, input_port_locator.input_port_index);
-    //     }
-    // }
+    fn export_or_connect_input(&mut self, input_port_locator: InputPortLocator<T>, name: &str) {
+        if !input_port_locator.system_weak_link.has_input_port(name) {
+            self.input_port_map.insert(
+                input_port_locator.clone(),
+                input_port_locator.input_port_index,
+            );
+        } else {
+            let subsystem_link = input_port_locator.system_weak_link.upgrade();
+            let subsystem_input_port =
+                subsystem_link.input_port(input_port_locator.input_port_index.clone());
+            let new_port = self.declare_input_port(
+                name.to_string(),
+                subsystem_input_port.data_type().clone(),
+                subsystem_input_port.size(),
+            );
+            let input_port_index = new_port.index().clone();
+            self.input_port_map
+                .insert(input_port_locator.clone(), input_port_index);
+        }
+    }
 }
