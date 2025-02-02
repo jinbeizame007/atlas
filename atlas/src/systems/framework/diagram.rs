@@ -387,6 +387,7 @@ pub struct DiagramBlueprint<T: AtlasScalar> {
     pub input_port_ids: Vec<InputPortLocator<T>>,
     pub input_port_names: Vec<String>,
     pub output_port_ids: Vec<OutputPortLocator<T>>,
+    pub output_port_names: Vec<String>,
     pub connection_map: HashMap<InputPortLocator<T>, OutputPortLocator<T>>,
     pub system_weak_links: Vec<SystemWeakLink<T>>,
     pub registered_systems: OwnedSystems<T>,

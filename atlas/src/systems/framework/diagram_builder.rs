@@ -24,6 +24,7 @@ pub struct DiagramBuilder<T: AtlasScalar> {
     input_port_ids: Vec<InputPortLocator<T>>,
     input_port_names: Vec<String>,
     output_port_ids: Vec<OutputPortLocator<T>>,
+    output_port_names: Vec<String>,
     diagram_input_data: Vec<ExportedInputPortData<T>>,
     connection_map: HashMap<InputPortLocator<T>, OutputPortLocator<T>>,
     system_weak_links: Vec<SystemWeakLink<T>>,
@@ -201,6 +202,7 @@ impl<T: AtlasScalar> DiagramBuilder<T> {
         blueprint.input_port_ids = self.input_port_ids.clone();
         blueprint.input_port_names = self.input_port_names.clone();
         blueprint.output_port_ids = self.output_port_ids.clone();
+        blueprint.output_port_names = self.output_port_names.clone();
         blueprint.connection_map = self.connection_map.clone();
         blueprint.system_weak_links = self.system_weak_links.clone();
         blueprint.registered_systems = self.registered_systems;
