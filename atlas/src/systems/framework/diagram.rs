@@ -509,6 +509,10 @@ impl<T: AtlasScalar> Diagram<T> {
         self.registered_systems.systems.len()
     }
 
+    pub fn add_output_port(&mut self, output_port: Box<DiagramOutputPort<T>>) {
+        self.output_ports.push(output_port);
+    }
+
     // pub fn from_blueprint(blueprint: DiagramBlueprint<T>) -> Self {
     //     let mut diagram = Self::new();
     //     diagram.initialize(blueprint);
@@ -560,5 +564,21 @@ impl<T: AtlasScalar> Diagram<T> {
             self.input_port_map
                 .insert(input_port_locator.clone(), input_port_index);
         }
+    }
+
+    fn export_output(
+        &mut self,
+        output_port_locator: &OutputPortLocator<T>,
+        subsystem_index: &SubsystemIndex,
+        name: &str,
+    ) {
+        let subsystem_weak_link = output_port_locator.system_weak_link.clone();
+        let diagram_output_port = DiagramOutputPort::new(
+            name.to_string(),
+            subsystem_weak_link.clone(),
+            subsystem_index.clone(),
+            output_port_locator.output_port_index.clone(),
+        );
+        self.add_output_port(Box::new(diagram_output_port));
     }
 }
