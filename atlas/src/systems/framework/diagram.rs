@@ -385,6 +385,7 @@ impl<T: AtlasScalar> OwnedSystems<T> {
 #[derive(Default)]
 pub struct DiagramBlueprint<T: AtlasScalar> {
     pub input_port_ids: Vec<InputPortLocator<T>>,
+    pub input_port_names: Vec<String>,
     pub output_port_ids: Vec<OutputPortLocator<T>>,
     pub connection_map: HashMap<InputPortLocator<T>, OutputPortLocator<T>>,
     pub system_weak_links: Vec<SystemWeakLink<T>>,
@@ -514,23 +515,31 @@ impl<T: AtlasScalar> Diagram<T> {
     //     diagram
     // }
 
-    // pub fn initialize(&mut self, blueprint: DiagramBlueprint<T>) {
-    //     assert!(!blueprint.registered_systems.systems.is_empty());
-    //     assert!(self.registered_systems.systems.is_empty());
+    pub fn initialize(&mut self, blueprint: DiagramBlueprint<T>) {
+        assert!(!blueprint.registered_systems.systems.is_empty());
+        assert!(self.registered_systems.systems.is_empty());
 
-    //     self.connection_map = blueprint.connection_map;
-    //     self.output_port_ids = blueprint.output_port_ids;
-    //     self.registered_systems = blueprint.registered_systems;
+        self.connection_map = blueprint.connection_map;
+        self.output_port_ids = blueprint.output_port_ids;
+        self.registered_systems = blueprint.registered_systems;
 
-    //     // Generate a map from the System pointer to its index in the registered order.
-    //     for (index, system) in blueprint.system_weak_links.iter().enumerate() {
-    //         self.system_index_map
-    //             .insert(system.clone(), SubsystemIndex::new(index));
-    //     }
+        // Generate a map from the System pointer to its index in the registered order.
+        for (index, system) in blueprint.system_weak_links.iter().enumerate() {
+            self.system_index_map
+                .insert(system.clone(), SubsystemIndex::new(index));
+        }
 
-    //     // Every system must appear exactly once.
-    //     assert_eq!(self.num_subsystems(), self.registered_systems.systems.len());
-    // }
+        // Every system must appear exactly once.
+        assert_eq!(self.num_subsystems(), self.registered_systems.systems.len());
+
+        // Add the inputs to the Diagram topology, and check their invariants.
+        for (index, input_port_locator) in blueprint.input_port_ids.iter().enumerate() {
+            self.export_or_connect_input(
+                input_port_locator.clone(),
+                &blueprint.input_port_names[index],
+            );
+        }
+    }
 
     fn export_or_connect_input(&mut self, input_port_locator: InputPortLocator<T>, name: &str) {
         if !input_port_locator.system_weak_link.has_input_port(name) {

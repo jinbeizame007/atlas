@@ -12,6 +12,7 @@ use crate::systems::framework::framework_common::{InputPortIndex, PortDataType};
 use crate::systems::framework::input_port::InputPort;
 use crate::systems::framework::leaf_context::LeafContext;
 use crate::systems::framework::output_port::OutputPort;
+use crate::systems::framework::port_base::PortBase;
 use crate::systems::framework::system::System;
 
 struct ExportedInputPortData<T: AtlasScalar> {
@@ -21,6 +22,7 @@ struct ExportedInputPortData<T: AtlasScalar> {
 #[derive(Default)]
 pub struct DiagramBuilder<T: AtlasScalar> {
     input_port_ids: Vec<InputPortLocator<T>>,
+    input_port_names: Vec<String>,
     output_port_ids: Vec<OutputPortLocator<T>>,
     diagram_input_data: Vec<ExportedInputPortData<T>>,
     connection_map: HashMap<InputPortLocator<T>, OutputPortLocator<T>>,
@@ -128,6 +130,7 @@ impl<T: AtlasScalar> DiagramBuilder<T> {
         self.assert_if_system_not_registered(input_port.system_weak_link());
 
         let input_port_index = InputPortIndex::new(self.diagram_input_data.len());
+        self.input_port_names.push(input_port.name().to_string());
         self.diagram_input_data
             .push(ExportedInputPortData { input_port_locator });
 
@@ -152,7 +155,7 @@ impl<T: AtlasScalar> DiagramBuilder<T> {
         // let exported_input_port_data = &self.diagram_input_data[diagram_input_port_index.value()];
         // let input_port_locator = &exported_input_port_data.input_port_locator;
         // let diagram_input_port = input_port_locator
-        //     .system_ptr
+        //     .system_weak_link
         //     .input_port(input_port_locator.input_port_index.clone());
         // if input_port.data_type() != diagram_input_port.data_type() {
         //     panic!(
@@ -196,6 +199,7 @@ impl<T: AtlasScalar> DiagramBuilder<T> {
 
         self.already_built = true;
         blueprint.input_port_ids = self.input_port_ids.clone();
+        blueprint.input_port_names = self.input_port_names.clone();
         blueprint.output_port_ids = self.output_port_ids.clone();
         blueprint.connection_map = self.connection_map.clone();
         blueprint.system_weak_links = self.system_weak_links.clone();
