@@ -72,6 +72,10 @@ pub fn derive_system_base(input: TokenStream) -> TokenStream {
             fn set_implicit_time_derivatives_residual_size(&mut self, size: usize) {
                 self.implicit_time_derivatives_residual_size = Some(size);
             }
+
+            fn implicit_time_derivatives_residual_size(&self) -> usize {
+                self.implicit_time_derivatives_residual_size.unwrap_or(self.num_continuous_states())
+            }
         }
     };
 

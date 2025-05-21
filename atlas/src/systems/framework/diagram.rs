@@ -99,6 +99,24 @@ impl<T: AtlasScalar> SystemLink<T> {
                 .eval_abstract_input(context, input_port_index),
         }
     }
+
+    pub fn context_sizes(&self) -> Ref<ContextSizes> {
+        match self {
+            SystemLink::LeafSystemLink(system) => Ref::map(system.borrow(), |s| s.context_sizes()),
+            SystemLink::DiagramLink(system) => Ref::map(system.borrow(), |s| s.context_sizes()),
+        }
+    }
+
+    pub fn implicit_time_derivatives_residual_size(&self) -> usize {
+        match self {
+            SystemLink::LeafSystemLink(system) => {
+                system.borrow().implicit_time_derivatives_residual_size()
+            }
+            SystemLink::DiagramLink(system) => {
+                system.borrow().implicit_time_derivatives_residual_size()
+            }
+        }
+    }
 }
 
 impl<T: AtlasScalar> SystemLink<T> {
@@ -557,7 +575,14 @@ impl<T: AtlasScalar> Diagram<T> {
         }
         self.output_port_ids = blueprint.output_port_ids;
 
-        // TODO: Set implicit time derivatives residual size.
+        let mut residual_size = 0;
+        let mut sizes = ContextSizes::default();
+        for (index, system) in self.registered_systems.systems.iter().enumerate() {
+            sizes += &*system.context_sizes();
+            residual_size += system.implicit_time_derivatives_residual_size();
+        }
+        self.context_sizes += &sizes;
+        self.implicit_time_derivatives_residual_size = Some(residual_size);
     }
 
     fn export_or_connect_input(&mut self, input_port_locator: InputPortLocator<T>, name: &str) {

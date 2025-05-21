@@ -1,4 +1,4 @@
-// use atlas_derives::SystemBase;
+use std::ops::{Add, AddAssign};
 
 use crate::common::value::AbstractValue;
 use crate::systems::framework::cache_entry::CacheEntry;
@@ -15,6 +15,37 @@ pub struct ContextSizes {
     pub num_generalized_positions: usize,
     pub num_generalized_velocities: usize,
     pub num_misc_continuous_states: usize,
+}
+
+impl Add for ContextSizes {
+    type Output = ContextSizes;
+
+    fn add(self, other: ContextSizes) -> ContextSizes {
+        ContextSizes {
+            num_generalized_positions: self.num_generalized_positions
+                + other.num_generalized_positions,
+            num_generalized_velocities: self.num_generalized_velocities
+                + other.num_generalized_velocities,
+            num_misc_continuous_states: self.num_misc_continuous_states
+                + other.num_misc_continuous_states,
+        }
+    }
+}
+
+impl AddAssign<&ContextSizes> for ContextSizes {
+    fn add_assign(&mut self, rhs: &ContextSizes) {
+        self.num_generalized_positions += rhs.num_generalized_positions;
+        self.num_generalized_velocities += rhs.num_generalized_velocities;
+        self.num_misc_continuous_states += rhs.num_misc_continuous_states;
+    }
+}
+
+impl AddAssign<&ContextSizes> for &mut ContextSizes {
+    fn add_assign(&mut self, rhs: &ContextSizes) {
+        self.num_generalized_positions += rhs.num_generalized_positions;
+        self.num_generalized_velocities += rhs.num_generalized_velocities;
+        self.num_misc_continuous_states += rhs.num_misc_continuous_states;
+    }
 }
 
 pub trait SystemBase {
@@ -129,6 +160,8 @@ pub trait SystemBase {
             + context_sizes.num_generalized_velocities
             + context_sizes.num_misc_continuous_states
     }
+
+    fn implicit_time_derivatives_residual_size(&self) -> usize;
 
     fn validate_context(&self, context: &dyn ContextBase) {
         assert!(*context.system_id() == *self.system_id())
