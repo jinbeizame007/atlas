@@ -408,6 +408,7 @@ pub struct Diagram<T: AtlasScalar> {
     context_sizes: ContextSizes,
     system_id: SystemId,
     parent_service: Option<Box<dyn SystemParentServiceInterface>>,
+    implicit_time_derivatives_residual_size: Option<usize>,
 
     // System
     system_weak_link: Option<SystemWeakLink<T>>,
@@ -517,6 +518,7 @@ impl<T: AtlasScalar> Diagram<T> {
     pub fn from_blueprint(blueprint: DiagramBlueprint<T>) -> Self {
         let mut diagram = Self::new();
         diagram.initialize(blueprint);
+
         diagram
     }
 

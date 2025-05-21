@@ -33,6 +33,9 @@ pub trait SystemBase {
     // Context
     // fn allocate_context(&self) -> Box<dyn ContextBase>;
     // fn do_allocate_context(&self) -> Box<dyn ContextBase>;
+
+    fn set_implicit_time_derivatives_residual_size(&mut self, size: usize);
+
     fn initialize_context_base(&self, context: &mut dyn ContextBase) {
         context.set_system_id(self.system_id().clone());
 

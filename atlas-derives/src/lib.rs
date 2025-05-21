@@ -68,6 +68,10 @@ pub fn derive_system_base(input: TokenStream) -> TokenStream {
             fn parent_service(&self) -> Option<&dyn SystemParentServiceInterface> {
                 self.parent_service.as_ref().map(|p| p.as_ref())
             }
+
+            fn set_implicit_time_derivatives_residual_size(&mut self, size: usize) {
+                self.implicit_time_derivatives_residual_size = Some(size);
+            }
         }
     };
 

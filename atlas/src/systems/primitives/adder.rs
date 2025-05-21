@@ -44,6 +44,7 @@ pub struct Adder<T: AtlasScalar> {
     time_derivatives_cache_index: CacheIndex,
     model_input_values: ModelValues,
     model_continuous_state_vector: BasicVector<T>,
+    implicit_time_derivatives_residual_size: Option<usize>,
 }
 
 impl<T: AtlasScalar> Adder<T> {
@@ -59,6 +60,7 @@ impl<T: AtlasScalar> Adder<T> {
             time_derivatives_cache_index: CacheIndex::new(0),
             model_input_values: ModelValues::default(),
             model_continuous_state_vector: BasicVector::<T>::zeros(0),
+            implicit_time_derivatives_residual_size: None,
         }));
         // adder.borrow_mut().system_weak_link =
         //     SystemWeakLink::LeafSystemWeakLink(Rc::downgrade(&adder));
