@@ -525,6 +525,10 @@ impl<T: AtlasScalar> Diagram<T> {
         Self::default()
     }
 
+    pub fn connection_map(&self) -> &HashMap<InputPortLocator<T>, OutputPortLocator<T>> {
+        &self.connection_map
+    }
+
     pub fn num_subsystems(&self) -> usize {
         self.registered_systems.systems.len()
     }
@@ -620,5 +624,32 @@ impl<T: AtlasScalar> Diagram<T> {
             output_port_locator.output_port_index.clone(),
         );
         self.add_output_port(Box::new(diagram_output_port));
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::systems::framework::diagram_builder::DiagramBuilder;
+    use crate::systems::primitives::adder::Adder;
+
+    use super::*;
+
+    #[test]
+    fn test_build() {
+        let mut diagram_builder = DiagramBuilder::<f64>::new();
+
+        let adder1 = Adder::<f64>::new(2, 3);
+        let adder2 = Adder::<f64>::new(2, 3);
+
+        let _ = diagram_builder.add_leaf_system(adder1);
+        let _ = diagram_builder.add_leaf_system(adder2);
+
+        let diagram = diagram_builder.build();
+
+        assert_eq!(diagram.num_subsystems(), 2);
+
+        // TODO: Add test for checking the numbers of the input and output ports.
+        // assert_eq!(System::<f64>::input_ports(&diagram).len(), 4);
+        // assert_eq!(System::<f64>::output_ports(&diagram).len(), 2);
     }
 }
