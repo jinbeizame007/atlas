@@ -9,6 +9,7 @@ use atlas_derives::{AbstractSystem, LeafSystem, System, SystemBase};
 
 use crate::common::atlas_scalar::AtlasScalar;
 use crate::common::value::AbstractValue;
+use crate::systems::framework::basic_vector::BasicVector;
 use crate::systems::framework::cache_entry::CacheEntry;
 use crate::systems::framework::context::Context;
 use crate::systems::framework::context_base::ContextBase;
@@ -21,6 +22,7 @@ use crate::systems::framework::framework_common::{
 use crate::systems::framework::input_port::InputPort;
 use crate::systems::framework::input_port_base::InputPortBase;
 use crate::systems::framework::leaf_context::LeafContext;
+use crate::systems::framework::leaf_output_port::LeafOutputPort;
 use crate::systems::framework::leaf_system::LeafSystem;
 use crate::systems::framework::output_port::OutputPort;
 use crate::systems::framework::output_port_base::OutputPortBase;
@@ -72,6 +74,17 @@ impl<T: AtlasScalar> SystemLink<T> {
             }
             SystemLink::DiagramLink(system) => {
                 Ref::map(system.borrow(), |s| s.input_port(&input_port_index))
+            }
+        }
+    }
+
+    pub fn input_port_mut(&mut self, input_port_index: InputPortIndex) -> RefMut<InputPort<T>> {
+        match self {
+            SystemLink::LeafSystemLink(system) => {
+                RefMut::map(system.borrow_mut(), |s| s.input_port_mut(&input_port_index))
+            }
+            SystemLink::DiagramLink(system) => {
+                RefMut::map(system.borrow_mut(), |s| s.input_port_mut(&input_port_index))
             }
         }
     }
@@ -288,102 +301,6 @@ impl<T: AtlasScalar> SystemWeakLink<T> {
     }
 }
 
-// /* ~~~ OutputPort Links ~~~ */
-// type LeafOutputPortLink<T: AtlasScalar> = Rc<RefCell<dyn OutputPort<T, CN = LeafContext<T>>>>;
-// type DiagramOutputPortLink<T: AtlasScalar> = Rc<RefCell<dyn OutputPort<T, CN = DiagramContext<T>>>>;
-
-// #[derive(Clone)]
-// pub enum OutputPortLink<T: AtlasScalar> {
-//     LeafOutputPortLink(LeafOutputPortLink<T>),
-//     DiagramOutputPortLink(DiagramOutputPortLink<T>),
-// }
-
-// impl<T: AtlasScalar> OutputPortLink<T> {
-//     pub fn eval_abstract(&self, context: &mut dyn Context<T>) -> Box<dyn AbstractValue> {
-//         match self {
-//             OutputPortLink::LeafOutputPortLink(port) => port.borrow().eval_abstract(context),
-//             OutputPortLink::DiagramOutputPortLink(port) => port.borrow().eval_abstract(context),
-//         }
-//     }
-
-//     pub fn allocate(&self) -> Box<dyn AbstractValue> {
-//         match self {
-//             OutputPortLink::LeafOutputPortLink(port) => port.borrow().allocate(),
-//             OutputPortLink::DiagramOutputPortLink(port) => port.borrow().allocate(),
-//         }
-//     }
-
-//     pub fn calc(&self, context: &mut dyn Context<T>, value: &mut dyn AbstractValue) {
-//         match self {
-//             OutputPortLink::LeafOutputPortLink(port) => port.borrow().calc(context, value),
-//             OutputPortLink::DiagramOutputPortLink(port) => port.borrow().calc(context, value),
-//         }
-//     }
-
-//     pub fn system_weak_link(&self) -> SystemWeakLink<T> {
-//         match self {
-//             OutputPortLink::LeafOutputPortLink(port) => port.borrow().system_weak_link(),
-//             OutputPortLink::DiagramOutputPortLink(port) => port.borrow().system_weak_link(),
-//         }
-//     }
-// }
-
-// type LeafOutputPortWeakLink<T: AtlasScalar> = Weak<RefCell<dyn OutputPort<T, CN = LeafContext<T>>>>;
-// type DiagramOutputPortWeakLink<T: AtlasScalar> =
-//     Weak<RefCell<dyn OutputPort<T, CN = DiagramContext<T>>>>;
-
-// #[derive(Clone)]
-// pub enum OutputPortWeakLink<T: AtlasScalar> {
-//     LeafOutputPortWeakLink(LeafOutputPortWeakLink<T>),
-//     DiagramOutputPortWeakLink(DiagramOutputPortWeakLink<T>),
-// }
-
-// impl<T: AtlasScalar> OutputPortWeakLink<T> {
-//     pub fn eval_abstract(&self, context: &mut dyn Context<T>) -> Box<dyn AbstractValue> {
-//         match self {
-//             OutputPortWeakLink::LeafOutputPortWeakLink(port) => {
-//                 port.upgrade().unwrap().borrow().eval_abstract(context)
-//             }
-//             OutputPortWeakLink::DiagramOutputPortWeakLink(port) => {
-//                 port.upgrade().unwrap().borrow().eval_abstract(context)
-//             }
-//         }
-//     }
-
-//     pub fn allocate(&self) -> Box<dyn AbstractValue> {
-//         match self {
-//             OutputPortWeakLink::LeafOutputPortWeakLink(port) => {
-//                 port.upgrade().unwrap().borrow().allocate()
-//             }
-//             OutputPortWeakLink::DiagramOutputPortWeakLink(port) => {
-//                 port.upgrade().unwrap().borrow().allocate()
-//             }
-//         }
-//     }
-
-//     pub fn calc(&self, context: &mut dyn Context<T>, value: &mut dyn AbstractValue) {
-//         match self {
-//             OutputPortWeakLink::LeafOutputPortWeakLink(port) => {
-//                 port.upgrade().unwrap().borrow().calc(context, value)
-//             }
-//             OutputPortWeakLink::DiagramOutputPortWeakLink(port) => {
-//                 port.upgrade().unwrap().borrow().calc(context, value)
-//             }
-//         }
-//     }
-
-//     pub fn system_weak_link(&self) -> SystemWeakLink<T> {
-//         match self {
-//             OutputPortWeakLink::LeafOutputPortWeakLink(port) => {
-//                 port.upgrade().unwrap().borrow().system_weak_link()
-//             }
-//             OutputPortWeakLink::DiagramOutputPortWeakLink(port) => {
-//                 port.upgrade().unwrap().borrow().system_weak_link()
-//             }
-//         }
-//     }
-// }
-
 /* ~~~ Input/Output Port Locators ~~~ */
 
 #[derive(Clone, Debug)]
@@ -551,6 +468,17 @@ impl<T: AtlasScalar> Diagram<T> {
         Self::default()
     }
 
+    pub fn diagram_output_port(&self, index: &OutputPortIndex) -> &DiagramOutputPort<T> {
+        self.output_ports[index].as_ref()
+    }
+
+    pub fn diagram_output_port_mut(
+        &mut self,
+        index: &OutputPortIndex,
+    ) -> &mut DiagramOutputPort<T> {
+        self.output_ports[index].as_mut()
+    }
+
     pub fn connection_map(&self) -> &HashMap<InputPortLocator<T>, OutputPortLocator<T>> {
         &self.connection_map
     }
@@ -694,8 +622,61 @@ mod tests {
 
         assert_eq!(diagram.borrow().num_subsystems(), 2);
 
-        // TODO: Add test for checking the numbers of the input and output ports.
         assert_eq!(System::<f64>::input_ports(&*diagram.borrow()).len(), 4);
         assert_eq!(System::<f64>::output_ports(&*diagram.borrow()).len(), 2);
+    }
+
+    #[test]
+    fn test_connection_map() {
+        let mut diagram_builder = DiagramBuilder::<f64>::new();
+
+        let adder1 = Adder::<f64>::new(2, 3);
+        let adder2 = Adder::<f64>::new(2, 3);
+        let adder3 = Adder::<f64>::new(2, 3);
+
+        let mut adder1_link = diagram_builder.add_leaf_system(adder1);
+        adder1_link.set_name("adder1".to_string());
+        let mut adder2_link = diagram_builder.add_leaf_system(adder2);
+        adder2_link.set_name("adder2".to_string());
+        let mut adder3_link = diagram_builder.add_leaf_system(adder3);
+        adder3_link.set_name("adder3".to_string());
+
+        diagram_builder.export_input_port(&*adder1_link.input_port(InputPortIndex::new(0)));
+        diagram_builder.export_input_port(&*adder1_link.input_port(InputPortIndex::new(1)));
+        diagram_builder.export_input_port(&*adder2_link.input_port(InputPortIndex::new(0)));
+        diagram_builder.export_input_port(&*adder2_link.input_port(InputPortIndex::new(1)));
+
+        diagram_builder.connect::<LeafContext<f64>>(
+            &mut *adder1_link.output_port_mut(OutputPortIndex::new(0)),
+            &*adder3_link.input_port(InputPortIndex::new(0)),
+        );
+        diagram_builder.connect::<LeafContext<f64>>(
+            &mut *adder2_link.output_port_mut(OutputPortIndex::new(0)),
+            &*adder3_link.input_port(InputPortIndex::new(1)),
+        );
+
+        diagram_builder.export_output_port::<LeafContext<f64>>(
+            &*adder3_link.output_port(OutputPortIndex::new(0)),
+        );
+
+        let diagram = diagram_builder.build();
+        assert_eq!(diagram.borrow().num_subsystems(), 3);
+
+        // TODO: Restore this test after implementing allocate_context() for Diagram.
+        // let mut diagram_context = diagram.borrow_mut().create_default_context();
+
+        // let input1 = BasicVector::<f64>::from_vec(vec![1.0, 2.0, 3.0]);
+        // let input2 = BasicVector::<f64>::from_vec(vec![4.0, 5.0, 6.0]);
+        // let input3 = BasicVector::<f64>::from_vec(vec![7.0, 8.0, 9.0]);
+        // let input4 = BasicVector::<f64>::from_vec(vec![10.0, 11.0, 12.0]);
+
+        // diagram.borrow_mut().input_port_mut(&InputPortIndex::new(0)).fix_value(diagram_context.as_mut(), input1.clone());
+        // diagram.borrow_mut().input_port_mut(&InputPortIndex::new(1)).fix_value(diagram_context.as_mut(), input2.clone());
+        // diagram.borrow_mut().input_port_mut(&InputPortIndex::new(2)).fix_value(diagram_context.as_mut(), input3.clone());
+        // diagram.borrow_mut().input_port_mut(&InputPortIndex::new(3)).fix_value(diagram_context.as_mut(), input4.clone());
+
+        // let sum = diagram.borrow().diagram_output_port(&OutputPortIndex::new(0)).eval::<BasicVector<f64>>(diagram_context.as_mut());
+        // let sum_expected = input1.clone() + &input2 + &input3 + &input4;
+        // assert_eq!(sum, sum_expected);
     }
 }

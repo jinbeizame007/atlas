@@ -3,6 +3,7 @@ use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 
 use crate::common::atlas_scalar::AtlasScalar;
+use crate::systems::framework::context::Context;
 use crate::systems::framework::diagram::{
     Diagram, DiagramBlueprint, InputPortLocator, OutputPortLocator, OwnedSystems, SystemLink,
     SystemWeakLink,
@@ -83,9 +84,12 @@ impl<T: AtlasScalar> DiagramBuilder<T> {
         system_link
     }
 
-    pub fn connect<O>(&mut self, output_port: &mut O, input_port: &InputPort<T>)
-    where
-        O: OutputPort<T>,
+    pub fn connect<CN>(
+        &mut self,
+        output_port: &mut dyn OutputPort<T, CN = CN>,
+        input_port: &InputPort<T>,
+    ) where
+        CN: Context<T>,
     {
         self.assert_if_already_built();
 
@@ -185,10 +189,13 @@ impl<T: AtlasScalar> DiagramBuilder<T> {
         self.input_port_ids.push(input_port_locator.clone());
     }
 
-    pub fn export_output_port(
+    pub fn export_output_port<CN>(
         &mut self,
-        output_port: &dyn OutputPort<T, CN = LeafContext<T>>,
-    ) -> OutputPortIndex {
+        output_port: &dyn OutputPort<T, CN = CN>,
+    ) -> OutputPortIndex
+    where
+        CN: Context<T>,
+    {
         self.assert_if_already_built();
 
         let output_port_index = OutputPortIndex::new(self.output_port_ids.len());
