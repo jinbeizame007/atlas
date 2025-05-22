@@ -33,6 +33,7 @@ use crate::systems::framework::system_base::SystemBase;
 // TODO: implement
 #[derive(LeafSystem, System, AbstractSystem, SystemBase)]
 pub struct AffineSystem<T: AtlasScalar> {
+    name: String,
     a: na::DMatrix<T>,
     b: na::DMatrix<T>,
     f0: na::DVector<T>,
@@ -72,6 +73,7 @@ impl<T: AtlasScalar> AffineSystem<T> {
         assert!(num_outputs > 0);
 
         let affine_system = Rc::new(RefCell::new(Self {
+            name: "affine_system".to_string(),
             a,
             b,
             f0,

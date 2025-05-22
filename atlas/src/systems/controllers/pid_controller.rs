@@ -43,6 +43,7 @@ pub struct PIDController<T: AtlasScalar> {
     output_port_index_control: OutputPortIndex,
     num_controlled_q: usize,
     #[allow(clippy::box_collection)]
+    name: String,
     system_weak_link: Option<SystemWeakLink<T>>,
     input_ports: Vec<InputPort<T>>,
     output_ports: Vec<Box<LeafOutputPort<T>>>,
@@ -61,6 +62,7 @@ impl<T: AtlasScalar> PIDController<T> {
         let num_controlled_q = kp.len();
 
         let mut pid_controller = Rc::new(RefCell::new(Self {
+            name: "pid_controller".to_string(),
             kp,
             ki,
             kd,

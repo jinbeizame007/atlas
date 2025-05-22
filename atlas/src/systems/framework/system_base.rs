@@ -50,6 +50,8 @@ impl AddAssign<&ContextSizes> for &mut ContextSizes {
 
 pub trait SystemBase {
     // Getters and setters without default implementations
+    fn set_name(&mut self, name: String);
+    fn name(&self) -> &String;
     fn input_ports(&self) -> Vec<&dyn InputPortBase>;
     fn input_ports_mut(&mut self) -> Vec<&mut dyn InputPortBase>;
     fn output_ports(&self) -> Vec<&dyn OutputPortBase>;

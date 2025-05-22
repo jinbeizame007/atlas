@@ -34,6 +34,7 @@ use crate::systems::framework::vector_base::VectorBase;
 
 #[derive(LeafSystem, AbstractSystem, System, SystemBase)]
 pub struct Adder<T: AtlasScalar> {
+    name: String,
     input_ports: Vec<InputPort<T>>,
     output_ports: Vec<Box<LeafOutputPort<T>>>,
     cache_entries: Vec<CacheEntry>,
@@ -50,6 +51,7 @@ pub struct Adder<T: AtlasScalar> {
 impl<T: AtlasScalar> Adder<T> {
     pub fn new(num_inputs: usize, size: usize) -> Rc<RefCell<Self>> {
         let adder = Rc::new(RefCell::new(Self {
+            name: "adder".to_string(),
             input_ports: vec![],
             output_ports: vec![],
             cache_entries: vec![],

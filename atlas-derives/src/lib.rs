@@ -17,6 +17,14 @@ pub fn derive_system_base(input: TokenStream) -> TokenStream {
 
     let impl_system_base = quote! {
         impl<T: AtlasScalar> SystemBase for #name<T> {
+            fn set_name(&mut self, name: String) {
+                self.name = name;
+            }
+
+            fn name(&self) -> &String {
+                &self.name
+            }
+
             fn input_ports(&self) -> Vec<&dyn InputPortBase> {
                 self.input_ports
                     .iter()
