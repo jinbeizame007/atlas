@@ -120,6 +120,20 @@ impl<T: AtlasScalar> SystemLink<T> {
 }
 
 impl<T: AtlasScalar> SystemLink<T> {
+    pub fn name(&self) -> Ref<String> {
+        match self {
+            SystemLink::LeafSystemLink(system) => Ref::map(system.borrow(), |s| s.name()),
+            SystemLink::DiagramLink(system) => Ref::map(system.borrow(), |s| s.name()),
+        }
+    }
+
+    pub fn set_name(&mut self, name: String) {
+        match self {
+            SystemLink::LeafSystemLink(system) => system.borrow_mut().set_name(name),
+            SystemLink::DiagramLink(system) => system.borrow_mut().set_name(name),
+        }
+    }
+
     pub fn output_port(
         &self,
         output_port_index: OutputPortIndex,
@@ -192,6 +206,17 @@ impl<T: AtlasScalar> Hash for SystemWeakLink<T> {
 }
 
 impl<T: AtlasScalar> SystemWeakLink<T> {
+    pub fn name(&self) -> String {
+        match self {
+            SystemWeakLink::LeafSystemWeakLink(system) => {
+                system.upgrade().unwrap().borrow().name().clone()
+            }
+            SystemWeakLink::DiagramWeakLink(system) => {
+                system.upgrade().unwrap().borrow().name().clone()
+            }
+        }
+    }
+
     pub fn upgrade(&self) -> SystemLink<T> {
         match self {
             SystemWeakLink::LeafSystemWeakLink(system) => {
@@ -420,6 +445,7 @@ impl<T: AtlasScalar> DiagramBlueprint<T> {
 #[derive(Default, SystemBase, AbstractSystem)]
 pub struct Diagram<T: AtlasScalar> {
     // SystemBase
+    name: String,
     input_ports: Vec<InputPort<T>>,
     output_ports: Vec<Box<DiagramOutputPort<T>>>,
     cache_entries: Vec<CacheEntry>,
@@ -537,9 +563,19 @@ impl<T: AtlasScalar> Diagram<T> {
         self.output_ports.push(output_port);
     }
 
-    pub fn from_blueprint(blueprint: DiagramBlueprint<T>) -> Self {
-        let mut diagram = Self::new();
-        diagram.initialize(blueprint);
+    pub fn from_blueprint(blueprint: DiagramBlueprint<T>) -> Rc<RefCell<Self>> {
+        let diagram = Rc::new(RefCell::new(Self::new()));
+
+        unsafe {
+            let diagram_weak = Rc::downgrade(&diagram);
+            let diagram_weak_ptr = Weak::into_raw(diagram_weak);
+            let system_weak =
+                Weak::<RefCell<dyn System<T, CN = DiagramContext<T>>>>::from_raw(diagram_weak_ptr);
+            diagram.borrow_mut().system_weak_link =
+                Some(SystemWeakLink::DiagramWeakLink(system_weak));
+        }
+
+        diagram.borrow_mut().initialize(blueprint);
 
         diagram
     }
@@ -641,15 +677,25 @@ mod tests {
         let adder1 = Adder::<f64>::new(2, 3);
         let adder2 = Adder::<f64>::new(2, 3);
 
-        let _ = diagram_builder.add_leaf_system(adder1);
-        let _ = diagram_builder.add_leaf_system(adder2);
+        let mut adder1_link = diagram_builder.add_leaf_system(adder1);
+        adder1_link.set_name("adder1".to_string());
+        let mut adder2_link = diagram_builder.add_leaf_system(adder2);
+        adder2_link.set_name("adder2".to_string());
+
+        diagram_builder.export_input_port(&*adder1_link.input_port(InputPortIndex::new(0)));
+        diagram_builder.export_input_port(&*adder1_link.input_port(InputPortIndex::new(1)));
+        diagram_builder.export_input_port(&*adder2_link.input_port(InputPortIndex::new(0)));
+        diagram_builder.export_input_port(&*adder2_link.input_port(InputPortIndex::new(1)));
+
+        diagram_builder.export_output_port(&*adder1_link.output_port(OutputPortIndex::new(0)));
+        diagram_builder.export_output_port(&*adder2_link.output_port(OutputPortIndex::new(0)));
 
         let diagram = diagram_builder.build();
 
-        assert_eq!(diagram.num_subsystems(), 2);
+        assert_eq!(diagram.borrow().num_subsystems(), 2);
 
         // TODO: Add test for checking the numbers of the input and output ports.
-        // assert_eq!(System::<f64>::input_ports(&diagram).len(), 4);
-        // assert_eq!(System::<f64>::output_ports(&diagram).len(), 2);
+        assert_eq!(System::<f64>::input_ports(&*diagram.borrow()).len(), 4);
+        assert_eq!(System::<f64>::output_ports(&*diagram.borrow()).len(), 2);
     }
 }

@@ -22,6 +22,7 @@ pub struct InputPort<T: AtlasScalar> {
     eval: Box<EvalAbstractCallback>,
     alloc: Box<AllocateCallback>,
 }
+
 impl<T: AtlasScalar> PortBase for InputPort<T> {
     fn name(&self) -> &str {
         &self.name

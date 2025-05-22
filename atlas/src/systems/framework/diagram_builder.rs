@@ -8,7 +8,7 @@ use crate::systems::framework::diagram::{
     SystemWeakLink,
 };
 use crate::systems::framework::diagram_context::DiagramContext;
-use crate::systems::framework::framework_common::{InputPortIndex, PortDataType};
+use crate::systems::framework::framework_common::{InputPortIndex, OutputPortIndex, PortDataType};
 use crate::systems::framework::input_port::InputPort;
 use crate::systems::framework::leaf_context::LeafContext;
 use crate::systems::framework::output_port::OutputPort;
@@ -185,7 +185,27 @@ impl<T: AtlasScalar> DiagramBuilder<T> {
         self.input_port_ids.push(input_port_locator.clone());
     }
 
-    pub fn build(self) -> Diagram<T> {
+    pub fn export_output_port(
+        &mut self,
+        output_port: &dyn OutputPort<T, CN = LeafContext<T>>,
+    ) -> OutputPortIndex {
+        self.assert_if_already_built();
+
+        let output_port_index = OutputPortIndex::new(self.output_port_ids.len());
+
+        let output_port_locator = OutputPortLocator {
+            system_weak_link: output_port.system_weak_link().clone(),
+            output_port_index: output_port.index().clone(),
+        };
+        self.output_port_ids.push(output_port_locator.clone());
+
+        let port_name = output_port.system_weak_link().name() + "_" + output_port.name();
+        self.output_port_names.push(port_name);
+
+        output_port_index
+    }
+
+    pub fn build(self) -> Rc<RefCell<Diagram<T>>> {
         self.assert_if_already_built();
         let blueprint = self.compile();
 
