@@ -1,4 +1,5 @@
-use std::sync::{Arc, Mutex};
+use std::cell::RefCell;
+use std::rc::Rc;
 
 use crate::common::atlas_scalar::AtlasScalar;
 use crate::common::value::AbstractValue;
@@ -32,7 +33,7 @@ impl<T: AtlasScalar> ContextPtr<T> {
 #[derive(Default)]
 pub struct DiagramContext<T: AtlasScalar> {
     system_id: SystemId,
-    parent: Option<Arc<Mutex<dyn ContextBase>>>,
+    parent: Option<Rc<RefCell<dyn ContextBase>>>,
     cache: Cache,
     time: T,
     state: DiagramState<T>,
@@ -57,7 +58,7 @@ impl<T: AtlasScalar> ContextBase for DiagramContext<T> {
         &self.system_id
     }
 
-    fn parent_base(&self) -> Option<Arc<Mutex<dyn ContextBase>>> {
+    fn parent_base(&self) -> Option<Rc<RefCell<dyn ContextBase>>> {
         self.parent.clone()
     }
 
@@ -149,6 +150,10 @@ impl<T: AtlasScalar> Context<T> for DiagramContext<T> {
 }
 
 impl<T: AtlasScalar> DiagramContext<T> {
+    pub fn add_system<CN: Context<T>>(&mut self, index: SubsystemIndex, context: &mut CN) {
+        
+    }
+
     pub fn get_subcontext(&mut self, subsystem_index: &SubsystemIndex) -> &mut LeafContext<T> {
         self.contexts[subsystem_index].as_leaf_context()
     }

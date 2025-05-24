@@ -341,7 +341,6 @@ impl<T: AtlasScalar> OwnedSystems<T> {
         self.systems.push(system);
     }
 }
-
 #[derive(Default)]
 pub struct DiagramBlueprint<T: AtlasScalar> {
     pub input_port_ids: Vec<InputPortLocator<T>>,
@@ -466,6 +465,17 @@ impl<T: AtlasScalar> System<T> for Diagram<T> {
 impl<T: AtlasScalar> Diagram<T> {
     pub fn new() -> Self {
         Self::default()
+    }
+
+    pub fn do_allocate_context(&self) {
+        todo!()
+        // let mut context = Box::new(DiagramContext::<f64>::default());
+        // self.initialize_context_base(context.as_mutable_base());
+
+        // for i in 0..self.num_subsystems() {
+        //     let system_link = self.registered_systems.systems[i];
+        //     context.add_
+        // }
     }
 
     pub fn diagram_output_port(&self, index: &OutputPortIndex) -> &DiagramOutputPort<T> {

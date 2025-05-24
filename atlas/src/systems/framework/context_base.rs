@@ -1,5 +1,6 @@
 use std::any::Any;
-use std::sync::{Arc, Mutex};
+use std::cell::RefCell;
+use std::rc::Rc;
 
 use crate::common::value::AbstractValue;
 use crate::systems::framework::cache::Cache;
@@ -11,7 +12,10 @@ pub trait ContextBase: Any {
     fn as_any_mut(&mut self) -> &mut dyn Any;
     fn set_system_id(&mut self, system_id: SystemId);
     fn system_id(&self) -> &SystemId;
-    fn parent_base(&self) -> Option<Arc<Mutex<dyn ContextBase>>>;
+    // fn set_parent(&mut self, child: &mut dyn ContextBase, parent: &dyn ContextBase) {
+    //     child.parent_base() = Some(Rc::new(RefCell::new(parent)));
+    // }
+    fn parent_base(&self) -> Option<Rc<RefCell<dyn ContextBase>>>;
     fn cache(&self) -> &Cache;
     fn cache_mut(&mut self) -> &mut Cache;
 

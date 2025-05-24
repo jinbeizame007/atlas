@@ -116,7 +116,7 @@ pub trait SystemBase {
             fixed_input_port_value.value().clone_box()
         } else {
             let parent_context_base = context.parent_base().unwrap();
-            let mut guard = parent_context_base.lock().unwrap();
+            let mut guard = parent_context_base.borrow_mut();
             let input_port = self.input_port_base(input_port_index);
 
             self.parent_service()

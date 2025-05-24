@@ -1,4 +1,5 @@
-use std::sync::{Arc, Mutex};
+use std::cell::RefCell;
+use std::rc::Rc;
 
 use crate::common::atlas_scalar::AtlasScalar;
 use crate::common::value::AbstractValue;
@@ -15,7 +16,7 @@ use crate::systems::framework::vector_base::VectorBase;
 #[derive(Default)]
 pub struct LeafContext<T: AtlasScalar> {
     system_id: SystemId,
-    parent: Option<Arc<Mutex<dyn ContextBase>>>,
+    parent: Option<Rc<RefCell<dyn ContextBase>>>,
     cache: Cache,
     time: T,
     state: Box<LeafState<T>>,
@@ -39,7 +40,7 @@ impl<T: AtlasScalar> ContextBase for LeafContext<T> {
         &self.system_id
     }
 
-    fn parent_base(&self) -> Option<Arc<Mutex<dyn ContextBase>>> {
+    fn parent_base(&self) -> Option<Rc<RefCell<dyn ContextBase>>> {
         self.parent.clone()
     }
 
