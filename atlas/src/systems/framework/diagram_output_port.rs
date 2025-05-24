@@ -59,7 +59,7 @@ impl<T: AtlasScalar> OutputPort<T> for DiagramOutputPort<T> {
             .allocate()
     }
 
-    fn eval_abstract(&self, context: &mut Self::CN) -> Box<dyn AbstractValue> {
+    fn eval_abstract(&self, context: &Self::CN) -> Box<dyn AbstractValue> {
         let subcontext = context.get_context(&self.subsystem_index);
         match &self.subsystem_weak_link {
             SystemWeakLink::LeafSystemWeakLink(leaf_system_weak_link) => leaf_system_weak_link
@@ -129,7 +129,7 @@ impl<T: AtlasScalar> DiagramOutputPort<T> {
 
     pub fn eval<ValueType: Clone + Debug + 'static>(
         &self,
-        context: &mut <Self as OutputPort<T>>::CN,
+        context: &<Self as OutputPort<T>>::CN,
     ) -> ValueType {
         self.eval_abstract(context)
             .as_any()

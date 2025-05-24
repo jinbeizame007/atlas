@@ -1,5 +1,4 @@
 use crate::common::value::AbstractValue;
-use crate::systems::framework::cache::CacheEntryValue;
 use crate::systems::framework::context_base::ContextBase;
 use crate::systems::framework::framework_common::CacheIndex;
 use crate::systems::framework::value_producer::ValueProducer;
@@ -21,42 +20,56 @@ impl CacheEntry {
         self.value_producer.allocate()
     }
 
-    pub fn calc(&self, context: &mut dyn ContextBase, value: &mut dyn AbstractValue) {
+    pub fn calc(&self, context: &dyn ContextBase, value: &mut dyn AbstractValue) {
         self.value_producer.calc(context, value)
     }
 
-    pub fn eval<'a, ValueType: 'static>(&self, context: &'a mut dyn ContextBase) -> &'a ValueType {
+    pub fn eval<ValueType: 'static>(&self, context: &mut dyn ContextBase) -> ValueType
+    where
+        ValueType: Clone,
+    {
         let abstract_value = self.eval_abstract(context);
-        abstract_value.as_any().downcast_ref::<ValueType>().unwrap()
+        abstract_value
+            .as_any()
+            .downcast_ref::<ValueType>()
+            .unwrap()
+            .clone()
     }
 
-    pub fn eval_abstract<'a>(&self, context: &'a mut dyn ContextBase) -> &'a dyn AbstractValue {
-        if self.cache_entry_value(context).needs_recomputation() {
+    pub fn eval_abstract(&self, context: &dyn ContextBase) -> Box<dyn AbstractValue> {
+        if context
+            .cache()
+            .borrow()
+            .cache_entry_value(&self.cache_index)
+            .needs_recomputation()
+        {
             self.update_value(context)
         }
-        self.cache_entry_value(context).abstract_value()
+        context
+            .cache()
+            .borrow()
+            .cache_entry_value(&self.cache_index)
+            .abstract_value()
+            .clone_box()
     }
 
-    fn update_value(&self, context: &mut dyn ContextBase) {
+    fn update_value(&self, context: &dyn ContextBase) {
         let mut value = {
-            let mutable_cache_value = self.cache_mut_entry_value(context);
-            mutable_cache_value.abstract_value_mut().clone_box()
+            let mut cache = context.cache().borrow_mut();
+            cache
+                .cache_mut_entry_value(&self.cache_index)
+                .abstract_value_mut()
+                .clone_box()
         };
         self.calc(context, value.as_mut());
 
-        let mutable_abstract_value = self.cache_mut_entry_value(context).abstract_value_mut();
-        mutable_abstract_value.set_from(value.as_ref());
-    }
-
-    pub fn cache_entry_value<'a>(&self, context: &'a dyn ContextBase) -> &'a CacheEntryValue {
-        context.cache().cache_entry_value(&self.cache_index)
-    }
-
-    pub fn cache_mut_entry_value<'a>(
-        &self,
-        context: &'a mut dyn ContextBase,
-    ) -> &'a mut CacheEntryValue {
-        context.cache_mut().cache_mut_entry_value(&self.cache_index)
+        {
+            let mut cache = context.cache().borrow_mut();
+            cache
+                .cache_mut_entry_value(&self.cache_index)
+                .abstract_value_mut()
+                .set_from(value.as_ref());
+        }
     }
 
     pub fn cache_index(&self) -> &CacheIndex {

@@ -1,4 +1,4 @@
-use std::cell::RefCell;
+use std::cell::{Ref, RefCell, RefMut};
 use std::rc::Rc;
 
 use crate::common::atlas_scalar::AtlasScalar;
@@ -47,7 +47,7 @@ impl<T: AtlasScalar> ContextLink<T> {
 pub struct DiagramContext<T: AtlasScalar> {
     system_id: SystemId,
     parent: Option<Rc<RefCell<dyn ContextBase>>>,
-    cache: Cache,
+    cache: RefCell<Cache>,
     time: T,
     state: DiagramState<T>,
     input_port_values: Vec<Option<FixedInputPortValue>>,
@@ -79,12 +79,8 @@ impl<T: AtlasScalar> ContextBase for DiagramContext<T> {
         &mut self.parent
     }
 
-    fn cache(&self) -> &Cache {
+    fn cache(&self) -> &RefCell<Cache> {
         &self.cache
-    }
-
-    fn cache_mut(&mut self) -> &mut Cache {
-        &mut self.cache
     }
 
     fn input_port_values(&mut self) -> &mut Vec<Option<FixedInputPortValue>> {
@@ -171,7 +167,7 @@ impl<T: AtlasScalar> DiagramContext<T> {
         Self {
             system_id: SystemId::default(),
             parent: None,
-            cache: Cache::default(),
+            cache: RefCell::new(Cache::default()),
             time: T::default(),
             state: DiagramState::default(),
             input_port_values: vec![],

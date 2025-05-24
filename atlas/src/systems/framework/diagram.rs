@@ -647,28 +647,27 @@ impl<T: AtlasScalar> Diagram<T> {
     ) -> Box<dyn AbstractValue> {
         let subsystem_weak_link = id.system_weak_link.clone();
         let output_port_index = id.output_port_index.clone();
-        let output_port = self.output_port(&output_port_index);
         let subsystem_index = self.subsystem_index(&subsystem_weak_link);
         let subsystem_context = diagram_context.get_context(&subsystem_index);
 
         match subsystem_weak_link {
             SystemWeakLink::LeafSystemWeakLink(system) => {
-                let leaf_output_port = output_port
-                    .as_any()
-                    .downcast_ref::<LeafOutputPort<T>>()
-                    .unwrap();
-                leaf_output_port.eval::<Box<dyn AbstractValue>>(
-                    &mut *subsystem_context.as_leaf_context().unwrap().borrow_mut(),
-                )
+                let subsystem = system.upgrade().unwrap();
+                let leaf_context = subsystem_context.as_leaf_context().unwrap();
+                let result = subsystem
+                    .borrow()
+                    .output_port(&output_port_index)
+                    .eval_abstract(&*leaf_context.borrow_mut());
+                result
             }
             SystemWeakLink::DiagramWeakLink(system) => {
-                let diagram_output_port = output_port
-                    .as_any()
-                    .downcast_ref::<DiagramOutputPort<T>>()
-                    .unwrap();
-                diagram_output_port.eval::<Box<dyn AbstractValue>>(
-                    &mut *subsystem_context.as_diagram_context().unwrap().borrow_mut(),
-                )
+                let subsystem = system.upgrade().unwrap();
+                let diagram_context = subsystem_context.as_diagram_context().unwrap();
+                let result = subsystem
+                    .borrow()
+                    .output_port(&output_port_index)
+                    .eval_abstract(&*diagram_context.borrow_mut());
+                result
             }
         }
     }
@@ -691,13 +690,30 @@ impl<T: AtlasScalar> DiagramExt<T> for Rc<RefCell<Diagram<T>>> {
             self.borrow_mut()
                 .system_index_map
                 .insert(system.clone(), SubsystemIndex::new(index));
-            let diagram_weak_link = Rc::downgrade(self);
-            let parent_service = unsafe {
-                let raw_ptr = Weak::into_raw(diagram_weak_link);
-                let trait_ptr = raw_ptr as *const RefCell<dyn SystemParentServiceInterface>;
-                Weak::<RefCell<dyn SystemParentServiceInterface>>::from_raw(trait_ptr)
-            };
-            self.borrow_mut().set_parent_service(parent_service);
+        }
+
+        // Set parent service for all subsystems
+        let diagram_weak_link = Rc::downgrade(self);
+        let parent_service = unsafe {
+            let raw_ptr = Weak::into_raw(diagram_weak_link);
+            let trait_ptr = raw_ptr as *const RefCell<dyn SystemParentServiceInterface>;
+            Weak::<RefCell<dyn SystemParentServiceInterface>>::from_raw(trait_ptr)
+        };
+
+        // Set parent service for each subsystem
+        for system_link in &mut self.borrow_mut().registered_systems.systems {
+            match system_link {
+                SystemLink::LeafSystemLink(system) => {
+                    system
+                        .borrow_mut()
+                        .set_parent_service(parent_service.clone());
+                }
+                SystemLink::DiagramLink(system) => {
+                    system
+                        .borrow_mut()
+                        .set_parent_service(parent_service.clone());
+                }
+            }
         }
 
         let mut self_borrowed_mut = self.borrow_mut();
@@ -814,8 +830,7 @@ mod tests {
         let diagram = diagram_builder.build();
         assert_eq!(diagram.borrow().num_subsystems(), 3);
 
-        // TODO: Restore this test after implementing allocate_context() for Diagram.
-        let mut diagram_context = diagram.borrow_mut().create_default_context();
+        let diagram_context = diagram.borrow_mut().create_default_context();
 
         let input1 = BasicVector::<f64>::from_vec(vec![1.0, 2.0, 3.0]);
         let input2 = BasicVector::<f64>::from_vec(vec![4.0, 5.0, 6.0]);
@@ -842,7 +857,7 @@ mod tests {
         let sum = diagram
             .borrow()
             .diagram_output_port(&OutputPortIndex::new(0))
-            .eval::<BasicVector<f64>>(&mut *diagram_context.borrow_mut());
+            .eval::<BasicVector<f64>>(&*diagram_context.borrow());
         let sum_expected = input1.clone() + &input2 + &input3 + &input4;
         assert_eq!(sum, sum_expected);
     }
