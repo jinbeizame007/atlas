@@ -145,7 +145,7 @@ pub trait LeafSystem<T: AtlasScalar>: System<T, CN = LeafContext<T>> {
         &mut self,
         name: String,
         size: usize,
-        calc: Box<dyn Fn(&mut Self::CN, &mut BasicVector<T>)>,
+        calc: Box<dyn Fn(&Self::CN, &mut BasicVector<T>)>,
     ) -> &LeafOutputPort<T> {
         let model_vector = BasicVector::<T>::zeros(size);
         self.create_vector_leaf_output_port(
@@ -170,15 +170,11 @@ pub trait LeafSystem<T: AtlasScalar>: System<T, CN = LeafContext<T>> {
         &mut self,
         name: String,
         alloc: Box<AllocateCallback>,
-        calc: Box<dyn Fn(&mut Self::CN, &mut dyn AbstractValue)>,
+        calc: Box<dyn Fn(&Self::CN, &mut dyn AbstractValue)>,
     ) -> &LeafOutputPort<T> {
         let calc_ = Box::new(
-            move |context_base: &mut dyn ContextBase, abstract_value: &mut dyn AbstractValue| {
-                let leaf_context = context_base
-                    .as_any_mut()
-                    .downcast_mut::<Self::CN>()
-                    .unwrap();
-                // let context = leaf_context.as_context_mut();
+            move |context_base: &dyn ContextBase, abstract_value: &mut dyn AbstractValue| {
+                let leaf_context = context_base.as_any().downcast_ref::<Self::CN>().unwrap();
                 (calc)(leaf_context, abstract_value)
             },
         );
@@ -193,15 +189,11 @@ pub trait LeafSystem<T: AtlasScalar>: System<T, CN = LeafContext<T>> {
         name: String,
         fixed_size: usize,
         alloc: Box<AllocateCallback>,
-        calc: Box<dyn Fn(&mut Self::CN, &mut BasicVector<T>)>,
+        calc: Box<dyn Fn(&Self::CN, &mut BasicVector<T>)>,
     ) -> &LeafOutputPort<T> {
         let cache_calc = Box::new(
-            move |context_base: &mut dyn ContextBase, abstract_value: &mut dyn AbstractValue| {
-                let leaf_context = context_base
-                    .as_any_mut()
-                    .downcast_mut::<Self::CN>()
-                    .unwrap();
-                // let context = leaf_context.as_context_mut();
+            move |context_base: &dyn ContextBase, abstract_value: &mut dyn AbstractValue| {
+                let leaf_context = context_base.as_any().downcast_ref::<Self::CN>().unwrap();
                 let basic_vector = abstract_value
                     .as_any_mut()
                     .downcast_mut::<Value<BasicVector<T>>>()

@@ -64,7 +64,7 @@ where
         let eval = {
             let cloned_input_port_index = input_port_index.clone();
             let system_weak_link = self.system_weak_link();
-            Box::new(move |context_base: &mut dyn ContextBase| {
+            Box::new(move |context_base: &dyn ContextBase| {
                 system_weak_link.eval_abstract_input(context_base, &cloned_input_port_index)
             })
         };

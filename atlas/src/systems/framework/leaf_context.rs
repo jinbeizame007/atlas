@@ -17,7 +17,7 @@ use crate::systems::framework::vector_base::VectorBase;
 pub struct LeafContext<T: AtlasScalar> {
     system_id: SystemId,
     parent: Option<Rc<RefCell<dyn ContextBase>>>,
-    cache: Cache,
+    cache: RefCell<Cache>,
     time: T,
     state: Box<LeafState<T>>,
     input_port_values: Vec<Option<FixedInputPortValue>>,
@@ -48,12 +48,8 @@ impl<T: AtlasScalar> ContextBase for LeafContext<T> {
         &mut self.parent
     }
 
-    fn cache(&self) -> &Cache {
+    fn cache(&self) -> &RefCell<Cache> {
         &self.cache
-    }
-
-    fn cache_mut(&mut self) -> &mut Cache {
-        &mut self.cache
     }
 
     fn input_port_values(&mut self) -> &mut Vec<Option<FixedInputPortValue>> {

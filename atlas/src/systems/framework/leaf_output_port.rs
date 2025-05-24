@@ -53,10 +53,8 @@ impl<T: AtlasScalar> OutputPort<T> for LeafOutputPort<T> {
         self.cache_entry().allocate()
     }
 
-    fn eval_abstract(&self, context: &mut Self::CN) -> Box<dyn AbstractValue> {
-        self.cache_entry()
-            .eval_abstract(context.as_mutable_base())
-            .clone_box()
+    fn eval_abstract(&self, context: &Self::CN) -> Box<dyn AbstractValue> {
+        self.cache_entry().eval_abstract(context.as_base())
     }
 
     fn calc(&self, context: &mut Self::CN, value: &mut dyn AbstractValue) {

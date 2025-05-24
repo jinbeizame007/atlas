@@ -82,7 +82,7 @@ pub trait SystemBase {
 
         self.create_source_trackers(context);
 
-        let cache = context.cache_mut();
+        let mut cache = context.cache().borrow_mut();
         for index in 0..self.num_cache_entries() {
             let cache_index = CacheIndex::new(index);
             let cache_entry = self.cache_entry(&cache_index);
