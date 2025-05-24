@@ -52,7 +52,7 @@ pub struct DiagramContext<T: AtlasScalar> {
     state: DiagramState<T>,
     input_port_values: Vec<Option<FixedInputPortValue>>,
     is_context_base_initialized: bool,
-    contexts: Vec<ContextLink<T>>,
+    contexts: Vec<Option<ContextLink<T>>>,
 }
 
 impl<T: AtlasScalar> ContextBase for DiagramContext<T> {
@@ -167,9 +167,22 @@ impl<T: AtlasScalar> Context<T> for DiagramContext<T> {
 }
 
 impl<T: AtlasScalar> DiagramContext<T> {
+    pub fn new(num_subsystems: usize) -> Self {
+        Self {
+            system_id: SystemId::default(),
+            parent: None,
+            cache: Cache::default(),
+            time: T::default(),
+            state: DiagramState::default(),
+            input_port_values: vec![],
+            is_context_base_initialized: false,
+            contexts: vec![None; num_subsystems],
+        }
+    }
+
     pub fn get_context(&self, subsystem_index: &SubsystemIndex) -> ContextLink<T> {
         let index = subsystem_index.value();
-        self.contexts[index].clone()
+        self.contexts[index].clone().unwrap()
     }
 }
 
@@ -183,6 +196,6 @@ impl<T: AtlasScalar> DiagramContextExt<T> for Rc<RefCell<DiagramContext<T>>> {
             .as_context_base()
             .borrow_mut()
             .set_parent(self.clone());
-        self.borrow_mut().contexts[index] = context.clone();
+        self.borrow_mut().contexts[index] = Some(context.clone());
     }
 }

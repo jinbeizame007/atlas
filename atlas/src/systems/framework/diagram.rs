@@ -13,7 +13,7 @@ use crate::systems::framework::basic_vector::BasicVector;
 use crate::systems::framework::cache_entry::CacheEntry;
 use crate::systems::framework::context::Context;
 use crate::systems::framework::context_base::ContextBase;
-use crate::systems::framework::diagram_context::{ContextLink, DiagramContext};
+use crate::systems::framework::diagram_context::{ContextLink, DiagramContext, DiagramContextExt};
 use crate::systems::framework::diagram_output_port::DiagramOutputPort;
 use crate::systems::framework::framework_common::{
     CacheIndex, InputPortIndex, OutputPortIndex, SubsystemIndex, SystemId,
@@ -450,7 +450,22 @@ impl<T: AtlasScalar> System<T> for Diagram<T> {
     }
 
     fn set_default_state(&self, context: &mut Self::CN) {
-        todo!()
+        self.validate_context(context);
+        
+        for i in 0..self.num_subsystems() {
+            let subcontext = context.get_context(&SubsystemIndex::new(i));
+            let subsystem_link = self.registered_systems.systems[i].clone();
+            match &subsystem_link {
+                SystemLink::LeafSystemLink(system) => {
+                    let leaf_context = subcontext.as_leaf_context().unwrap();
+                    system.borrow_mut().set_default_state(&mut leaf_context.borrow_mut());
+                }
+                SystemLink::DiagramLink(system) => {
+                    let diagram_context = subcontext.as_diagram_context().unwrap();
+                    system.borrow_mut().set_default_state(&mut diagram_context.borrow_mut());
+                }
+            };
+        }
     }
 
     fn do_calc_time_derivatives(
@@ -468,7 +483,7 @@ impl<T: AtlasScalar> Diagram<T> {
     }
 
     pub fn do_allocate_context(&self) -> Rc<RefCell<DiagramContext<T>>> {
-        let context = Rc::new(RefCell::new(DiagramContext::<T>::default()));
+        let context = Rc::new(RefCell::new(DiagramContext::<T>::new(self.num_subsystems())));
         self.initialize_context_base(context.borrow_mut().as_mutable_base());
 
         for i in 0..self.num_subsystems() {
@@ -483,7 +498,7 @@ impl<T: AtlasScalar> Diagram<T> {
                     ContextLink::DiagramContextLink(diagram_context)
                 }
             };
-            context.borrow_mut().add_system(SubsystemIndex::new(i), subcontext);
+            context.add_system(SubsystemIndex::new(i), subcontext);
         }
 
         // TODO: Add MakeState()
@@ -690,20 +705,20 @@ mod tests {
         assert_eq!(diagram.borrow().num_subsystems(), 3);
 
         // TODO: Restore this test after implementing allocate_context() for Diagram.
-        // let mut diagram_context = diagram.borrow_mut().create_default_context();
+        let mut diagram_context = diagram.borrow_mut().create_default_context();
 
-        // let input1 = BasicVector::<f64>::from_vec(vec![1.0, 2.0, 3.0]);
-        // let input2 = BasicVector::<f64>::from_vec(vec![4.0, 5.0, 6.0]);
-        // let input3 = BasicVector::<f64>::from_vec(vec![7.0, 8.0, 9.0]);
-        // let input4 = BasicVector::<f64>::from_vec(vec![10.0, 11.0, 12.0]);
+        let input1 = BasicVector::<f64>::from_vec(vec![1.0, 2.0, 3.0]);
+        let input2 = BasicVector::<f64>::from_vec(vec![4.0, 5.0, 6.0]);
+        let input3 = BasicVector::<f64>::from_vec(vec![7.0, 8.0, 9.0]);
+        let input4 = BasicVector::<f64>::from_vec(vec![10.0, 11.0, 12.0]);
 
-        // diagram.borrow_mut().input_port_mut(&InputPortIndex::new(0)).fix_value(diagram_context.as_mut(), input1.clone());
-        // diagram.borrow_mut().input_port_mut(&InputPortIndex::new(1)).fix_value(diagram_context.as_mut(), input2.clone());
-        // diagram.borrow_mut().input_port_mut(&InputPortIndex::new(2)).fix_value(diagram_context.as_mut(), input3.clone());
-        // diagram.borrow_mut().input_port_mut(&InputPortIndex::new(3)).fix_value(diagram_context.as_mut(), input4.clone());
+        diagram.borrow_mut().input_port_mut(&InputPortIndex::new(0)).fix_value(&mut *diagram_context.borrow_mut(), input1.clone());
+        diagram.borrow_mut().input_port_mut(&InputPortIndex::new(1)).fix_value(&mut *diagram_context.borrow_mut(), input2.clone());
+        diagram.borrow_mut().input_port_mut(&InputPortIndex::new(2)).fix_value(&mut *diagram_context.borrow_mut(), input3.clone());
+        diagram.borrow_mut().input_port_mut(&InputPortIndex::new(3)).fix_value(&mut *diagram_context.borrow_mut(), input4.clone());
 
-        // let sum = diagram.borrow().diagram_output_port(&OutputPortIndex::new(0)).eval::<BasicVector<f64>>(diagram_context.as_mut());
-        // let sum_expected = input1.clone() + &input2 + &input3 + &input4;
-        // assert_eq!(sum, sum_expected);
+        let sum = diagram.borrow().diagram_output_port(&OutputPortIndex::new(0)).eval::<BasicVector<f64>>(&mut *diagram_context.borrow_mut());
+        let sum_expected = input1.clone() + &input2 + &input3 + &input4;
+        assert_eq!(sum, sum_expected);
     }
 }
