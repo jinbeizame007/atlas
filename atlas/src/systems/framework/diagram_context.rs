@@ -14,18 +14,31 @@ use crate::systems::framework::leaf_context::LeafContext;
 use crate::systems::framework::state::State;
 use crate::systems::framework::vector_base::VectorBase;
 
-pub enum ContextPtr<T: AtlasScalar> {
-    LeafContextPtr(*mut LeafContext<T>),
-    DiagramContextPtr(*mut DiagramContext<T>),
+#[derive(Clone)]
+pub enum ContextLink<T: AtlasScalar> {
+    LeafContextLink(Rc<RefCell<LeafContext<T>>>),
+    DiagramContextLink(Rc<RefCell<DiagramContext<T>>>),
 }
 
-impl<T: AtlasScalar> ContextPtr<T> {
-    pub fn as_leaf_context(&mut self) -> &mut LeafContext<T> {
+impl<T: AtlasScalar> ContextLink<T> {
+    pub fn as_context_base(&self) -> Rc<RefCell<dyn ContextBase>> {
         match self {
-            ContextPtr::LeafContextPtr(ptr) => unsafe { &mut **ptr },
-            ContextPtr::DiagramContextPtr(ptr) => {
-                todo!()
-            }
+            ContextLink::LeafContextLink(ctx) => ctx.clone() as Rc<RefCell<dyn ContextBase>>,
+            ContextLink::DiagramContextLink(ctx) => ctx.clone() as Rc<RefCell<dyn ContextBase>>,
+        }
+    }
+
+    pub fn as_leaf_context(&self) -> Option<Rc<RefCell<LeafContext<T>>>> {
+        match self {
+            ContextLink::LeafContextLink(ctx) => Some(ctx.clone()),
+            ContextLink::DiagramContextLink(_) => todo!(),
+        }
+    }
+    
+    pub fn as_diagram_context(&self) -> Option<Rc<RefCell<DiagramContext<T>>>> {
+        match self {
+            ContextLink::LeafContextLink(_) => todo!(),
+            ContextLink::DiagramContextLink(ctx) => Some(ctx.clone()),
         }
     }
 }
@@ -39,7 +52,7 @@ pub struct DiagramContext<T: AtlasScalar> {
     state: DiagramState<T>,
     input_port_values: Vec<Option<FixedInputPortValue>>,
     is_context_base_initialized: bool,
-    contexts: Vec<ContextPtr<T>>,
+    contexts: Vec<ContextLink<T>>,
 }
 
 impl<T: AtlasScalar> ContextBase for DiagramContext<T> {
@@ -154,9 +167,21 @@ impl<T: AtlasScalar> Context<T> for DiagramContext<T> {
 }
 
 impl<T: AtlasScalar> DiagramContext<T> {
-    pub fn add_system<CN: Context<T>>(&mut self, index: SubsystemIndex, context: &mut CN) {}
-
-    pub fn get_subcontext(&mut self, subsystem_index: &SubsystemIndex) -> &mut LeafContext<T> {
-        self.contexts[subsystem_index].as_leaf_context()
+    pub fn get_context(&self, subsystem_index: &SubsystemIndex) -> ContextLink<T> {
+        let index = subsystem_index.value();
+        self.contexts[index].clone()
     }
 }
+
+// pub trait DiagramContextExt<T: AtlasScalar> {
+//     fn add_system<CN: Context<T>>(&self, index: SubsystemIndex, context: Rc<RefCell<CN>>);
+// }
+
+// impl<T: AtlasScalar> DiagramContextExt<T> for Rc<RefCell<DiagramContext<T>>> {
+//     fn add_system<CN: Context<T>>(&self, index: SubsystemIndex, context: Rc<RefCell<CN>>) {
+//         context.borrow_mut().set_parent(self.clone());
+//         self.borrow_mut().contexts.push(ContextLink::LeafContextLink(
+//             unsafe { std::mem::transmute(context) }
+//         ));
+//     }
+// }

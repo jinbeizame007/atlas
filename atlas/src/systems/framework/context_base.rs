@@ -12,8 +12,8 @@ pub trait ContextBase: Any {
     fn as_any_mut(&mut self) -> &mut dyn Any;
     fn set_system_id(&mut self, system_id: SystemId);
     fn system_id(&self) -> &SystemId;
-    fn set_parent(&mut self, child: &mut dyn ContextBase, parent: Rc<RefCell<dyn ContextBase>>) {
-        *child.parent_base_mut() = Some(parent);
+    fn set_parent(&mut self, parent: Rc<RefCell<dyn ContextBase>>) {
+        *self.parent_base_mut() = Some(parent);
     }
     fn parent_base(&self) -> &Option<Rc<RefCell<dyn ContextBase>>>;
     fn parent_base_mut(&mut self) -> &mut Option<Rc<RefCell<dyn ContextBase>>>;
@@ -48,4 +48,8 @@ pub trait ContextBase: Any {
         *self.is_context_base_initialized_mut() = is_context_base_initialized;
     }
     fn is_context_base_initialized_mut(&mut self) -> &mut bool;
+}
+
+pub fn set_parent_static(child: &mut dyn ContextBase, parent: Rc<RefCell<dyn ContextBase>>) {
+    *child.parent_base_mut() = Some(parent);
 }
