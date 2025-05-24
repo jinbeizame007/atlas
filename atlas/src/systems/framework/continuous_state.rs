@@ -19,14 +19,28 @@ pub trait ContinuousState<T: AtlasScalar>: Default {
         self.vector_mut().set_from_vector(value);
     }
 
+    fn generalized_position(&self) -> Subvector<T> {
+        let num_q = self.num_q();
+        self.vector().subvector(0, num_q)
+    }
     fn generalized_position_mut(&mut self) -> Subvector<T> {
         let num_q = self.num_q();
         self.vector_mut().subvector_mut(0, num_q)
+    }
+    fn generalized_velocity(&self) -> Subvector<T> {
+        let num_q = self.num_q();
+        self.vector().subvector(num_q, self.num_v())
     }
     fn generalized_velocity_mut(&mut self) -> Subvector<T> {
         let num_q = self.num_q();
         let num_v = self.num_v();
         self.vector_mut().subvector_mut(num_q, num_v)
+    }
+    fn misc_continuous_state(&self) -> Subvector<T> {
+        let num_q = self.num_q();
+        let num_v = self.num_v();
+        let num_z = self.num_z();
+        self.vector().subvector(num_q + num_v, num_z)
     }
     fn misc_continuous_state_mut(&mut self) -> Subvector<T> {
         let num_q = self.num_q();
