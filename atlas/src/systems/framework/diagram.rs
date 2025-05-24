@@ -13,7 +13,7 @@ use crate::systems::framework::basic_vector::BasicVector;
 use crate::systems::framework::cache_entry::CacheEntry;
 use crate::systems::framework::context::Context;
 use crate::systems::framework::context_base::ContextBase;
-use crate::systems::framework::diagram_context::DiagramContext;
+use crate::systems::framework::diagram_context::{ContextLink, DiagramContext};
 use crate::systems::framework::diagram_output_port::DiagramOutputPort;
 use crate::systems::framework::framework_common::{
     CacheIndex, InputPortIndex, OutputPortIndex, SubsystemIndex, SystemId,
@@ -438,7 +438,7 @@ impl<T: AtlasScalar> System<T> for Diagram<T> {
     }
 
     fn allocate_context(&self) -> Rc<RefCell<Self::CN>> {
-        todo!()
+        self.do_allocate_context()
     }
 
     fn do_allocate_input(&self, input_port: &InputPort<T>) -> Box<dyn AbstractValue> {
@@ -467,15 +467,32 @@ impl<T: AtlasScalar> Diagram<T> {
         Self::default()
     }
 
-    pub fn do_allocate_context(&self) {
-        todo!()
-        // let mut context = Box::new(DiagramContext::<f64>::default());
-        // self.initialize_context_base(context.as_mutable_base());
+    pub fn do_allocate_context(&self) -> Rc<RefCell<DiagramContext<T>>> {
+        let context = Rc::new(RefCell::new(DiagramContext::<T>::default()));
+        self.initialize_context_base(context.borrow_mut().as_mutable_base());
 
-        // for i in 0..self.num_subsystems() {
-        //     let system_link = self.registered_systems.systems[i];
-        //     context.add_
-        // }
+        for i in 0..self.num_subsystems() {
+            let subsystem_link = self.registered_systems.systems[i].clone();
+            let subcontext = match &subsystem_link {
+                SystemLink::LeafSystemLink(system) => {
+                    let leaf_context = system.borrow().allocate_context();
+                    ContextLink::LeafContextLink(leaf_context)
+                }
+                SystemLink::DiagramLink(system) => {
+                    let diagram_context = system.borrow().allocate_context();
+                    ContextLink::DiagramContextLink(diagram_context)
+                }
+            };
+            context.borrow_mut().add_system(SubsystemIndex::new(i), subcontext);
+        }
+
+        // TODO: Add MakeState()
+
+        // TODO: Add SubscribeDiagramCompositeTrackersToChildrens()
+
+        // TODO: Register Subscribers and Trackers
+
+        context
     }
 
     pub fn diagram_output_port(&self, index: &OutputPortIndex) -> &DiagramOutputPort<T> {
