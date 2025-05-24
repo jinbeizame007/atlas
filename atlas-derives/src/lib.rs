@@ -73,8 +73,12 @@ pub fn derive_system_base(input: TokenStream) -> TokenStream {
                 &self.system_id
             }
 
-            fn parent_service(&self) -> Option<&dyn SystemParentServiceInterface> {
-                self.parent_service.as_ref().map(|p| p.as_ref())
+            fn parent_service(&self) -> Option<Weak<RefCell<dyn SystemParentServiceInterface>>> {
+                self.parent_service.clone()
+            }
+
+            fn set_parent_service(&mut self, parent_service: Weak<RefCell<dyn SystemParentServiceInterface>>) {
+                self.parent_service = Some(parent_service);
             }
 
             fn set_implicit_time_derivatives_residual_size(&mut self, size: usize) {

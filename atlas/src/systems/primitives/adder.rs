@@ -41,7 +41,7 @@ pub struct Adder<T: AtlasScalar> {
     context_sizes: ContextSizes,
     system_id: SystemId,
     system_weak_link: Option<SystemWeakLink<T>>,
-    parent_service: Option<Box<dyn SystemParentServiceInterface>>,
+    parent_service: Option<Weak<RefCell<dyn SystemParentServiceInterface>>>,
     time_derivatives_cache_index: CacheIndex,
     model_input_values: ModelValues,
     model_continuous_state_vector: BasicVector<T>,

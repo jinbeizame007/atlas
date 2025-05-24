@@ -367,7 +367,7 @@ pub struct Diagram<T: AtlasScalar> {
     cache_entries: Vec<CacheEntry>,
     context_sizes: ContextSizes,
     system_id: SystemId,
-    parent_service: Option<Box<dyn SystemParentServiceInterface>>,
+    parent_service: Option<Weak<RefCell<dyn SystemParentServiceInterface>>>,
     implicit_time_derivatives_residual_size: Option<usize>,
 
     // System
@@ -516,7 +516,7 @@ impl<T: AtlasScalar> SystemParentServiceInterface for Diagram<T> {
         } else if is_connected {
             Some(self.eval_subsystem_output_port(
                 diagram_context,
-                self.connection_map.get(&id).unwrap().clone()
+                self.connection_map.get(&id).unwrap().clone(),
             ))
         } else {
             None

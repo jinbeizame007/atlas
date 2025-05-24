@@ -1,4 +1,8 @@
-use std::ops::{Add, AddAssign};
+use std::{
+    cell::RefCell,
+    ops::{Add, AddAssign},
+    rc::Weak,
+};
 
 use crate::common::value::AbstractValue;
 use crate::systems::framework::cache_entry::CacheEntry;
@@ -61,7 +65,11 @@ pub trait SystemBase {
     fn context_sizes(&self) -> &ContextSizes;
     fn context_sizes_mut(&mut self) -> &mut ContextSizes;
     fn system_id(&self) -> &SystemId;
-    fn parent_service(&self) -> Option<&dyn SystemParentServiceInterface>;
+    fn parent_service(&self) -> Option<Weak<RefCell<dyn SystemParentServiceInterface>>>;
+    fn set_parent_service(
+        &mut self,
+        parent_service: Weak<RefCell<dyn SystemParentServiceInterface>>,
+    );
 
     // Context
     // fn allocate_context(&self) -> Box<dyn ContextBase>;
@@ -121,7 +129,11 @@ pub trait SystemBase {
 
             self.parent_service()
                 .unwrap()
-                .eval_connected_subsystem_input_port(&*guard, input_port).unwrap()
+                .upgrade()
+                .unwrap()
+                .borrow()
+                .eval_connected_subsystem_input_port(&*guard, input_port)
+                .unwrap()
         }
     }
 
