@@ -188,7 +188,7 @@ pub fn derive_system(input: TokenStream) -> TokenStream {
                 &self.time_derivatives_cache_index
             }
 
-            fn allocate_context(&self) -> Box<Self::CN> {
+            fn allocate_context(&self) -> Rc<RefCell<Self::CN>> {
                 LeafSystem::<T>::allocate_context(self)
             }
 

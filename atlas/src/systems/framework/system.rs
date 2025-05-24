@@ -50,7 +50,7 @@ where
     fn system_weak_link(&self) -> SystemWeakLink<T>;
 
     // Resource allocation and initializaion
-    fn allocate_context(&self) -> Box<Self::CN>;
+    fn allocate_context(&self) -> Rc<RefCell<Self::CN>>;
     // fn allocate_context(&mut self) -> Box<dyn Context<T>> {
     //     self.do_allocate_context().as_ref().
     // }
@@ -117,9 +117,9 @@ where
         self.do_allocate_input(input_port)
     }
     fn allocate_time_derivatives(&mut self) -> Box<<<Self::CN as Context<T>>::S as State<T>>::CS>;
-    fn create_default_context(&mut self) -> Box<Self::CN> {
-        let mut context = self.allocate_context();
-        self.set_default_context(context.as_mut());
+    fn create_default_context(&mut self) -> Rc<RefCell<Self::CN>> {
+        let context = self.allocate_context();
+        self.set_default_context(&mut context.borrow_mut());
         context
     }
 

@@ -437,7 +437,7 @@ impl<T: AtlasScalar> System<T> for Diagram<T> {
         todo!()
     }
 
-    fn allocate_context(&self) -> Box<Self::CN> {
+    fn allocate_context(&self) -> Rc<RefCell<Self::CN>> {
         todo!()
     }
 

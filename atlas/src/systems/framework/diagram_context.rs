@@ -150,9 +150,7 @@ impl<T: AtlasScalar> Context<T> for DiagramContext<T> {
 }
 
 impl<T: AtlasScalar> DiagramContext<T> {
-    pub fn add_system<CN: Context<T>>(&mut self, index: SubsystemIndex, context: &mut CN) {
-        
-    }
+    pub fn add_system<CN: Context<T>>(&mut self, index: SubsystemIndex, context: &mut CN) {}
 
     pub fn get_subcontext(&mut self, subsystem_index: &SubsystemIndex) -> &mut LeafContext<T> {
         self.contexts[subsystem_index].as_leaf_context()

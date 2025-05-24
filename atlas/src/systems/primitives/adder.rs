@@ -134,21 +134,21 @@ mod tests {
             .borrow_mut()
             .input_port_mut(&InputPortIndex::new(0))
             .fix_value(
-                context.as_mut(),
+                &mut *context.borrow_mut(),
                 BasicVector::<f64>::from_vec(vec![1.0, 2.0, 3.0]),
             );
         adder
             .borrow_mut()
             .input_port_mut(&InputPortIndex::new(1))
             .fix_value(
-                context.as_mut(),
+                &mut *context.borrow_mut(),
                 BasicVector::<f64>::from_vec(vec![0.5, 1.2, 0.3]),
             );
 
         let sum = adder
             .borrow()
             .leaf_output_port(&OutputPortIndex::new(0))
-            .eval::<BasicVector<f64>>(context.as_mut());
+            .eval::<BasicVector<f64>>(&mut *context.borrow_mut());
         assert_eq!(
             *sum.value(),
             na::DVector::<f64>::from_vec(vec![1.5, 3.2, 3.3])

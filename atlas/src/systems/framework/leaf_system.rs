@@ -1,4 +1,6 @@
+use std::cell::RefCell;
 use std::fmt::Debug;
+use std::rc::Rc;
 
 extern crate nalgebra as na;
 
@@ -34,15 +36,15 @@ pub trait LeafSystem<T: AtlasScalar>: System<T, CN = LeafContext<T>> {
     ) -> &mut LeafOutputPort<T>;
     fn add_output_port(&mut self, output_port: Box<LeafOutputPort<T>>);
 
-    fn allocate_context(&self) -> Box<LeafContext<T>> {
+    fn allocate_context(&self) -> Rc<RefCell<LeafContext<T>>> {
         self.do_allocate_context()
     }
 
-    fn do_allocate_context(&self) -> Box<LeafContext<T>> {
+    fn do_allocate_context(&self) -> Rc<RefCell<LeafContext<T>>> {
         let mut context = self.do_make_leaf_context();
         self.initialize_context_base(context.as_mutable_base());
 
-        Box::new(context)
+        Rc::new(RefCell::new(context))
     }
 
     fn do_allocate_input(&self, input_port: &InputPort<T>) -> Box<dyn AbstractValue> {
