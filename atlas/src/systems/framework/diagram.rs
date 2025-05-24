@@ -587,7 +587,7 @@ impl<T: AtlasScalar> Diagram<T> {
     }
 
     pub fn from_blueprint(blueprint: DiagramBlueprint<T>) -> Rc<RefCell<Self>> {
-        let diagram = Rc::new(RefCell::new(Self::new()));
+        let mut diagram = Rc::new(RefCell::new(Self::new()));
 
         unsafe {
             let diagram_weak = Rc::downgrade(&diagram);
@@ -598,54 +598,9 @@ impl<T: AtlasScalar> Diagram<T> {
                 Some(SystemWeakLink::DiagramWeakLink(system_weak));
         }
 
-        diagram.borrow_mut().initialize(blueprint);
+        diagram.initialize(blueprint);
 
         diagram
-    }
-
-    pub fn initialize(&mut self, blueprint: DiagramBlueprint<T>) {
-        assert!(!blueprint.registered_systems.systems.is_empty());
-        assert!(self.registered_systems.systems.is_empty());
-
-        self.connection_map = blueprint.connection_map;
-        self.registered_systems = blueprint.registered_systems;
-
-        // Generate a map from the System pointer to its index in the registered order.
-        for (index, system) in blueprint.system_weak_links.iter().enumerate() {
-            self.system_index_map
-                .insert(system.clone(), SubsystemIndex::new(index));
-        }
-
-        // Every system must appear exactly once.
-        assert_eq!(self.num_subsystems(), self.registered_systems.systems.len());
-
-        // Add the inputs to the Diagram topology, and check their invariants.
-        for (index, input_port_locator) in blueprint.input_port_ids.iter().enumerate() {
-            self.export_or_connect_input(
-                input_port_locator.clone(),
-                &blueprint.input_port_names[index],
-            );
-        }
-
-        for (index, output_port_locator) in blueprint.output_port_ids.iter().enumerate() {
-            let subsystem_index =
-                self.system_index_map[&output_port_locator.system_weak_link].clone();
-            self.export_output(
-                output_port_locator,
-                &subsystem_index,
-                &blueprint.output_port_names[index],
-            );
-        }
-        self.output_port_ids = blueprint.output_port_ids;
-
-        let mut residual_size = 0;
-        let mut sizes = ContextSizes::default();
-        for (index, system) in self.registered_systems.systems.iter().enumerate() {
-            sizes += &*system.context_sizes();
-            residual_size += system.implicit_time_derivatives_residual_size();
-        }
-        self.context_sizes += &sizes;
-        self.implicit_time_derivatives_residual_size = Some(residual_size);
     }
 
     fn export_or_connect_input(&mut self, input_port_locator: InputPortLocator<T>, name: &str) {
@@ -716,6 +671,75 @@ impl<T: AtlasScalar> Diagram<T> {
                 )
             }
         }
+    }
+}
+
+pub trait DiagramExt<T: AtlasScalar> {
+    fn initialize(&mut self, blueprint: DiagramBlueprint<T>);
+}
+
+impl<T: AtlasScalar> DiagramExt<T> for Rc<RefCell<Diagram<T>>> {
+    fn initialize(&mut self, blueprint: DiagramBlueprint<T>) {
+        assert!(!blueprint.registered_systems.systems.is_empty());
+        assert!(self.borrow().registered_systems.systems.is_empty());
+
+        self.borrow_mut().connection_map = blueprint.connection_map;
+        self.borrow_mut().registered_systems = blueprint.registered_systems;
+
+        // Generate a map from the System pointer to its index in the registered order.
+        for (index, system) in blueprint.system_weak_links.iter().enumerate() {
+            self.borrow_mut()
+                .system_index_map
+                .insert(system.clone(), SubsystemIndex::new(index));
+            let diagram_weak_link = Rc::downgrade(self);
+            let parent_service = unsafe {
+                let raw_ptr = Weak::into_raw(diagram_weak_link);
+                let trait_ptr = raw_ptr as *const RefCell<dyn SystemParentServiceInterface>;
+                Weak::<RefCell<dyn SystemParentServiceInterface>>::from_raw(trait_ptr)
+            };
+            self.borrow_mut().set_parent_service(parent_service);
+        }
+
+        let mut self_borrowed_mut = self.borrow_mut();
+
+        // Every system must appear exactly once.
+        assert_eq!(
+            self_borrowed_mut.num_subsystems(),
+            self_borrowed_mut.registered_systems.systems.len()
+        );
+
+        // Add the inputs to the Diagram topology, and check their invariants.
+        for (index, input_port_locator) in blueprint.input_port_ids.iter().enumerate() {
+            self_borrowed_mut.export_or_connect_input(
+                input_port_locator.clone(),
+                &blueprint.input_port_names[index],
+            );
+        }
+
+        for (index, output_port_locator) in blueprint.output_port_ids.iter().enumerate() {
+            let subsystem_index =
+                self_borrowed_mut.system_index_map[&output_port_locator.system_weak_link].clone();
+            self_borrowed_mut.export_output(
+                output_port_locator,
+                &subsystem_index,
+                &blueprint.output_port_names[index],
+            );
+        }
+        self_borrowed_mut.output_port_ids = blueprint.output_port_ids;
+
+        let mut residual_size = 0;
+        let mut sizes = ContextSizes::default();
+        for (index, system) in self_borrowed_mut
+            .registered_systems
+            .systems
+            .iter()
+            .enumerate()
+        {
+            sizes += &*system.context_sizes();
+            residual_size += system.implicit_time_derivatives_residual_size();
+        }
+        self_borrowed_mut.context_sizes += &sizes;
+        self_borrowed_mut.implicit_time_derivatives_residual_size = Some(residual_size);
     }
 }
 
