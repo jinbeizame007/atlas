@@ -78,12 +78,10 @@ impl<T: AtlasScalar> Adder<T> {
 
         let calc = {
             let weak_adder = Rc::downgrade(&adder);
-            Box::new(
-                move |context: &mut LeafContext<T>, sum: &mut BasicVector<T>| {
-                    let adder = weak_adder.upgrade().unwrap();
-                    adder.borrow().calc_sum(context, sum);
-                },
-            )
+            Box::new(move |context: &LeafContext<T>, sum: &mut BasicVector<T>| {
+                let adder = weak_adder.upgrade().unwrap();
+                adder.borrow().calc_sum(context, sum);
+            })
         };
 
         for i in 0..num_inputs {
@@ -100,7 +98,7 @@ impl<T: AtlasScalar> Adder<T> {
         adder
     }
 
-    fn calc_sum(&self, context: &mut <Self as System<T>>::CN, sum: &mut BasicVector<T>) {
+    fn calc_sum(&self, context: &<Self as System<T>>::CN, sum: &mut BasicVector<T>) {
         VectorBase::fill(sum, &T::zero());
         for input_port in self.input_ports.iter() {
             *sum += input_port.eval::<LeafState<T>, BasicVector<T>>(context);

@@ -92,9 +92,9 @@ impl<T: AtlasScalar> InputPort<T> {
 
     pub fn eval<S: State<T> + 'static, ValueType: Clone + Debug + 'static>(
         &self,
-        context: &mut dyn Context<T, S = S>,
+        context: &dyn Context<T, S = S>,
     ) -> ValueType {
-        let context_base = context.as_mutable_base();
+        let context_base = context.as_base();
         let abstract_value = (self.eval)(context_base);
         self.port_eval_cast::<ValueType>(abstract_value.as_ref())
     }

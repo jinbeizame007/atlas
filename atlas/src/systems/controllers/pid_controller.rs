@@ -100,7 +100,7 @@ impl<T: AtlasScalar> PIDController<T> {
         let calc = {
             let pid_controller_weak = Rc::downgrade(&pid_controller);
             Box::new(
-                move |context: &mut LeafContext<T>, control: &mut BasicVector<T>| {
+                move |context: &LeafContext<T>, control: &mut BasicVector<T>| {
                     let pid_controller = pid_controller_weak.upgrade().unwrap();
                     pid_controller.borrow().calc_control(context, control);
                 },
@@ -145,7 +145,7 @@ impl<T: AtlasScalar> PIDController<T> {
         derivatives_vector.set_from_vector(controlled_state_diff.value());
     }
 
-    pub fn calc_control(&self, context: &mut LeafContext<T>, control: &mut BasicVector<T>) {
+    pub fn calc_control(&self, context: &LeafContext<T>, control: &mut BasicVector<T>) {
         let state = self
             .input_port_estimated_state()
             .eval::<LeafState<T>, BasicVector<T>>(context);
@@ -155,15 +155,14 @@ impl<T: AtlasScalar> PIDController<T> {
 
         let controlled_state_diff = &desired_state - &state;
 
-        let integrated_controlled_state_diff =
-            context.continuous_state_mut().generalized_position_mut();
+        let integrated_controlled_state_diff = context.continuous_state().generalized_position();
 
         let control_vector = self
             .kp
             .component_mul(&controlled_state_diff.value().rows(0, self.num_controlled_q))
             + self
                 .ki
-                .component_mul(integrated_controlled_state_diff.value())
+                .component_mul(&integrated_controlled_state_diff.value())
             + self.kd.component_mul(
                 &controlled_state_diff
                     .value()

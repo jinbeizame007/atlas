@@ -17,8 +17,7 @@ pub trait ContextBase: Any {
     }
     fn parent_base(&self) -> &Option<Rc<RefCell<dyn ContextBase>>>;
     fn parent_base_mut(&mut self) -> &mut Option<Rc<RefCell<dyn ContextBase>>>;
-    fn cache(&self) -> &Cache;
-    fn cache_mut(&mut self) -> &mut Cache;
+    fn cache(&self) -> &RefCell<Cache>;
 
     fn input_port_values(&mut self) -> &mut Vec<Option<FixedInputPortValue>>;
     fn num_input_ports(&self) -> usize;

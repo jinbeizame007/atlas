@@ -10,7 +10,7 @@ pub trait OutputPort<T: AtlasScalar>: OutputPortBase {
     type CN: Context<T>;
 
     // fn eval<ValueType: Clone + Debug + 'static>(&self, context: &mut <Self as OutputPort<T>>::CN) -> ValueType;
-    fn eval_abstract(&self, context: &mut Self::CN) -> Box<dyn AbstractValue>;
+    fn eval_abstract(&self, context: &Self::CN) -> Box<dyn AbstractValue>;
     fn allocate(&mut self) -> Box<dyn AbstractValue>;
     fn calc(&self, context: &mut Self::CN, value: &mut dyn AbstractValue);
     fn system_weak_link(&self) -> SystemWeakLink<T>;
