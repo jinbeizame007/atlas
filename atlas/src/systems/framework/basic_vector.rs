@@ -1,6 +1,8 @@
+use std::cell::RefCell;
 use std::cmp::PartialEq;
 use std::fmt::Debug;
 use std::ops::{Add, AddAssign, Div, Index, IndexMut, Mul, MulAssign, Sub, SubAssign};
+use std::rc::Rc;
 
 extern crate nalgebra as na;
 
@@ -252,8 +254,16 @@ impl<T: AtlasScalar> VectorBase<T> for BasicVector<T> {
         &mut self.values[index]
     }
 
-    fn subvector_mut<'a>(&'a mut self, start: usize, shape: usize) -> Subvector<'a, T> {
-        Subvector::<'a, T>::new(self.value_mut().rows_mut(start, shape))
+    fn subvector(&self, start: usize, shape: usize) -> Subvector<T> {
+        Subvector::<T>::new(
+            &self.values as *const na::DVector<T> as *mut na::DVector<T>,
+            start,
+            shape,
+        )
+    }
+
+    fn subvector_mut(&mut self, start: usize, shape: usize) -> Subvector<T> {
+        Subvector::<T>::new(&mut self.values, start, shape)
     }
 
     fn set_at_index(&mut self, index: usize, value: T) {
