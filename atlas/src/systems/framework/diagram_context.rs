@@ -58,8 +58,12 @@ impl<T: AtlasScalar> ContextBase for DiagramContext<T> {
         &self.system_id
     }
 
-    fn parent_base(&self) -> Option<Rc<RefCell<dyn ContextBase>>> {
-        self.parent.clone()
+    fn parent_base(&self) -> &Option<Rc<RefCell<dyn ContextBase>>> {
+        &self.parent
+    }
+
+    fn parent_base_mut(&mut self) -> &mut Option<Rc<RefCell<dyn ContextBase>>> {
+        &mut self.parent
     }
 
     fn cache(&self) -> &Cache {
