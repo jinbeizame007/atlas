@@ -832,33 +832,25 @@ mod tests {
 
         let diagram_context = diagram.borrow_mut().create_default_context();
 
-        let input1 = BasicVector::<f64>::from_vec(vec![1.0, 2.0, 3.0]);
-        let input2 = BasicVector::<f64>::from_vec(vec![4.0, 5.0, 6.0]);
-        let input3 = BasicVector::<f64>::from_vec(vec![7.0, 8.0, 9.0]);
-        let input4 = BasicVector::<f64>::from_vec(vec![10.0, 11.0, 12.0]);
+        let inputs = [
+            BasicVector::<f64>::from_vec(vec![1.0, 2.0, 3.0]),
+            BasicVector::<f64>::from_vec(vec![4.0, 5.0, 6.0]),
+            BasicVector::<f64>::from_vec(vec![7.0, 8.0, 9.0]),
+            BasicVector::<f64>::from_vec(vec![10.0, 11.0, 12.0]),
+        ];
 
-        diagram
-            .borrow_mut()
-            .input_port_mut(&InputPortIndex::new(0))
-            .fix_value(&mut *diagram_context.borrow_mut(), input1.clone());
-        diagram
-            .borrow_mut()
-            .input_port_mut(&InputPortIndex::new(1))
-            .fix_value(&mut *diagram_context.borrow_mut(), input2.clone());
-        diagram
-            .borrow_mut()
-            .input_port_mut(&InputPortIndex::new(2))
-            .fix_value(&mut *diagram_context.borrow_mut(), input3.clone());
-        diagram
-            .borrow_mut()
-            .input_port_mut(&InputPortIndex::new(3))
-            .fix_value(&mut *diagram_context.borrow_mut(), input4.clone());
+        for (i, input) in inputs.iter().enumerate() {
+            diagram
+                .borrow_mut()
+                .input_port_mut(&InputPortIndex::new(i))
+                .fix_value(&mut *diagram_context.borrow_mut(), input.clone());
+        }
 
         let sum = diagram
             .borrow()
             .diagram_output_port(&OutputPortIndex::new(0))
             .eval::<BasicVector<f64>>(&*diagram_context.borrow());
-        let sum_expected = input1.clone() + &input2 + &input3 + &input4;
+        let sum_expected = inputs[0].clone() + &inputs[1] + &inputs[2] + &inputs[3];
         assert_eq!(sum, sum_expected);
     }
 }
