@@ -53,7 +53,7 @@ pub trait SystemParentServiceInterface {
     fn root_system_base(&self) -> &dyn SystemBase;
     fn eval_connected_subsystem_input_port(
         &self,
-        context: &mut dyn ContextBase,
+        context: &dyn ContextBase,
         input_port: &dyn InputPortBase,
-    ) -> Box<dyn AbstractValue>;
+    ) -> Option<Box<dyn AbstractValue>>;
 }

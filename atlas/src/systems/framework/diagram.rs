@@ -451,18 +451,22 @@ impl<T: AtlasScalar> System<T> for Diagram<T> {
 
     fn set_default_state(&self, context: &mut Self::CN) {
         self.validate_context(context);
-        
+
         for i in 0..self.num_subsystems() {
             let subcontext = context.get_context(&SubsystemIndex::new(i));
             let subsystem_link = self.registered_systems.systems[i].clone();
             match &subsystem_link {
                 SystemLink::LeafSystemLink(system) => {
                     let leaf_context = subcontext.as_leaf_context().unwrap();
-                    system.borrow_mut().set_default_state(&mut leaf_context.borrow_mut());
+                    system
+                        .borrow_mut()
+                        .set_default_state(&mut leaf_context.borrow_mut());
                 }
                 SystemLink::DiagramLink(system) => {
                     let diagram_context = subcontext.as_diagram_context().unwrap();
-                    system.borrow_mut().set_default_state(&mut diagram_context.borrow_mut());
+                    system
+                        .borrow_mut()
+                        .set_default_state(&mut diagram_context.borrow_mut());
                 }
             };
         }
@@ -477,13 +481,63 @@ impl<T: AtlasScalar> System<T> for Diagram<T> {
     }
 }
 
+// impl<T: AtlasScalar> SystemParentServiceInterface for Diagram<T> {
+//     fn root_system_base(&self) -> &dyn SystemBase {
+//         todo!()
+//     }
+
+//     fn eval_connected_subsystem_input_port(
+//         &self,
+//         context: &dyn ContextBase,
+//         input_port: &dyn InputPortBase,
+//     ) -> Option<Box<dyn AbstractValue>> {
+//         self.validate_context(context);
+
+//         let diagram_context = context
+//             .as_any()
+//             .downcast_ref::<DiagramContext<T>>()
+//             .expect("Context should be DiagramContext for Diagram");
+
+//         let system_weak_link = input_port
+//             .as_any()
+//             .downcast_ref::<InputPort<T>>()
+//             .unwrap()
+//             .system_weak_link();
+//         let id = InputPortLocator {
+//             system_weak_link: system_weak_link.clone(),
+//             input_port_index: input_port.index().clone(),
+//         };
+
+//         let output_port_locator = self.connection_map.get(&id).unwrap();
+//         let is_exported = self.input_port_map.contains_key(&id);
+//         let is_connected = self.connection_map.contains_key(&id);
+
+//         if is_exported {
+//             Some(self.eval_abstract_input(diagram_context, self.input_port_map.get(&id).unwrap()))
+//         } else if is_connected {
+//             self.eval_connected_subsystem_input_port(
+//                 diagram_context,
+//                 self.connection_map.get(&id).unwrap(),
+//             )
+//         } else {
+//             None
+//         }
+//     }
+// }
+
 impl<T: AtlasScalar> Diagram<T> {
     pub fn new() -> Self {
         Self::default()
     }
 
+    pub fn subsystem_index(&self, system_weak_link: &SystemWeakLink<T>) -> SubsystemIndex {
+        self.system_index_map.get(system_weak_link).unwrap().clone()
+    }
+
     pub fn do_allocate_context(&self) -> Rc<RefCell<DiagramContext<T>>> {
-        let context = Rc::new(RefCell::new(DiagramContext::<T>::new(self.num_subsystems())));
+        let context = Rc::new(RefCell::new(DiagramContext::<T>::new(
+            self.num_subsystems(),
+        )));
         self.initialize_context_base(context.borrow_mut().as_mutable_base());
 
         for i in 0..self.num_subsystems() {
@@ -631,6 +685,39 @@ impl<T: AtlasScalar> Diagram<T> {
         );
         self.add_output_port(Box::new(diagram_output_port));
     }
+
+    pub fn eval_subsystem_output_port(
+        &self,
+        diagram_context: &DiagramContext<T>,
+        id: OutputPortLocator<T>,
+    ) -> Box<dyn AbstractValue> {
+        let subsystem_weak_link = id.system_weak_link.clone();
+        let output_port_index = id.output_port_index.clone();
+        let output_port = self.output_port(&output_port_index);
+        let subsystem_index = self.subsystem_index(&subsystem_weak_link);
+        let subsystem_context = diagram_context.get_context(&subsystem_index);
+
+        match subsystem_weak_link {
+            SystemWeakLink::LeafSystemWeakLink(system) => {
+                let leaf_output_port = output_port
+                    .as_any()
+                    .downcast_ref::<LeafOutputPort<T>>()
+                    .unwrap();
+                leaf_output_port.eval::<Box<dyn AbstractValue>>(
+                    &mut *subsystem_context.as_leaf_context().unwrap().borrow_mut(),
+                )
+            }
+            SystemWeakLink::DiagramWeakLink(system) => {
+                let diagram_output_port = output_port
+                    .as_any()
+                    .downcast_ref::<DiagramOutputPort<T>>()
+                    .unwrap();
+                diagram_output_port.eval::<Box<dyn AbstractValue>>(
+                    &mut *subsystem_context.as_diagram_context().unwrap().borrow_mut(),
+                )
+            }
+        }
+    }
 }
 
 #[cfg(test)]
@@ -712,12 +799,27 @@ mod tests {
         let input3 = BasicVector::<f64>::from_vec(vec![7.0, 8.0, 9.0]);
         let input4 = BasicVector::<f64>::from_vec(vec![10.0, 11.0, 12.0]);
 
-        diagram.borrow_mut().input_port_mut(&InputPortIndex::new(0)).fix_value(&mut *diagram_context.borrow_mut(), input1.clone());
-        diagram.borrow_mut().input_port_mut(&InputPortIndex::new(1)).fix_value(&mut *diagram_context.borrow_mut(), input2.clone());
-        diagram.borrow_mut().input_port_mut(&InputPortIndex::new(2)).fix_value(&mut *diagram_context.borrow_mut(), input3.clone());
-        diagram.borrow_mut().input_port_mut(&InputPortIndex::new(3)).fix_value(&mut *diagram_context.borrow_mut(), input4.clone());
+        diagram
+            .borrow_mut()
+            .input_port_mut(&InputPortIndex::new(0))
+            .fix_value(&mut *diagram_context.borrow_mut(), input1.clone());
+        diagram
+            .borrow_mut()
+            .input_port_mut(&InputPortIndex::new(1))
+            .fix_value(&mut *diagram_context.borrow_mut(), input2.clone());
+        diagram
+            .borrow_mut()
+            .input_port_mut(&InputPortIndex::new(2))
+            .fix_value(&mut *diagram_context.borrow_mut(), input3.clone());
+        diagram
+            .borrow_mut()
+            .input_port_mut(&InputPortIndex::new(3))
+            .fix_value(&mut *diagram_context.borrow_mut(), input4.clone());
 
-        let sum = diagram.borrow().diagram_output_port(&OutputPortIndex::new(0)).eval::<BasicVector<f64>>(&mut *diagram_context.borrow_mut());
+        let sum = diagram
+            .borrow()
+            .diagram_output_port(&OutputPortIndex::new(0))
+            .eval::<BasicVector<f64>>(&mut *diagram_context.borrow_mut());
         let sum_expected = input1.clone() + &input2 + &input3 + &input4;
         assert_eq!(sum, sum_expected);
     }
