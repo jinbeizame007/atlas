@@ -121,7 +121,7 @@ pub trait SystemBase {
 
             self.parent_service()
                 .unwrap()
-                .eval_connected_subsystem_input_port(&*guard, input_port)
+                .eval_connected_subsystem_input_port(&*guard, input_port).unwrap()
         }
     }
 

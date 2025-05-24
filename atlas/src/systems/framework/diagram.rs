@@ -481,49 +481,48 @@ impl<T: AtlasScalar> System<T> for Diagram<T> {
     }
 }
 
-// impl<T: AtlasScalar> SystemParentServiceInterface for Diagram<T> {
-//     fn root_system_base(&self) -> &dyn SystemBase {
-//         todo!()
-//     }
+impl<T: AtlasScalar> SystemParentServiceInterface for Diagram<T> {
+    fn root_system_base(&self) -> &dyn SystemBase {
+        todo!()
+    }
 
-//     fn eval_connected_subsystem_input_port(
-//         &self,
-//         context: &dyn ContextBase,
-//         input_port: &dyn InputPortBase,
-//     ) -> Option<Box<dyn AbstractValue>> {
-//         self.validate_context(context);
+    fn eval_connected_subsystem_input_port(
+        &self,
+        context: &dyn ContextBase,
+        input_port: &dyn InputPortBase,
+    ) -> Option<Box<dyn AbstractValue>> {
+        self.validate_context(context);
 
-//         let diagram_context = context
-//             .as_any()
-//             .downcast_ref::<DiagramContext<T>>()
-//             .expect("Context should be DiagramContext for Diagram");
+        let diagram_context = context
+            .as_any()
+            .downcast_ref::<DiagramContext<T>>()
+            .expect("Context should be DiagramContext for Diagram");
 
-//         let system_weak_link = input_port
-//             .as_any()
-//             .downcast_ref::<InputPort<T>>()
-//             .unwrap()
-//             .system_weak_link();
-//         let id = InputPortLocator {
-//             system_weak_link: system_weak_link.clone(),
-//             input_port_index: input_port.index().clone(),
-//         };
+        let system_weak_link = input_port
+            .as_any()
+            .downcast_ref::<InputPort<T>>()
+            .unwrap()
+            .system_weak_link();
+        let id = InputPortLocator {
+            system_weak_link: system_weak_link.clone(),
+            input_port_index: input_port.index().clone(),
+        };
 
-//         let output_port_locator = self.connection_map.get(&id).unwrap();
-//         let is_exported = self.input_port_map.contains_key(&id);
-//         let is_connected = self.connection_map.contains_key(&id);
+        let is_exported = self.input_port_map.contains_key(&id);
+        let is_connected = self.connection_map.contains_key(&id);
 
-//         if is_exported {
-//             Some(self.eval_abstract_input(diagram_context, self.input_port_map.get(&id).unwrap()))
-//         } else if is_connected {
-//             self.eval_connected_subsystem_input_port(
-//                 diagram_context,
-//                 self.connection_map.get(&id).unwrap(),
-//             )
-//         } else {
-//             None
-//         }
-//     }
-// }
+        if is_exported {
+            Some(self.eval_abstract_input(diagram_context, self.input_port_map.get(&id).unwrap()))
+        } else if is_connected {
+            Some(self.eval_subsystem_output_port(
+                diagram_context,
+                self.connection_map.get(&id).unwrap().clone()
+            ))
+        } else {
+            None
+        }
+    }
+}
 
 impl<T: AtlasScalar> Diagram<T> {
     pub fn new() -> Self {
