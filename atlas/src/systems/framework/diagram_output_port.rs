@@ -65,14 +65,14 @@ impl<T: AtlasScalar> OutputPort<T> for DiagramOutputPort<T> {
             SystemWeakLink::LeafSystemWeakLink(leaf_system_weak_link) => leaf_system_weak_link
                 .upgrade()
                 .unwrap()
-                .borrow_mut()
-                .output_port_mut(&self.output_port_index)
+                .borrow()
+                .output_port(&self.output_port_index)
                 .eval_abstract(&mut *subcontext.as_leaf_context().unwrap().borrow_mut()),
             SystemWeakLink::DiagramWeakLink(diagram_system_weak_link) => diagram_system_weak_link
                 .upgrade()
                 .unwrap()
-                .borrow_mut()
-                .output_port_mut(&self.output_port_index)
+                .borrow()
+                .output_port(&self.output_port_index)
                 .eval_abstract(&mut *subcontext.as_diagram_context().unwrap().borrow_mut()),
         }
     }
