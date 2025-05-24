@@ -171,15 +171,6 @@ impl<T: AtlasScalar> DiagramContext<T> {
         let index = subsystem_index.value();
         self.contexts[index].clone()
     }
-
-    pub fn add_system(&mut self, subsystem_index: SubsystemIndex, context: ContextLink<T>) {
-        let index = subsystem_index.value();
-        // Ensure the contexts vector is large enough
-        if self.contexts.len() <= index {
-            self.contexts.resize(index + 1, ContextLink::LeafContextLink(Rc::new(RefCell::new(LeafContext::default()))));
-        }
-        self.contexts[index] = context;
-    }
 }
 
 pub trait DiagramContextExt<T: AtlasScalar> {
