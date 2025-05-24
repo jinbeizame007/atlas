@@ -62,35 +62,37 @@ impl<T: AtlasScalar> OutputPort<T> for DiagramOutputPort<T> {
     fn eval_abstract(&self, context: &mut Self::CN) -> Box<dyn AbstractValue> {
         let subcontext = context.get_context(&self.subsystem_index);
         match &self.subsystem_weak_link {
-            SystemWeakLink::LeafSystemWeakLink(leaf_system_weak_link) => {
-                leaf_system_weak_link
-                    .upgrade().unwrap().borrow_mut()
-                    .output_port_mut(&self.output_port_index)
-                    .eval_abstract(&mut *subcontext.as_leaf_context().unwrap().borrow_mut())
-            }
-            SystemWeakLink::DiagramWeakLink(diagram_system_weak_link) => {
-                diagram_system_weak_link
-                    .upgrade().unwrap().borrow_mut()
-                    .output_port_mut(&self.output_port_index)
-                    .eval_abstract(&mut *subcontext.as_diagram_context().unwrap().borrow_mut())
-            }
+            SystemWeakLink::LeafSystemWeakLink(leaf_system_weak_link) => leaf_system_weak_link
+                .upgrade()
+                .unwrap()
+                .borrow_mut()
+                .output_port_mut(&self.output_port_index)
+                .eval_abstract(&mut *subcontext.as_leaf_context().unwrap().borrow_mut()),
+            SystemWeakLink::DiagramWeakLink(diagram_system_weak_link) => diagram_system_weak_link
+                .upgrade()
+                .unwrap()
+                .borrow_mut()
+                .output_port_mut(&self.output_port_index)
+                .eval_abstract(&mut *subcontext.as_diagram_context().unwrap().borrow_mut()),
         }
     }
 
     fn calc(&self, context: &mut Self::CN, value: &mut dyn AbstractValue) {
         let subcontext = context.get_context(&self.subsystem_index);
         match (&self.subsystem_weak_link, subcontext) {
-            (SystemWeakLink::LeafSystemWeakLink(sys), ContextLink::LeafContextLink(ctx)) => {
-                sys.upgrade().unwrap().borrow_mut()
-                    .output_port_mut(&self.output_port_index)
-                    .calc(&mut *ctx.borrow_mut(), value)
-            }
-            (SystemWeakLink::DiagramWeakLink(sys), ContextLink::DiagramContextLink(ctx)) => {
-                sys.upgrade().unwrap().borrow_mut()
-                    .output_port_mut(&self.output_port_index)
-                    .calc(&mut *ctx.borrow_mut(), value)
-            }
-            _ => panic!("Mismatch between system type and context type")
+            (SystemWeakLink::LeafSystemWeakLink(sys), ContextLink::LeafContextLink(ctx)) => sys
+                .upgrade()
+                .unwrap()
+                .borrow_mut()
+                .output_port_mut(&self.output_port_index)
+                .calc(&mut *ctx.borrow_mut(), value),
+            (SystemWeakLink::DiagramWeakLink(sys), ContextLink::DiagramContextLink(ctx)) => sys
+                .upgrade()
+                .unwrap()
+                .borrow_mut()
+                .output_port_mut(&self.output_port_index)
+                .calc(&mut *ctx.borrow_mut(), value),
+            _ => panic!("Mismatch between system type and context type"),
         }
     }
 

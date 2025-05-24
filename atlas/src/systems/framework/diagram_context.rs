@@ -34,7 +34,7 @@ impl<T: AtlasScalar> ContextLink<T> {
             ContextLink::DiagramContextLink(_) => todo!(),
         }
     }
-    
+
     pub fn as_diagram_context(&self) -> Option<Rc<RefCell<DiagramContext<T>>>> {
         match self {
             ContextLink::LeafContextLink(_) => todo!(),
@@ -173,15 +173,16 @@ impl<T: AtlasScalar> DiagramContext<T> {
     }
 }
 
-// pub trait DiagramContextExt<T: AtlasScalar> {
-//     fn add_system<CN: Context<T>>(&self, index: SubsystemIndex, context: Rc<RefCell<CN>>);
-// }
+pub trait DiagramContextExt<T: AtlasScalar> {
+    fn add_system(&self, index: SubsystemIndex, context: ContextLink<T>);
+}
 
-// impl<T: AtlasScalar> DiagramContextExt<T> for Rc<RefCell<DiagramContext<T>>> {
-//     fn add_system<CN: Context<T>>(&self, index: SubsystemIndex, context: Rc<RefCell<CN>>) {
-//         context.borrow_mut().set_parent(self.clone());
-//         self.borrow_mut().contexts.push(ContextLink::LeafContextLink(
-//             unsafe { std::mem::transmute(context) }
-//         ));
-//     }
-// }
+impl<T: AtlasScalar> DiagramContextExt<T> for Rc<RefCell<DiagramContext<T>>> {
+    fn add_system(&self, index: SubsystemIndex, context: ContextLink<T>) {
+        context
+            .as_context_base()
+            .borrow_mut()
+            .set_parent(self.clone());
+        self.borrow_mut().contexts[index] = context.clone();
+    }
+}
