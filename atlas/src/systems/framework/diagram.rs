@@ -4,6 +4,7 @@ use std::cmp::{Eq, PartialEq};
 use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
 use std::rc::{Rc, Weak};
+use std::convert::From;
 
 use atlas_derives::{AbstractSystem, SystemBase};
 
@@ -37,6 +38,15 @@ pub enum SystemLink<T: AtlasScalar> {
 
 pub type LeafSystemLink<T> = Rc<RefCell<dyn System<T, CN = LeafContext<T>>>>;
 pub type DiagramLink<T> = Rc<RefCell<dyn System<T, CN = DiagramContext<T>>>>;
+
+impl<T: AtlasScalar, S> From<Rc<RefCell<S>>> for SystemLink<T>
+where
+    S: System<T, CN = LeafContext<T>> + 'static,
+{
+    fn from(system: Rc<RefCell<S>>) -> Self {
+        SystemLink::LeafSystemLink(system)
+    }
+}
 
 impl<T: AtlasScalar> PartialEq for SystemLink<T> {
     fn eq(&self, other: &Self) -> bool {
@@ -174,6 +184,61 @@ impl<T: AtlasScalar> SystemLink<T> {
                 // Ref::map(system.borrow(), |s| s.output_port(&output_port_index))
             }
         }
+    }
+}
+
+pub trait SystemLinkExt<T: AtlasScalar> {
+    type CN: Context<T>;
+
+    fn input_port(&self, input_port_index: InputPortIndex) -> Ref<InputPort<T>>;
+
+    fn input_port_mut(&self, input_port_index: InputPortIndex) -> RefMut<InputPort<T>>;
+
+    fn output_port(&self, output_port_index: OutputPortIndex) -> Ref<dyn OutputPort<T, CN = Self::CN>>;
+
+    fn output_port_mut(&self, output_port_index: OutputPortIndex) -> RefMut<dyn OutputPort<T, CN = Self::CN>>;
+}
+
+impl<T: AtlasScalar, S> SystemLinkExt<T> for Rc<RefCell<S>>
+where
+    S: System<T, CN = LeafContext<T>>,
+{
+    type CN = LeafContext<T>;
+
+    fn input_port(&self, input_port_index: InputPortIndex) -> Ref<InputPort<T>> {
+        Ref::map(self.borrow(), |s| s.input_port(&input_port_index))
+    }
+
+    fn input_port_mut(&self, input_port_index: InputPortIndex) -> RefMut<InputPort<T>> {
+        RefMut::map(self.borrow_mut(), |s| s.input_port_mut(&input_port_index))
+    }
+
+    fn output_port(&self, output_port_index: OutputPortIndex) -> Ref<dyn OutputPort<T, CN = Self::CN>> {
+        Ref::map(self.borrow(), |s| s.output_port(&output_port_index))
+    }
+
+    fn output_port_mut(&self, output_port_index: OutputPortIndex) -> RefMut<dyn OutputPort<T, CN = Self::CN>> {
+        RefMut::map(self.borrow_mut(), |s| s.output_port_mut(&output_port_index))
+    }
+}
+
+impl<T: AtlasScalar> SystemLinkExt<T> for DiagramLink<T> {
+    type CN = DiagramContext<T>;
+
+    fn input_port(&self, input_port_index: InputPortIndex) -> Ref<InputPort<T>> {
+        Ref::map(self.borrow(), |s| s.input_port(&input_port_index))
+    }
+
+    fn input_port_mut(&self, input_port_index: InputPortIndex) -> RefMut<InputPort<T>> {
+        RefMut::map(self.borrow_mut(), |s| s.input_port_mut(&input_port_index))
+    }
+
+    fn output_port(&self, output_port_index: OutputPortIndex) -> Ref<dyn OutputPort<T, CN = Self::CN>> {
+        Ref::map(self.borrow(), |s| s.output_port(&output_port_index))
+    }
+
+    fn output_port_mut(&self, output_port_index: OutputPortIndex) -> RefMut<dyn OutputPort<T, CN = Self::CN>> {
+        RefMut::map(self.borrow_mut(), |s| s.output_port_mut(&output_port_index))
     }
 }
 
@@ -811,10 +876,10 @@ mod tests {
         let mut adder2_link = diagram_builder.add_leaf_system(&adder2);
         adder2_link.set_name("adder2".to_string());
 
-        diagram_builder.export_input_port(adder1_link.input_port(InputPortIndex::new(0)));
-        diagram_builder.export_input_port(adder1_link.input_port(InputPortIndex::new(1)));
-        diagram_builder.export_input_port(adder2_link.input_port(InputPortIndex::new(0)));
-        diagram_builder.export_input_port(adder2_link.input_port(InputPortIndex::new(1)));
+        diagram_builder.export_input_port(adder1.input_port(InputPortIndex::new(0)));
+        diagram_builder.export_input_port(adder1.input_port(InputPortIndex::new(1)));
+        diagram_builder.export_input_port(adder2.input_port(InputPortIndex::new(0)));
+        diagram_builder.export_input_port(adder2.input_port(InputPortIndex::new(1)));
 
         diagram_builder.export_output_port(adder1_link.output_port(OutputPortIndex::new(0)));
         diagram_builder.export_output_port(adder2_link.output_port(OutputPortIndex::new(0)));
@@ -837,25 +902,25 @@ mod tests {
         let adder2 = Adder::new(num_inputs, vector_size);
         let adder3 = Adder::new(num_inputs, vector_size);
 
-        let mut adder1_link = diagram_builder.add_leaf_system(&adder1);
-        let mut adder2_link = diagram_builder.add_leaf_system(&adder2);
-        let adder3_link = diagram_builder.add_leaf_system(&adder3);
+        diagram_builder.add_leaf_system(&adder1);
+        diagram_builder.add_leaf_system(&adder2);
+        diagram_builder.add_leaf_system(&adder3);
 
-        diagram_builder.export_input_port(adder1_link.input_port(InputPortIndex::new(0)));
-        diagram_builder.export_input_port(adder1_link.input_port(InputPortIndex::new(1)));
-        diagram_builder.export_input_port(adder2_link.input_port(InputPortIndex::new(0)));
-        diagram_builder.export_input_port(adder2_link.input_port(InputPortIndex::new(1)));
+        diagram_builder.export_input_port(adder1.input_port(InputPortIndex::new(0)));
+        diagram_builder.export_input_port(adder1.input_port(InputPortIndex::new(1)));
+        diagram_builder.export_input_port(adder2.input_port(InputPortIndex::new(0)));
+        diagram_builder.export_input_port(adder2.input_port(InputPortIndex::new(1)));
 
         diagram_builder.connect(
-            adder1_link.output_port_mut(OutputPortIndex::new(0)),
-            adder3_link.input_port(InputPortIndex::new(0)),
+            adder1.output_port_mut(OutputPortIndex::new(0)),
+            adder3.input_port(InputPortIndex::new(0)),
         );
         diagram_builder.connect(
-            adder2_link.output_port_mut(OutputPortIndex::new(0)),
-            adder3_link.input_port(InputPortIndex::new(1)),
+            adder2.output_port_mut(OutputPortIndex::new(0)),
+            adder3.input_port(InputPortIndex::new(1)),
         );
 
-        diagram_builder.export_output_port(adder3_link.output_port(OutputPortIndex::new(0)));
+        diagram_builder.export_output_port(adder3.output_port(OutputPortIndex::new(0)));
 
         let diagram = diagram_builder.build();
         assert_eq!(diagram.borrow().num_subsystems(), 3);
