@@ -1,7 +1,4 @@
-use atlas::systems::framework::basic_vector::BasicVector;
-use atlas::systems::framework::diagram::DiagramExt;
-use atlas::systems::framework::diagram_builder::DiagramBuilder;
-use atlas::systems::framework::framework_common::{InputPortIndex, OutputPortIndex};
+use atlas::prelude::*;
 use atlas::systems::primitives::adder::Adder;
 
 fn main() {
