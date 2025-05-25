@@ -6,7 +6,7 @@ use crate::common::atlas_scalar::AtlasScalar;
 use crate::systems::framework::context::Context;
 use crate::systems::framework::diagram::{
     Diagram, DiagramBlueprint, InputPortLocator, OutputPortLocator, OwnedSystems, SystemLink,
-    SystemWeakLink,
+    SystemWeakLink, LeafSystemLink,
 };
 use crate::systems::framework::diagram_context::DiagramContext;
 use crate::systems::framework::framework_common::{InputPortIndex, OutputPortIndex, PortDataType};
@@ -56,21 +56,20 @@ impl<T: AtlasScalar> DiagramBuilder<T> {
         &mut self.connection_map
     }
 
-    pub fn add_leaf_system<S>(&mut self, mut system: Rc<RefCell<S>>) -> SystemLink<T>
+    pub fn add_leaf_system<S>(&mut self, system: &Rc<RefCell<S>>) -> SystemLink<T>
     where
         S: System<T, CN = LeafContext<T>>,
         T: AtlasScalar,
     {
-        let system_link = SystemLink::LeafSystemLink(system.clone());
+        let leaf_system_link = SystemLink::LeafSystemLink(system.clone());
 
-        self.system_weak_links
-            .push(system.borrow().system_weak_link());
-        self.registered_systems.push(system_link.clone());
+        self.system_weak_links.push(system.borrow().system_weak_link());
+        self.registered_systems.push(leaf_system_link.clone());
 
-        system_link
+        leaf_system_link
     }
 
-    pub fn add_diagram<S>(&mut self, mut system: Rc<RefCell<S>>) -> SystemLink<T>
+    pub fn add_diagram<S>(&mut self, system: &Rc<RefCell<S>>) -> SystemLink<T>
     where
         S: System<T, CN = DiagramContext<T>>,
         T: AtlasScalar,

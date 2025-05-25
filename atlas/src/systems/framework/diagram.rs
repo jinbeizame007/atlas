@@ -38,8 +38,8 @@ pub enum SystemLink<T: AtlasScalar> {
     DiagramLink(DiagramLink<T>),
 }
 
-type LeafSystemLink<T: AtlasScalar> = Rc<RefCell<dyn System<T, CN = LeafContext<T>>>>;
-type DiagramLink<T: AtlasScalar> = Rc<RefCell<dyn System<T, CN = DiagramContext<T>>>>;
+pub type LeafSystemLink<T: AtlasScalar> = Rc<RefCell<dyn System<T, CN = LeafContext<T>>>>;
+pub type DiagramLink<T: AtlasScalar> = Rc<RefCell<dyn System<T, CN = DiagramContext<T>>>>;
 
 impl<T: AtlasScalar> PartialEq for SystemLink<T> {
     fn eq(&self, other: &Self) -> bool {
@@ -773,9 +773,9 @@ mod tests {
         let adder1 = Adder::<f64>::new(2, 3);
         let adder2 = Adder::<f64>::new(2, 3);
 
-        let mut adder1_link = diagram_builder.add_leaf_system(adder1);
+        let mut adder1_link = diagram_builder.add_leaf_system(&adder1);
         adder1_link.set_name("adder1".to_string());
-        let mut adder2_link = diagram_builder.add_leaf_system(adder2);
+        let mut adder2_link = diagram_builder.add_leaf_system(&adder2);
         adder2_link.set_name("adder2".to_string());
 
         diagram_builder.export_input_port(&*adder1_link.input_port(InputPortIndex::new(0)));
@@ -802,11 +802,11 @@ mod tests {
         let adder2 = Adder::<f64>::new(2, 3);
         let adder3 = Adder::<f64>::new(2, 3);
 
-        let mut adder1_link = diagram_builder.add_leaf_system(adder1);
+        let mut adder1_link = diagram_builder.add_leaf_system(&adder1);
         adder1_link.set_name("adder1".to_string());
-        let mut adder2_link = diagram_builder.add_leaf_system(adder2);
+        let mut adder2_link = diagram_builder.add_leaf_system(&adder2);
         adder2_link.set_name("adder2".to_string());
-        let mut adder3_link = diagram_builder.add_leaf_system(adder3);
+        let mut adder3_link = diagram_builder.add_leaf_system(&adder3);
         adder3_link.set_name("adder3".to_string());
 
         diagram_builder.export_input_port(&*adder1_link.input_port(InputPortIndex::new(0)));
