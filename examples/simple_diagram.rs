@@ -10,23 +10,23 @@ fn main() {
     let adder2 = Adder::new(num_inputs, vector_size);
     let adder3 = Adder::new(num_inputs, vector_size);
 
-    let mut adder1_link = diagram_builder.add_leaf_system(&adder1);
-    let mut adder2_link = diagram_builder.add_leaf_system(&adder2);
-    let adder3_link = diagram_builder.add_leaf_system(&adder3);
+    diagram_builder.add_leaf_system(&adder1);
+    diagram_builder.add_leaf_system(&adder2);
+    diagram_builder.add_leaf_system(&adder3);
 
-    diagram_builder.export_input_port(adder1_link.input_port(InputPortIndex::new(0)));
-    diagram_builder.export_input_port(adder1_link.input_port(InputPortIndex::new(1)));
-    diagram_builder.export_input_port(adder2_link.input_port(InputPortIndex::new(0)));
-    diagram_builder.export_input_port(adder2_link.input_port(InputPortIndex::new(1)));
-    diagram_builder.export_output_port(adder3_link.output_port(OutputPortIndex::new(0)));
+    diagram_builder.export_input_port(adder1.input_port(InputPortIndex::new(0)));
+    diagram_builder.export_input_port(adder1.input_port(InputPortIndex::new(1)));
+    diagram_builder.export_input_port(adder2.input_port(InputPortIndex::new(0)));
+    diagram_builder.export_input_port(adder2.input_port(InputPortIndex::new(1)));
+    diagram_builder.export_output_port(adder3.output_port(OutputPortIndex::new(0)));
 
     diagram_builder.connect(
-        adder1_link.output_port_mut(OutputPortIndex::new(0)),
-        adder3_link.input_port(InputPortIndex::new(0)),
+        adder1.output_port_mut(OutputPortIndex::new(0)),
+        adder3.input_port(InputPortIndex::new(0)),
     );
     diagram_builder.connect(
-        adder2_link.output_port_mut(OutputPortIndex::new(0)),
-        adder3_link.input_port(InputPortIndex::new(1)),
+        adder2.output_port_mut(OutputPortIndex::new(0)),
+        adder3.input_port(InputPortIndex::new(1)),
     );
 
     let diagram = diagram_builder.build();
