@@ -2,9 +2,9 @@ use std::any::Any;
 use std::cell::{Ref, RefCell, RefMut};
 use std::cmp::{Eq, PartialEq};
 use std::collections::HashMap;
+use std::convert::From;
 use std::hash::{Hash, Hasher};
 use std::rc::{Rc, Weak};
-use std::convert::From;
 
 use atlas_derives::{AbstractSystem, SystemBase};
 
@@ -194,9 +194,15 @@ pub trait SystemLinkExt<T: AtlasScalar> {
 
     fn input_port_mut(&self, input_port_index: InputPortIndex) -> RefMut<InputPort<T>>;
 
-    fn output_port(&self, output_port_index: OutputPortIndex) -> Ref<dyn OutputPort<T, CN = Self::CN>>;
+    fn output_port(
+        &self,
+        output_port_index: OutputPortIndex,
+    ) -> Ref<dyn OutputPort<T, CN = Self::CN>>;
 
-    fn output_port_mut(&self, output_port_index: OutputPortIndex) -> RefMut<dyn OutputPort<T, CN = Self::CN>>;
+    fn output_port_mut(
+        &self,
+        output_port_index: OutputPortIndex,
+    ) -> RefMut<dyn OutputPort<T, CN = Self::CN>>;
 }
 
 impl<T: AtlasScalar, S> SystemLinkExt<T> for Rc<RefCell<S>>
@@ -213,11 +219,17 @@ where
         RefMut::map(self.borrow_mut(), |s| s.input_port_mut(&input_port_index))
     }
 
-    fn output_port(&self, output_port_index: OutputPortIndex) -> Ref<dyn OutputPort<T, CN = Self::CN>> {
+    fn output_port(
+        &self,
+        output_port_index: OutputPortIndex,
+    ) -> Ref<dyn OutputPort<T, CN = Self::CN>> {
         Ref::map(self.borrow(), |s| s.output_port(&output_port_index))
     }
 
-    fn output_port_mut(&self, output_port_index: OutputPortIndex) -> RefMut<dyn OutputPort<T, CN = Self::CN>> {
+    fn output_port_mut(
+        &self,
+        output_port_index: OutputPortIndex,
+    ) -> RefMut<dyn OutputPort<T, CN = Self::CN>> {
         RefMut::map(self.borrow_mut(), |s| s.output_port_mut(&output_port_index))
     }
 }
@@ -233,11 +245,17 @@ impl<T: AtlasScalar> SystemLinkExt<T> for DiagramLink<T> {
         RefMut::map(self.borrow_mut(), |s| s.input_port_mut(&input_port_index))
     }
 
-    fn output_port(&self, output_port_index: OutputPortIndex) -> Ref<dyn OutputPort<T, CN = Self::CN>> {
+    fn output_port(
+        &self,
+        output_port_index: OutputPortIndex,
+    ) -> Ref<dyn OutputPort<T, CN = Self::CN>> {
         Ref::map(self.borrow(), |s| s.output_port(&output_port_index))
     }
 
-    fn output_port_mut(&self, output_port_index: OutputPortIndex) -> RefMut<dyn OutputPort<T, CN = Self::CN>> {
+    fn output_port_mut(
+        &self,
+        output_port_index: OutputPortIndex,
+    ) -> RefMut<dyn OutputPort<T, CN = Self::CN>> {
         RefMut::map(self.borrow_mut(), |s| s.output_port_mut(&output_port_index))
     }
 }
