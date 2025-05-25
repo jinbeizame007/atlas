@@ -809,10 +809,10 @@ mod tests {
         let mut adder3_link = diagram_builder.add_leaf_system(&adder3);
         adder3_link.set_name("adder3".to_string());
 
-        diagram_builder.export_input_port(&*adder1_link.input_port(InputPortIndex::new(0)));
-        diagram_builder.export_input_port(&*adder1_link.input_port(InputPortIndex::new(1)));
-        diagram_builder.export_input_port(&*adder2_link.input_port(InputPortIndex::new(0)));
-        diagram_builder.export_input_port(&*adder2_link.input_port(InputPortIndex::new(1)));
+        diagram_builder.export_input_port(adder1_link.input_port(InputPortIndex::new(0)));
+        diagram_builder.export_input_port(adder1_link.input_port(InputPortIndex::new(1)));
+        diagram_builder.export_input_port(adder2_link.input_port(InputPortIndex::new(0)));
+        diagram_builder.export_input_port(adder2_link.input_port(InputPortIndex::new(1)));
 
         diagram_builder.connect(
             adder1_link.output_port_mut(OutputPortIndex::new(0)),
