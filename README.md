@@ -1,4 +1,10 @@
-# [WIP] ⛰️Atlas: Drake Inspired Control Framework for Rust
+<div align="center">
+
+# [WIP] ⛰️ Atlas
+
+A model-based design framework for Rust, inspired by [Drake](https://drake.mit.edu/).
+
+</div>
 
 ## Example
 
