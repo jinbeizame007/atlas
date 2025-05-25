@@ -1,6 +1,7 @@
 use std::any::Any;
 use std::cell::{Ref, RefCell};
 use std::fmt::Debug;
+use std::ops::Deref;
 
 use crate::common::atlas_scalar::AtlasScalar;
 use crate::common::value::{AbstractValue, Value};
@@ -129,8 +130,9 @@ impl<T: AtlasScalar> DiagramOutputPort<T> {
 
     pub fn eval<ValueType: Clone + Debug + 'static>(
         &self,
-        context: &<Self as OutputPort<T>>::CN,
+        context: impl Deref<Target = <Self as OutputPort<T>>::CN>,
     ) -> ValueType {
+        let context = &*context;
         self.eval_abstract(context)
             .as_any()
             .downcast_ref::<Value<ValueType>>()

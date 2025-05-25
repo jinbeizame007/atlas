@@ -1,5 +1,6 @@
 use std::any::Any;
 use std::fmt::Debug;
+use std::ops::DerefMut;
 
 use crate::common::atlas_scalar::AtlasScalar;
 use crate::common::value::{AbstractValue, Value};
@@ -11,6 +12,7 @@ use crate::systems::framework::input_port_base::{EvalAbstractCallback, InputPort
 use crate::systems::framework::port_base::PortBase;
 use crate::systems::framework::state::State;
 use crate::systems::framework::value_producer::AllocateCallback;
+use crate::systems::framework::context_base::ContextBase;
 
 pub struct InputPort<T: AtlasScalar> {
     name: String,
@@ -115,13 +117,22 @@ impl<T: AtlasScalar> InputPort<T> {
         self.alloc = alloc;
     }
 
-    pub fn fix_value<'a, ValueType: Clone + Debug + 'static>(
+    pub fn fix_value<CN, S, ValueType: Clone + Debug + 'static>(
         &self,
-        context: &'a mut impl Context<T>,
+        mut context: CN,
         value: ValueType,
-    ) -> Option<&'a FixedInputPortValue> {
+    ) -> Option<FixedInputPortValue>
+    where
+        CN: DerefMut,
+        CN::Target: Context<T, S = S>,
+    {
+        let context = &mut *context;
         let abstract_value = Value::<ValueType>::new(value);
 
-        context.fix_input_port(self.index().value(), &abstract_value)
+        if context.fix_input_port(self.index().value(), &abstract_value).is_some() {
+            Some(FixedInputPortValue::new(Box::new(abstract_value)))
+        } else {
+            None
+        }
     }
 }

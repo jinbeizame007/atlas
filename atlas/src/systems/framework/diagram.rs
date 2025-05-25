@@ -864,12 +864,12 @@ mod tests {
         for (i, input) in inputs.iter().enumerate() {
             diagram
                 .input_port_mut(&InputPortIndex::new(i))
-                .fix_value(&mut *diagram_context.borrow_mut(), input.clone());
+                .fix_value(diagram_context.borrow_mut(), input.clone());
         }
 
         let sum = diagram
             .diagram_output_port(&OutputPortIndex::new(0))
-            .eval::<BasicVector<f64>>(&*diagram_context.borrow());
+            .eval::<BasicVector<f64>>(diagram_context.borrow());
         let sum_expected = inputs[0].clone() + &inputs[1] + &inputs[2] + &inputs[3];
         assert_eq!(sum, sum_expected);
     }
