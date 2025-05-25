@@ -674,10 +674,34 @@ impl<T: AtlasScalar> Diagram<T> {
 }
 
 pub trait DiagramExt<T: AtlasScalar> {
+    fn input_port(&self, index: &InputPortIndex) -> Ref<InputPort<T>>;
+
+    fn input_port_mut(&self, index: &InputPortIndex) -> RefMut<InputPort<T>>;
+
+    fn diagram_output_port(&self, index: &OutputPortIndex) -> Ref<DiagramOutputPort<T>>;
+
+    fn diagram_output_port_mut(&self, index: &OutputPortIndex) -> RefMut<DiagramOutputPort<T>>;
+
     fn initialize(&mut self, blueprint: DiagramBlueprint<T>);
 }
 
 impl<T: AtlasScalar> DiagramExt<T> for Rc<RefCell<Diagram<T>>> {
+    fn input_port(&self, index: &InputPortIndex) -> Ref<InputPort<T>> {
+        Ref::map(self.borrow(), |diagram| diagram.input_port(index))
+    }
+
+    fn input_port_mut(&self, index: &InputPortIndex) -> RefMut<InputPort<T>> {
+        RefMut::map(self.borrow_mut(), |diagram| diagram.input_port_mut(index))
+    }
+
+    fn diagram_output_port(&self, index: &OutputPortIndex) -> Ref<DiagramOutputPort<T>> {
+        Ref::map(self.borrow(), |diagram| diagram.diagram_output_port(index))
+    }
+
+    fn diagram_output_port_mut(&self, index: &OutputPortIndex) -> RefMut<DiagramOutputPort<T>> {
+        RefMut::map(self.borrow_mut(), |diagram| diagram.diagram_output_port_mut(index))
+    }
+
     fn initialize(&mut self, blueprint: DiagramBlueprint<T>) {
         assert!(!blueprint.registered_systems.systems.is_empty());
         assert!(self.borrow().registered_systems.systems.is_empty());
@@ -839,13 +863,11 @@ mod tests {
 
         for (i, input) in inputs.iter().enumerate() {
             diagram
-                .borrow_mut()
                 .input_port_mut(&InputPortIndex::new(i))
                 .fix_value(&mut *diagram_context.borrow_mut(), input.clone());
         }
 
         let sum = diagram
-            .borrow()
             .diagram_output_port(&OutputPortIndex::new(0))
             .eval::<BasicVector<f64>>(&*diagram_context.borrow());
         let sum_expected = inputs[0].clone() + &inputs[1] + &inputs[2] + &inputs[3];
