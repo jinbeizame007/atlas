@@ -199,15 +199,14 @@ impl<T: AtlasScalar> DiagramBuilder<T> {
         self.input_port_ids.push(input_port_locator.clone());
     }
 
-    pub fn export_output_port<CN>(
-        &mut self,
-        output_port: &dyn OutputPort<T, CN = CN>,
-    ) -> OutputPortIndex
+    pub fn export_output_port<CN, O>(&mut self, output_port: O) -> OutputPortIndex
     where
         CN: Context<T>,
+        O: Deref<Target = dyn OutputPort<T, CN = CN>>,
     {
         self.assert_if_already_built();
 
+        let output_port = &*output_port;
         let output_port_index = OutputPortIndex::new(self.output_port_ids.len());
 
         let output_port_locator = OutputPortLocator {
