@@ -585,6 +585,12 @@ impl<T: AtlasScalar> Diagram<T> {
         self.output_ports.push(output_port);
     }
 
+    pub fn create_default_context(&self) -> Rc<RefCell<DiagramContext<T>>> {
+        let context = self.do_allocate_context();
+        self.set_default_state(&mut context.borrow_mut());
+        context
+    }
+
     pub fn from_blueprint(blueprint: DiagramBlueprint<T>) -> Rc<RefCell<Self>> {
         let mut diagram = Rc::new(RefCell::new(Self::new()));
 
@@ -781,7 +787,7 @@ impl<T: AtlasScalar> DiagramExt<T> for Rc<RefCell<Diagram<T>>> {
     }
 
     fn create_default_context(&self) -> Rc<RefCell<DiagramContext<T>>> {
-        self.borrow_mut().create_default_context()
+        self.borrow().create_default_context()
     }
 }
 
