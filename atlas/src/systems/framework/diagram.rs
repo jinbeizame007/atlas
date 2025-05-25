@@ -778,13 +778,13 @@ mod tests {
         let mut adder2_link = diagram_builder.add_leaf_system(&adder2);
         adder2_link.set_name("adder2".to_string());
 
-        diagram_builder.export_input_port(&*adder1_link.input_port(InputPortIndex::new(0)));
-        diagram_builder.export_input_port(&*adder1_link.input_port(InputPortIndex::new(1)));
-        diagram_builder.export_input_port(&*adder2_link.input_port(InputPortIndex::new(0)));
-        diagram_builder.export_input_port(&*adder2_link.input_port(InputPortIndex::new(1)));
+        diagram_builder.export_input_port(adder1_link.input_port(InputPortIndex::new(0)));
+        diagram_builder.export_input_port(adder1_link.input_port(InputPortIndex::new(1)));
+        diagram_builder.export_input_port(adder2_link.input_port(InputPortIndex::new(0)));
+        diagram_builder.export_input_port(adder2_link.input_port(InputPortIndex::new(1)));
 
-        diagram_builder.export_output_port(&*adder1_link.output_port(OutputPortIndex::new(0)));
-        diagram_builder.export_output_port(&*adder2_link.output_port(OutputPortIndex::new(0)));
+        diagram_builder.export_output_port(adder1_link.output_port(OutputPortIndex::new(0)));
+        diagram_builder.export_output_port(adder2_link.output_port(OutputPortIndex::new(0)));
 
         let diagram = diagram_builder.build();
 
@@ -823,7 +823,7 @@ mod tests {
             adder3_link.input_port(InputPortIndex::new(1)),
         );
 
-        diagram_builder.export_output_port(&*adder3_link.output_port(OutputPortIndex::new(0)));
+        diagram_builder.export_output_port(adder3_link.output_port(OutputPortIndex::new(0)));
 
         let diagram = diagram_builder.build();
         assert_eq!(diagram.borrow().num_subsystems(), 3);
