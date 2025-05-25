@@ -1,9 +1,8 @@
-use atlas::systems::primitives::adder::Adder;
-use atlas::systems::framework::diagram_builder::DiagramBuilder;
-use atlas::systems::framework::framework_common::{InputPortIndex, OutputPortIndex};
 use atlas::systems::framework::basic_vector::BasicVector;
 use atlas::systems::framework::diagram::DiagramExt;
-use atlas::systems::framework::system::System;
+use atlas::systems::framework::diagram_builder::DiagramBuilder;
+use atlas::systems::framework::framework_common::{InputPortIndex, OutputPortIndex};
+use atlas::systems::primitives::adder::Adder;
 
 fn main() {
     let mut diagram_builder = DiagramBuilder::<f64>::new();
@@ -22,6 +21,7 @@ fn main() {
     diagram_builder.export_input_port(adder1_link.input_port(InputPortIndex::new(1)));
     diagram_builder.export_input_port(adder2_link.input_port(InputPortIndex::new(0)));
     diagram_builder.export_input_port(adder2_link.input_port(InputPortIndex::new(1)));
+    diagram_builder.export_output_port(adder3_link.output_port(OutputPortIndex::new(0)));
 
     diagram_builder.connect(
         adder1_link.output_port_mut(OutputPortIndex::new(0)),
@@ -32,10 +32,8 @@ fn main() {
         adder3_link.input_port(InputPortIndex::new(1)),
     );
 
-    diagram_builder.export_output_port(adder3_link.output_port(OutputPortIndex::new(0)));
-
     let diagram = diagram_builder.build();
-    let diagram_context = diagram.borrow_mut().create_default_context();
+    let diagram_context = diagram.create_default_context();
 
     let inputs = [
         BasicVector::<f64>::from_vec(vec![1.0, 2.0, 3.0]),

@@ -682,6 +682,8 @@ pub trait DiagramExt<T: AtlasScalar> {
     fn diagram_output_port_mut(&self, index: &OutputPortIndex) -> RefMut<DiagramOutputPort<T>>;
 
     fn initialize(&mut self, blueprint: DiagramBlueprint<T>);
+
+    fn create_default_context(&self) -> Rc<RefCell<DiagramContext<T>>>;
 }
 
 impl<T: AtlasScalar> DiagramExt<T> for Rc<RefCell<Diagram<T>>> {
@@ -777,6 +779,10 @@ impl<T: AtlasScalar> DiagramExt<T> for Rc<RefCell<Diagram<T>>> {
         self_borrowed_mut.context_sizes += &sizes;
         self_borrowed_mut.implicit_time_derivatives_residual_size = Some(residual_size);
     }
+
+    fn create_default_context(&self) -> Rc<RefCell<DiagramContext<T>>> {
+        self.borrow_mut().create_default_context()
+    }
 }
 
 #[cfg(test)]
@@ -848,7 +854,7 @@ mod tests {
         let diagram = diagram_builder.build();
         assert_eq!(diagram.borrow().num_subsystems(), 3);
 
-        let diagram_context = diagram.borrow_mut().create_default_context();
+        let diagram_context = diagram.create_default_context();
 
         let inputs = [
             BasicVector::<f64>::from_vec(vec![1.0, 2.0, 3.0]),
