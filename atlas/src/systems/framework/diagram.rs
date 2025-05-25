@@ -819,16 +819,15 @@ mod tests {
     fn test_connection_map() {
         let mut diagram_builder = DiagramBuilder::<f64>::new();
 
-        let adder1 = Adder::new(2, 3);
-        let adder2 = Adder::new(2, 3);
-        let adder3 = Adder::new(2, 3);
+        let num_inputs = 2;
+        let vector_size = 3;
+        let adder1 = Adder::new(num_inputs, vector_size);
+        let adder2 = Adder::new(num_inputs, vector_size);
+        let adder3 = Adder::new(num_inputs, vector_size);
 
         let mut adder1_link = diagram_builder.add_leaf_system(&adder1);
-        adder1_link.set_name("adder1".to_string());
         let mut adder2_link = diagram_builder.add_leaf_system(&adder2);
-        adder2_link.set_name("adder2".to_string());
-        let mut adder3_link = diagram_builder.add_leaf_system(&adder3);
-        adder3_link.set_name("adder3".to_string());
+        let adder3_link = diagram_builder.add_leaf_system(&adder3);
 
         diagram_builder.export_input_port(adder1_link.input_port(InputPortIndex::new(0)));
         diagram_builder.export_input_port(adder1_link.input_port(InputPortIndex::new(1)));

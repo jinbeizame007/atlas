@@ -1,0 +1,13 @@
+[package]
+name = "examples"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[dev-dependencies]
+atlas = { path = "../atlas" }
+atlas-derives = { path = "../atlas-derives" }
+
+[[example]]
+name = "simple_diagram"
+path = "simple_diagram.rs"
