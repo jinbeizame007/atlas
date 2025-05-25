@@ -1,12 +1,13 @@
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
+use std::ops::{Deref, DerefMut};
 use std::rc::Rc;
 
 use crate::common::atlas_scalar::AtlasScalar;
 use crate::systems::framework::context::Context;
 use crate::systems::framework::diagram::{
-    Diagram, DiagramBlueprint, InputPortLocator, OutputPortLocator, OwnedSystems, SystemLink,
-    SystemWeakLink, LeafSystemLink,
+    Diagram, DiagramBlueprint, InputPortLocator, LeafSystemLink, OutputPortLocator, OwnedSystems,
+    SystemLink, SystemWeakLink,
 };
 use crate::systems::framework::diagram_context::DiagramContext;
 use crate::systems::framework::framework_common::{InputPortIndex, OutputPortIndex, PortDataType};
@@ -63,7 +64,8 @@ impl<T: AtlasScalar> DiagramBuilder<T> {
     {
         let leaf_system_link = SystemLink::LeafSystemLink(system.clone());
 
-        self.system_weak_links.push(system.borrow().system_weak_link());
+        self.system_weak_links
+            .push(system.borrow().system_weak_link());
         self.registered_systems.push(leaf_system_link.clone());
 
         leaf_system_link
@@ -83,13 +85,14 @@ impl<T: AtlasScalar> DiagramBuilder<T> {
         system_link
     }
 
-    pub fn connect<CN>(
-        &mut self,
-        output_port: &mut dyn OutputPort<T, CN = CN>,
-        input_port: &InputPort<T>,
-    ) where
+    pub fn connect<CN, I, O>(&mut self, mut output_port: O, input_port: I)
+    where
         CN: Context<T>,
+        I: Deref<Target = InputPort<T>>,
+        O: DerefMut<Target = dyn OutputPort<T, CN = CN>>,
     {
+        let input_port = &*input_port;
+        let output_port = &mut *output_port;
         self.assert_if_already_built();
 
         let input_port_locator = InputPortLocator::<T> {
@@ -118,7 +121,11 @@ impl<T: AtlasScalar> DiagramBuilder<T> {
             .insert(input_port_locator, output_port_locator);
     }
 
-    pub fn export_input_port(&mut self, input_port: &InputPort<T>) -> InputPortIndex {
+    pub fn export_input_port<I>(&mut self, input_port: I) -> InputPortIndex
+    where
+        I: Deref<Target = InputPort<T>>,
+    {
+        let input_port = &*input_port;
         self.assert_if_already_built();
         let diagram_port_index = self.declare_input_port(input_port);
         self.connect_input_port(diagram_port_index.clone(), input_port);
@@ -126,7 +133,11 @@ impl<T: AtlasScalar> DiagramBuilder<T> {
         diagram_port_index
     }
 
-    pub fn declare_input_port(&mut self, input_port: &InputPort<T>) -> InputPortIndex {
+    pub fn declare_input_port<I>(&mut self, input_port: I) -> InputPortIndex
+    where
+        I: Deref<Target = InputPort<T>>,
+    {
+        let input_port = &*input_port;
         let input_port_locator = InputPortLocator {
             system_weak_link: input_port.system_weak_link().clone(),
             input_port_index: input_port.index().clone(),
@@ -141,11 +152,11 @@ impl<T: AtlasScalar> DiagramBuilder<T> {
         input_port_index
     }
 
-    pub fn connect_input_port(
-        &mut self,
-        diagram_input_port_index: InputPortIndex,
-        input_port: &InputPort<T>,
-    ) {
+    pub fn connect_input_port<I>(&mut self, diagram_input_port_index: InputPortIndex, input_port: I)
+    where
+        I: Deref<Target = InputPort<T>>,
+    {
+        let input_port = &*input_port;
         self.assert_if_already_built();
         let input_port_locator = InputPortLocator {
             system_weak_link: input_port.system_weak_link().clone(),
