@@ -814,18 +814,16 @@ mod tests {
         diagram_builder.export_input_port(&*adder2_link.input_port(InputPortIndex::new(0)));
         diagram_builder.export_input_port(&*adder2_link.input_port(InputPortIndex::new(1)));
 
-        diagram_builder.connect::<LeafContext<f64>>(
-            &mut *adder1_link.output_port_mut(OutputPortIndex::new(0)),
-            &*adder3_link.input_port(InputPortIndex::new(0)),
+        diagram_builder.connect(
+            adder1_link.output_port_mut(OutputPortIndex::new(0)),
+            adder3_link.input_port(InputPortIndex::new(0)),
         );
-        diagram_builder.connect::<LeafContext<f64>>(
-            &mut *adder2_link.output_port_mut(OutputPortIndex::new(0)),
-            &*adder3_link.input_port(InputPortIndex::new(1)),
+        diagram_builder.connect(
+            adder2_link.output_port_mut(OutputPortIndex::new(0)),
+            adder3_link.input_port(InputPortIndex::new(1)),
         );
 
-        diagram_builder.export_output_port::<LeafContext<f64>>(
-            &*adder3_link.output_port(OutputPortIndex::new(0)),
-        );
+        diagram_builder.export_output_port(&*adder3_link.output_port(OutputPortIndex::new(0)));
 
         let diagram = diagram_builder.build();
         assert_eq!(diagram.borrow().num_subsystems(), 3);
