@@ -822,9 +822,9 @@ mod tests {
     fn test_connection_map() {
         let mut diagram_builder = DiagramBuilder::<f64>::new();
 
-        let adder1 = Adder::<f64>::new(2, 3);
-        let adder2 = Adder::<f64>::new(2, 3);
-        let adder3 = Adder::<f64>::new(2, 3);
+        let adder1 = Adder::new(2, 3);
+        let adder2 = Adder::new(2, 3);
+        let adder3 = Adder::new(2, 3);
 
         let mut adder1_link = diagram_builder.add_leaf_system(&adder1);
         adder1_link.set_name("adder1".to_string());
