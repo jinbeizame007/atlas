@@ -12,6 +12,7 @@ pub enum ContinuousStatePtr<T: AtlasScalar> {
 }
 
 impl<T: AtlasScalar> ContinuousStatePtr<T> {
+    #[allow(dead_code)]
     fn num_q(&self) -> usize {
         match self {
             ContinuousStatePtr::LeafContinuousStatePtr(ptr) => unsafe {
@@ -23,6 +24,7 @@ impl<T: AtlasScalar> ContinuousStatePtr<T> {
         }
     }
 
+    #[allow(dead_code)]
     fn num_v(&self) -> usize {
         match self {
             ContinuousStatePtr::LeafContinuousStatePtr(ptr) => unsafe {
@@ -34,6 +36,7 @@ impl<T: AtlasScalar> ContinuousStatePtr<T> {
         }
     }
 
+    #[allow(dead_code)]
     fn num_z(&self) -> usize {
         match self {
             ContinuousStatePtr::LeafContinuousStatePtr(ptr) => unsafe {
@@ -45,6 +48,7 @@ impl<T: AtlasScalar> ContinuousStatePtr<T> {
         }
     }
 
+    #[allow(dead_code)]
     fn size(&self) -> usize {
         match self {
             ContinuousStatePtr::LeafContinuousStatePtr(ptr) => unsafe {
@@ -56,6 +60,7 @@ impl<T: AtlasScalar> ContinuousStatePtr<T> {
         }
     }
 
+    #[allow(dead_code)]
     fn system_id(&self) -> &SystemId {
         match self {
             ContinuousStatePtr::LeafContinuousStatePtr(ptr) => unsafe {
@@ -67,6 +72,7 @@ impl<T: AtlasScalar> ContinuousStatePtr<T> {
         }
     }
 
+    #[allow(dead_code)]
     fn set_system_id(&mut self, system_id: SystemId) {
         match self {
             ContinuousStatePtr::LeafContinuousStatePtr(ptr) => unsafe {
@@ -78,6 +84,7 @@ impl<T: AtlasScalar> ContinuousStatePtr<T> {
         }
     }
 
+    #[allow(dead_code)]
     fn set_from_vector(&mut self, value: &na::DVector<T>) {
         match self {
             ContinuousStatePtr::LeafContinuousStatePtr(ptr) => unsafe {
@@ -89,6 +96,7 @@ impl<T: AtlasScalar> ContinuousStatePtr<T> {
         }
     }
 
+    #[allow(dead_code)]
     fn vector(&self) -> &dyn VectorBase<T, Output = T> {
         match self {
             ContinuousStatePtr::LeafContinuousStatePtr(ptr) => unsafe {
@@ -100,6 +108,7 @@ impl<T: AtlasScalar> ContinuousStatePtr<T> {
         }
     }
 
+    #[allow(dead_code)]
     fn vector_mut(&mut self) -> &mut dyn VectorBase<T, Output = T> {
         match self {
             ContinuousStatePtr::LeafContinuousStatePtr(ptr) => unsafe {
@@ -114,7 +123,9 @@ impl<T: AtlasScalar> ContinuousStatePtr<T> {
 
 #[derive(Default)]
 pub struct DiagramContinuousState<T: AtlasScalar> {
+    #[allow(dead_code)]
     state: Box<dyn VectorBase<T, Output = T>>,
+    #[allow(dead_code)]
     substates: Vec<ContinuousStatePtr<T>>,
     num_q: usize,
     num_v: usize,
@@ -123,7 +134,7 @@ pub struct DiagramContinuousState<T: AtlasScalar> {
 }
 
 impl<T: AtlasScalar> DiagramContinuousState<T> {
-    pub fn new(substates: Vec<ContinuousStatePtr<T>>) -> Self {
+    pub fn new(_substates: Vec<ContinuousStatePtr<T>>) -> Self {
         todo!()
         // let state = Box::new(BasicVector
         // DiagramContinuousState::<T> {
@@ -136,16 +147,19 @@ impl<T: AtlasScalar> DiagramContinuousState<T> {
         // }
     }
 
+    #[allow(dead_code)]
     fn num_substates(&self) -> usize {
         self.substates.len()
     }
 
+    #[allow(dead_code)]
     fn substate(&self, index: usize) -> &ContinuousStatePtr<T> {
-        unsafe { &self.substates[index] }
+        &self.substates[index]
     }
 
+    #[allow(dead_code)]
     fn substate_mut(&mut self, index: usize) -> &mut ContinuousStatePtr<T> {
-        unsafe { &mut self.substates[index] }
+        &mut self.substates[index]
     }
 }
 
@@ -174,7 +188,7 @@ impl<T: AtlasScalar> ContinuousState<T> for DiagramContinuousState<T> {
         self.system_id = system_id;
     }
 
-    fn set_from_vector(&mut self, value: &na::DVector<T>) {
+    fn set_from_vector(&mut self, _value: &na::DVector<T>) {
         todo!()
     }
 

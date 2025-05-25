@@ -1,13 +1,13 @@
 use std::cell::RefCell;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::ops::{Deref, DerefMut};
 use std::rc::Rc;
 
 use crate::common::atlas_scalar::AtlasScalar;
 use crate::systems::framework::context::Context;
 use crate::systems::framework::diagram::{
-    Diagram, DiagramBlueprint, InputPortLocator, LeafSystemLink, OutputPortLocator, OwnedSystems,
-    SystemLink, SystemWeakLink,
+    Diagram, DiagramBlueprint, InputPortLocator, OutputPortLocator, OwnedSystems, SystemLink,
+    SystemWeakLink,
 };
 use crate::systems::framework::diagram_context::DiagramContext;
 use crate::systems::framework::framework_common::{InputPortIndex, OutputPortIndex, PortDataType};
@@ -18,6 +18,7 @@ use crate::systems::framework::port_base::PortBase;
 use crate::systems::framework::system::System;
 
 struct ExportedInputPortData<T: AtlasScalar> {
+    #[allow(dead_code)]
     pub input_port_locator: InputPortLocator<T>,
 }
 
@@ -152,8 +153,11 @@ impl<T: AtlasScalar> DiagramBuilder<T> {
         input_port_index
     }
 
-    pub fn connect_input_port<I>(&mut self, diagram_input_port_index: InputPortIndex, input_port: I)
-    where
+    pub fn connect_input_port<I>(
+        &mut self,
+        _diagram_input_port_index: InputPortIndex,
+        input_port: I,
+    ) where
         I: Deref<Target = InputPort<T>>,
     {
         let input_port = &*input_port;

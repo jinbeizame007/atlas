@@ -46,7 +46,7 @@ pub struct PIDController<T: AtlasScalar> {
     name: String,
     system_weak_link: Option<SystemWeakLink<T>>,
     input_ports: Vec<InputPort<T>>,
-    output_ports: Vec<Box<LeafOutputPort<T>>>,
+    output_ports: Vec<LeafOutputPort<T>>,
     cache_entries: Vec<CacheEntry>,
     context_sizes: ContextSizes,
     system_id: SystemId,
@@ -61,7 +61,7 @@ impl<T: AtlasScalar> PIDController<T> {
     pub fn new(kp: na::DVector<T>, ki: na::DVector<T>, kd: na::DVector<T>) -> Rc<RefCell<Self>> {
         let num_controlled_q = kp.len();
 
-        let mut pid_controller = Rc::new(RefCell::new(Self {
+        let pid_controller = Rc::new(RefCell::new(Self {
             name: "pid_controller".to_string(),
             kp,
             ki,
@@ -184,6 +184,7 @@ impl<T: AtlasScalar> PIDController<T> {
         &self.input_ports[&self.input_port_index_desired_state]
     }
 
+    #[allow(dead_code)]
     fn output_port_control(&self) -> &LeafOutputPort<T> {
         &self.output_ports[&self.output_port_index_control]
     }
@@ -215,26 +216,26 @@ impl<T: AtlasScalar> System<T> for PIDController<T> {
     fn output_ports(&self) -> Vec<&dyn OutputPort<T, CN = Self::CN>> {
         self.output_ports
             .iter()
-            .map(|p| p.as_ref() as &dyn OutputPort<T, CN = Self::CN>)
+            .map(|p| p as &dyn OutputPort<T, CN = Self::CN>)
             .collect()
     }
 
     fn output_ports_mut(&mut self) -> Vec<&mut dyn OutputPort<T, CN = Self::CN>> {
         self.output_ports
             .iter_mut()
-            .map(|p| p.as_mut() as &mut dyn OutputPort<T, CN = Self::CN>)
+            .map(|p| p as &mut dyn OutputPort<T, CN = Self::CN>)
             .collect()
     }
 
     fn output_port(&self, index: &OutputPortIndex) -> &dyn OutputPort<T, CN = Self::CN> {
-        self.output_ports[index].as_ref()
+        &self.output_ports[index]
     }
 
     fn output_port_mut(
         &mut self,
         index: &OutputPortIndex,
     ) -> &mut dyn OutputPort<T, CN = Self::CN> {
-        self.output_ports[index].as_mut()
+        &mut self.output_ports[index]
     }
 
     fn system_weak_link(&self) -> SystemWeakLink<T> {

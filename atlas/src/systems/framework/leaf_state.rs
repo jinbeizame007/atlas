@@ -17,7 +17,7 @@ impl<T: AtlasScalar> State<T> for LeafState<T> {
     type CS = LeafContinuousState<T>;
 
     fn continuous_state(&self) -> &Self::CS {
-        &self.continuous_state.as_ref()
+        self.continuous_state.as_ref()
     }
 
     fn continuous_state_mut(&mut self) -> &mut Self::CS {

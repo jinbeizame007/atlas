@@ -5,11 +5,10 @@ use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
 use std::rc::{Rc, Weak};
 
-use atlas_derives::{AbstractSystem, LeafSystem, System, SystemBase};
+use atlas_derives::{AbstractSystem, SystemBase};
 
 use crate::common::atlas_scalar::AtlasScalar;
 use crate::common::value::AbstractValue;
-use crate::systems::framework::basic_vector::BasicVector;
 use crate::systems::framework::cache_entry::CacheEntry;
 use crate::systems::framework::context::Context;
 use crate::systems::framework::context_base::ContextBase;
@@ -22,8 +21,6 @@ use crate::systems::framework::framework_common::{
 use crate::systems::framework::input_port::InputPort;
 use crate::systems::framework::input_port_base::InputPortBase;
 use crate::systems::framework::leaf_context::LeafContext;
-use crate::systems::framework::leaf_output_port::LeafOutputPort;
-use crate::systems::framework::leaf_system::LeafSystem;
 use crate::systems::framework::output_port::OutputPort;
 use crate::systems::framework::output_port_base::OutputPortBase;
 use crate::systems::framework::port_base::PortBase;
@@ -38,16 +35,18 @@ pub enum SystemLink<T: AtlasScalar> {
     DiagramLink(DiagramLink<T>),
 }
 
-pub type LeafSystemLink<T: AtlasScalar> = Rc<RefCell<dyn System<T, CN = LeafContext<T>>>>;
-pub type DiagramLink<T: AtlasScalar> = Rc<RefCell<dyn System<T, CN = DiagramContext<T>>>>;
+pub type LeafSystemLink<T> = Rc<RefCell<dyn System<T, CN = LeafContext<T>>>>;
+pub type DiagramLink<T> = Rc<RefCell<dyn System<T, CN = DiagramContext<T>>>>;
 
 impl<T: AtlasScalar> PartialEq for SystemLink<T> {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
             (SystemLink::LeafSystemLink(a), SystemLink::LeafSystemLink(b)) => {
-                a.as_ptr() == b.as_ptr()
+                std::ptr::addr_eq(a.as_ptr(), b.as_ptr())
             }
-            (SystemLink::DiagramLink(a), SystemLink::DiagramLink(b)) => a.as_ptr() == b.as_ptr(),
+            (SystemLink::DiagramLink(a), SystemLink::DiagramLink(b)) => {
+                std::ptr::addr_eq(a.as_ptr(), b.as_ptr())
+            }
             _ => false,
         }
     }
@@ -155,7 +154,7 @@ impl<T: AtlasScalar> SystemLink<T> {
             SystemLink::LeafSystemLink(system) => {
                 Ref::map(system.borrow(), |s| s.output_port(&output_port_index))
             }
-            SystemLink::DiagramLink(system) => {
+            SystemLink::DiagramLink(_system) => {
                 todo!()
                 // Ref::map(system.borrow(), |s| s.output_port(&output_port_index))
             }
@@ -170,7 +169,7 @@ impl<T: AtlasScalar> SystemLink<T> {
             SystemLink::LeafSystemLink(system) => RefMut::map(system.borrow_mut(), |s| {
                 s.output_port_mut(&output_port_index)
             }),
-            SystemLink::DiagramLink(system) => {
+            SystemLink::DiagramLink(_system) => {
                 todo!()
                 // Ref::map(system.borrow(), |s| s.output_port(&output_port_index))
             }
@@ -184,17 +183,17 @@ pub enum SystemWeakLink<T: AtlasScalar> {
     DiagramWeakLink(DiagramWeakLink<T>),
 }
 
-type LeafSystemWeakLink<T: AtlasScalar> = Weak<RefCell<dyn System<T, CN = LeafContext<T>>>>;
-type DiagramWeakLink<T: AtlasScalar> = Weak<RefCell<dyn System<T, CN = DiagramContext<T>>>>;
+type LeafSystemWeakLink<T> = Weak<RefCell<dyn System<T, CN = LeafContext<T>>>>;
+type DiagramWeakLink<T> = Weak<RefCell<dyn System<T, CN = DiagramContext<T>>>>;
 
 impl<T: AtlasScalar> PartialEq for SystemWeakLink<T> {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
             (SystemWeakLink::LeafSystemWeakLink(a), SystemWeakLink::LeafSystemWeakLink(b)) => {
-                a.as_ptr() == b.as_ptr()
+                std::ptr::addr_eq(a.as_ptr(), b.as_ptr())
             }
             (SystemWeakLink::DiagramWeakLink(a), SystemWeakLink::DiagramWeakLink(b)) => {
-                a.as_ptr() == b.as_ptr()
+                std::ptr::addr_eq(a.as_ptr(), b.as_ptr())
             }
             _ => false,
         }
@@ -363,7 +362,7 @@ pub struct Diagram<T: AtlasScalar> {
     // SystemBase
     name: String,
     input_ports: Vec<InputPort<T>>,
-    output_ports: Vec<Box<DiagramOutputPort<T>>>,
+    output_ports: Vec<DiagramOutputPort<T>>,
     cache_entries: Vec<CacheEntry>,
     context_sizes: ContextSizes,
     system_id: SystemId,
@@ -407,26 +406,26 @@ impl<T: AtlasScalar> System<T> for Diagram<T> {
     fn output_ports(&self) -> Vec<&dyn OutputPort<T, CN = Self::CN>> {
         self.output_ports
             .iter()
-            .map(|p| p.as_ref() as &dyn OutputPort<T, CN = Self::CN>)
+            .map(|p| p as &dyn OutputPort<T, CN = Self::CN>)
             .collect()
     }
 
     fn output_ports_mut(&mut self) -> Vec<&mut dyn OutputPort<T, CN = Self::CN>> {
         self.output_ports
             .iter_mut()
-            .map(|p| p.as_mut() as &mut dyn OutputPort<T, CN = Self::CN>)
+            .map(|p| p as &mut dyn OutputPort<T, CN = Self::CN>)
             .collect()
     }
 
     fn output_port(&self, index: &OutputPortIndex) -> &dyn OutputPort<T, CN = Self::CN> {
-        self.output_ports[index].as_ref()
+        &self.output_ports[index]
     }
 
     fn output_port_mut(
         &mut self,
         index: &OutputPortIndex,
     ) -> &mut dyn OutputPort<T, CN = Self::CN> {
-        self.output_ports[index].as_mut()
+        &mut self.output_ports[index]
     }
 
     fn system_weak_link(&self) -> SystemWeakLink<T> {
@@ -441,7 +440,7 @@ impl<T: AtlasScalar> System<T> for Diagram<T> {
         self.do_allocate_context()
     }
 
-    fn do_allocate_input(&self, input_port: &InputPort<T>) -> Box<dyn AbstractValue> {
+    fn do_allocate_input(&self, _input_port: &InputPort<T>) -> Box<dyn AbstractValue> {
         todo!()
     }
 
@@ -474,8 +473,8 @@ impl<T: AtlasScalar> System<T> for Diagram<T> {
 
     fn do_calc_time_derivatives(
         &mut self,
-        context: &mut Self::CN,
-        derivatives: &mut <<Self::CN as Context<T>>::S as State<T>>::CS,
+        _context: &mut Self::CN,
+        _derivatives: &mut <<Self::CN as Context<T>>::S as State<T>>::CS,
     ) {
         todo!()
     }
@@ -564,14 +563,14 @@ impl<T: AtlasScalar> Diagram<T> {
     }
 
     pub fn diagram_output_port(&self, index: &OutputPortIndex) -> &DiagramOutputPort<T> {
-        self.output_ports[index].as_ref()
+        &self.output_ports[index]
     }
 
     pub fn diagram_output_port_mut(
         &mut self,
         index: &OutputPortIndex,
     ) -> &mut DiagramOutputPort<T> {
-        self.output_ports[index].as_mut()
+        &mut self.output_ports[index]
     }
 
     pub fn connection_map(&self) -> &HashMap<InputPortLocator<T>, OutputPortLocator<T>> {
@@ -582,7 +581,7 @@ impl<T: AtlasScalar> Diagram<T> {
         self.registered_systems.systems.len()
     }
 
-    pub fn add_output_port(&mut self, output_port: Box<DiagramOutputPort<T>>) {
+    pub fn add_output_port(&mut self, output_port: DiagramOutputPort<T>) {
         self.output_ports.push(output_port);
     }
 
@@ -637,7 +636,7 @@ impl<T: AtlasScalar> Diagram<T> {
             subsystem_index.clone(),
             output_port_locator.output_port_index.clone(),
         );
-        self.add_output_port(Box::new(diagram_output_port));
+        self.add_output_port(diagram_output_port);
     }
 
     pub fn eval_subsystem_output_port(
@@ -699,7 +698,9 @@ impl<T: AtlasScalar> DiagramExt<T> for Rc<RefCell<Diagram<T>>> {
     }
 
     fn diagram_output_port_mut(&self, index: &OutputPortIndex) -> RefMut<DiagramOutputPort<T>> {
-        RefMut::map(self.borrow_mut(), |diagram| diagram.diagram_output_port_mut(index))
+        RefMut::map(self.borrow_mut(), |diagram| {
+            diagram.diagram_output_port_mut(index)
+        })
     }
 
     fn initialize(&mut self, blueprint: DiagramBlueprint<T>) {
@@ -769,12 +770,7 @@ impl<T: AtlasScalar> DiagramExt<T> for Rc<RefCell<Diagram<T>>> {
 
         let mut residual_size = 0;
         let mut sizes = ContextSizes::default();
-        for (index, system) in self_borrowed_mut
-            .registered_systems
-            .systems
-            .iter()
-            .enumerate()
-        {
+        for system in self_borrowed_mut.registered_systems.systems.iter() {
             sizes += &*system.context_sizes();
             residual_size += system.implicit_time_derivatives_residual_size();
         }
@@ -785,6 +781,7 @@ impl<T: AtlasScalar> DiagramExt<T> for Rc<RefCell<Diagram<T>>> {
 
 #[cfg(test)]
 mod tests {
+    use crate::systems::framework::basic_vector::BasicVector;
     use crate::systems::framework::diagram_builder::DiagramBuilder;
     use crate::systems::primitives::adder::Adder;
 

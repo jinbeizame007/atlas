@@ -1,6 +1,6 @@
 use std::any::Any;
 use std::cell::RefCell;
-use std::rc::{Rc, Weak};
+use std::rc::Rc;
 
 use crate::common::atlas_scalar::AtlasScalar;
 use crate::common::value::AbstractValue;
@@ -76,7 +76,7 @@ where
                 let system_rc = leaf_system_weak_link.upgrade().unwrap();
                 let system = system_rc.borrow();
                 let input_port = system.input_port(&cloned_input_port_index);
-                system.allocate_input_abstract(&input_port)
+                system.allocate_input_abstract(input_port)
             })
         };
         let input_port = {

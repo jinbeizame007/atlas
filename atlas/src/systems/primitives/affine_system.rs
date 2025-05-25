@@ -34,16 +34,23 @@ use crate::systems::framework::system_base::SystemBase;
 #[derive(LeafSystem, System, AbstractSystem, SystemBase)]
 pub struct AffineSystem<T: AtlasScalar> {
     name: String,
+    #[allow(dead_code)]
     a: na::DMatrix<T>,
+    #[allow(dead_code)]
     b: na::DMatrix<T>,
+    #[allow(dead_code)]
     f0: na::DVector<T>,
+    #[allow(dead_code)]
     c: na::DVector<T>,
+    #[allow(dead_code)]
     d: na::DMatrix<T>,
+    #[allow(dead_code)]
     y0: na::DVector<T>,
+    #[allow(dead_code)]
     time_period: f64,
     #[allow(clippy::box_collection)]
     input_ports: Vec<InputPort<T>>,
-    output_ports: Vec<Box<LeafOutputPort<T>>>,
+    output_ports: Vec<LeafOutputPort<T>>,
     cache_entries: Vec<CacheEntry>,
     context_sizes: ContextSizes,
     system_id: SystemId,
@@ -72,7 +79,7 @@ impl<T: AtlasScalar> AffineSystem<T> {
         assert!(num_inputs > 0);
         assert!(num_outputs > 0);
 
-        let affine_system = Rc::new(RefCell::new(Self {
+        Rc::new(RefCell::new(Self {
             name: "affine_system".to_string(),
             a,
             b,
@@ -92,9 +99,7 @@ impl<T: AtlasScalar> AffineSystem<T> {
             model_input_values: ModelValues::default(),
             model_continuous_state_vector: BasicVector::<T>::zeros(0),
             implicit_time_derivatives_residual_size: None,
-        }));
-
-        affine_system
+        }))
     }
 }
 

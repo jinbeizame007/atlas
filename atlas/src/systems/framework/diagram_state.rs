@@ -14,6 +14,7 @@ pub enum StatePtr<T: AtlasScalar> {
 }
 
 impl<T: AtlasScalar> StatePtr<T> {
+    #[allow(dead_code)]
     fn continuous_state_ptr(&self) -> ContinuousStatePtr<T> {
         match self {
             StatePtr::LeafStatePtr(ptr) => unsafe {
@@ -49,10 +50,11 @@ impl<T: AtlasScalar> State<T> for DiagramState<T> {
 }
 
 impl<T: AtlasScalar> DiagramState<T> {
-    pub fn new(size: usize) -> Self {
+    pub fn new(_size: usize) -> Self {
         todo!()
     }
 
+    #[allow(dead_code)]
     fn num_substates(&self) -> usize {
         self.substates.len()
     }

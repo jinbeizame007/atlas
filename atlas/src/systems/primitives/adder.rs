@@ -36,7 +36,7 @@ use crate::systems::framework::vector_base::VectorBase;
 pub struct Adder<T: AtlasScalar> {
     name: String,
     input_ports: Vec<InputPort<T>>,
-    output_ports: Vec<Box<LeafOutputPort<T>>>,
+    output_ports: Vec<LeafOutputPort<T>>,
     cache_entries: Vec<CacheEntry>,
     context_sizes: ContextSizes,
     system_id: SystemId,
@@ -126,7 +126,7 @@ mod tests {
     #[test]
     fn test_fix_input_port_values() {
         let adder = Adder::<f64>::new(2, 3);
-        let mut context = adder.borrow_mut().create_default_context();
+        let context = adder.borrow_mut().create_default_context();
 
         adder
             .borrow_mut()

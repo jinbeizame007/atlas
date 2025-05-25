@@ -1,5 +1,3 @@
-use std::fmt::Debug;
-
 use crate::common::atlas_scalar::AtlasScalar;
 use crate::common::value::AbstractValue;
 use crate::systems::framework::context::Context;

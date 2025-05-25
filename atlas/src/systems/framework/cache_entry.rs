@@ -24,9 +24,9 @@ impl CacheEntry {
         self.value_producer.calc(context, value)
     }
 
-    pub fn eval<ValueType: 'static>(&self, context: &mut dyn ContextBase) -> ValueType
+    pub fn eval<ValueType>(&self, context: &mut dyn ContextBase) -> ValueType
     where
-        ValueType: Clone,
+        ValueType: Clone + 'static,
     {
         let abstract_value = self.eval_abstract(context);
         abstract_value

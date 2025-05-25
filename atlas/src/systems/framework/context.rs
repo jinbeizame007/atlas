@@ -13,6 +13,7 @@ pub trait Context<T: AtlasScalar>: ContextBase {
     fn num_continuous_states(&self) -> usize;
     fn continuous_state(&self) -> &<Self::S as State<T>>::CS;
     fn continuous_state_mut(&mut self) -> &mut <Self::S as State<T>>::CS;
+    #[allow(clippy::boxed_local)]
     fn set_continuous_state(&mut self, continuous_state: Box<<Self::S as State<T>>::CS>) {
         *self.continuous_state_mut() = *continuous_state;
     }

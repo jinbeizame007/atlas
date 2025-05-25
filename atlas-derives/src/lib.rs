@@ -42,14 +42,14 @@ pub fn derive_system_base(input: TokenStream) -> TokenStream {
             fn output_ports(&self) -> Vec<&dyn OutputPortBase> {
                 self.output_ports
                     .iter()
-                    .map(|p| p.as_ref() as &dyn OutputPortBase)
+                    .map(|p| p as &dyn OutputPortBase)
                     .collect()
             }
 
             fn output_ports_mut(&mut self) -> Vec<&mut dyn OutputPortBase> {
                 self.output_ports
                     .iter_mut()
-                    .map(|p| p.as_mut() as &mut dyn OutputPortBase)
+                    .map(|p| p as &mut dyn OutputPortBase)
                     .collect()
             }
 
@@ -162,26 +162,26 @@ pub fn derive_system(input: TokenStream) -> TokenStream {
             fn output_ports(&self) -> Vec<&dyn OutputPort<T, CN = Self::CN>> {
                 self.output_ports
                     .iter()
-                    .map(|p| p.as_ref() as &dyn OutputPort<T, CN = Self::CN>)
+                    .map(|p| p as &dyn OutputPort<T, CN = Self::CN>)
                     .collect()
             }
 
             fn output_ports_mut(&mut self) -> Vec<&mut dyn OutputPort<T, CN = Self::CN>> {
                 self.output_ports
                     .iter_mut()
-                    .map(|p| p.as_mut() as &mut dyn OutputPort<T, CN = Self::CN>)
+                    .map(|p| p as &mut dyn OutputPort<T, CN = Self::CN>)
                     .collect()
             }
 
             fn output_port(&self, index: &OutputPortIndex) -> &dyn OutputPort<T, CN = Self::CN> {
-                self.output_ports[index].as_ref()
+                &self.output_ports[index]
             }
 
             fn output_port_mut(
                 &mut self,
                 index: &OutputPortIndex,
             ) -> &mut dyn OutputPort<T, CN = Self::CN> {
-                self.output_ports[index].as_mut()
+                &mut self.output_ports[index]
             }
 
             fn system_weak_link(&self) -> SystemWeakLink<T> {
@@ -255,7 +255,7 @@ pub fn derive_leaf_system(input: TokenStream) -> TokenStream {
                 &mut self.output_ports[output_port_index]
             }
 
-            fn add_output_port(&mut self, output_port: Box<LeafOutputPort<T>>) {
+            fn add_output_port(&mut self, output_port: LeafOutputPort<T>) {
                 self.output_ports.push(output_port);
             }
         }

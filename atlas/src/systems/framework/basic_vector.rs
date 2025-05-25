@@ -1,8 +1,6 @@
-use std::cell::RefCell;
 use std::cmp::PartialEq;
 use std::fmt::Debug;
 use std::ops::{Add, AddAssign, Div, Index, IndexMut, Mul, MulAssign, Sub, SubAssign};
-use std::rc::Rc;
 
 extern crate nalgebra as na;
 

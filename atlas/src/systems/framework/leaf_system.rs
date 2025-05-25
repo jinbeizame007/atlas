@@ -34,7 +34,7 @@ pub trait LeafSystem<T: AtlasScalar>: System<T, CN = LeafContext<T>> {
         &mut self,
         output_port_index: &OutputPortIndex,
     ) -> &mut LeafOutputPort<T>;
-    fn add_output_port(&mut self, output_port: Box<LeafOutputPort<T>>);
+    fn add_output_port(&mut self, output_port: LeafOutputPort<T>);
 
     fn allocate_context(&self) -> Rc<RefCell<LeafContext<T>>> {
         self.do_allocate_context()
@@ -228,7 +228,7 @@ pub trait LeafSystem<T: AtlasScalar>: System<T, CN = LeafContext<T>> {
         let cache_entry_ptr: *const CacheEntry = cache_entry;
         let output_port = if let Some(size) = fixed_size {
             let data_type = PortDataType::VectorValued;
-            Box::new(LeafOutputPort::<T>::new(
+            LeafOutputPort::<T>::new(
                 name,
                 self.system_weak_link(),
                 _system_id,
@@ -236,11 +236,11 @@ pub trait LeafSystem<T: AtlasScalar>: System<T, CN = LeafContext<T>> {
                 data_type,
                 size,
                 cache_entry_ptr,
-            ))
+            )
         } else {
             let data_type = PortDataType::AbstractValued;
             let size = 0;
-            Box::new(LeafOutputPort::<T>::new(
+            LeafOutputPort::<T>::new(
                 name,
                 self.system_weak_link(),
                 _system_id,
@@ -248,7 +248,7 @@ pub trait LeafSystem<T: AtlasScalar>: System<T, CN = LeafContext<T>> {
                 data_type,
                 size,
                 cache_entry_ptr,
-            ))
+            )
         };
         self.add_output_port(output_port);
 
